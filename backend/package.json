@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "^1.2.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "firebase": "^11.4.0"
+  }
+}
