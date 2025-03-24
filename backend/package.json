@@ -1,17 +1,16 @@
 {
   "name": "backend",
-  "module": "index.ts",
-  "type": "module",
+  "version": "1.0.50",
   "scripts": {
-    "dev": "bun run ./index.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "^1.2.5"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
-    "firebase": "^11.4.0"
-  }
+    "elysia": "latest",
+    "logestic": "^1.2.4"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/index.js"
 }
