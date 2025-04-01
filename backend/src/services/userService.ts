@@ -10,39 +10,37 @@ import {
 } from 'firebase/auth';
 
 /**
- * Service class for handling Firebase user authentication operations
+ * Clase userService para manejar la autenticación de usuarios
  */
 export class UserService {
 	/**
-	 * Creates a new user with the provided email and password
-	 * @param {string} email - The email address for the new user
-	 * @param {string} password - The password for the new user
-	 * @returns {Promise<User>} The created Firebase user object
-	 * @throws {Error} If user creation fails
+	 * Crea un nuevo usuario con el correo electrónico y la contraseña
+	 * @param {string} email - Correo electrónico del nuevo usuario
+	 * @param {string} password - Contraseña del nuevo usuario
+	 * @returns {Promise<User>} - El objeto de usuario de Firebase creado
+	 * @throws {Error} - Si la creación del usuario falla
 	 */
 	static async createUser(email: string, password: string): Promise<User> {
 		try {
 			const userCredential: UserCredential =
 				await createUserWithEmailAndPassword(auth, email, password);
 			const user: User = userCredential.user;
-
-			// CRUD - User created
-			console.log('Usuario creado:', user);
+			console.log('Usuario creado:', user); // CRUD - Usuario creado
 			return user;
 		} catch (error: any) {
-			const errorCode = error.code;
+			//const errorCode = error.code;
 			const errorMessage = error.message;
-			console.error('Error creando usuario:', errorCode, errorMessage);
+			console.error(errorMessage);
 			throw error;
 		}
 	}
 
 	/**
-	 * Signs in a user with the provided email and password
-	 * @param {string} email - The email address of the user
-	 * @param {string} password - The password of the user
-	 * @returns {Promise<User>} The signed-in Firebase user object
-	 * @throws {Error} If sign-in fails
+	 * Loggea un usuario con el correo electrónico y la contraseña proporcionados
+	 * @param {string} email - El correo electrónico del usuario
+	 * @param {string} password - La contraseña del usuario
+	 * @returns {Promise<User>} - El objeto de usuario de Firebase
+	 * @throws {Error} - Si el inicio de sesión falla
 	 */
 	static async signIn(email: string, password: string): Promise<User> {
 		try {
@@ -53,21 +51,21 @@ export class UserService {
 			);
 			const user: User = userCredential.user;
 
-			// CRUD - User signed in
+			// CRUD - Usuario loggeado
 			console.log('Usuario conectado:', user);
 			return user;
 		} catch (error: any) {
 			const errorCode = error.code;
 			const errorMessage = error.message;
 
-			// User sign-in failed
+			// Error general
 			console.error('Error conectando usuario:', errorCode, errorMessage);
 			throw error;
 		}
 	}
-
+ // ------------------------------------------------------------- NO IMPLEMENTADO
 	/**
-	 * Signs out the currently signed-in user
+	 * Cierra la sesión del usuario actual
 	 * @returns {Promise<void>}
 	 * @throws {Error} If sign-out fails
 	 */
@@ -82,7 +80,7 @@ export class UserService {
 	}
 
 	/**
-	 * Sends a password reset email to the provided email address
+	 * Envia un email de recuperación de contraseña al usuario
 	 * @param {string} email - The email address to send the reset link to
 	 * @returns {Promise<void>}
 	 * @throws {Error} If sending the reset email fails
@@ -98,7 +96,7 @@ export class UserService {
 	}
 
 	/**
-	 * Updates the profile of the currently signed-in user
+	 * Actializa el perfil del usuario
 	 * @param {User} user - The user to update
 	 * @param {object} profileData - The profile data to update
 	 * @returns {Promise<void>}
@@ -118,7 +116,7 @@ export class UserService {
 	}
 
 	/**
-	 * Gets the currently signed-in user
+	 * Obtiene el usuario actualmente conectado
 	 * @returns {User | null} The current user or null if no user is signed in
 	 */
 	static getCurrentUser(): User | null {
