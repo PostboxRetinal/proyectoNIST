@@ -63,7 +63,6 @@ export class UserService {
 			throw error;
 		}
 	}
- // ------------------------------------------------------------- NO IMPLEMENTADO
 	/**
 	 * Cierra la sesión del usuario actual
 	 * @returns {Promise<void>}

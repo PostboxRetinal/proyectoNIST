@@ -25,7 +25,7 @@ const api = new Elysia({ prefix: '/api' }).post(
 	'/newUser',
 	async ({ body, error }) => {
 		try {
-			const { email, password } = body as any; // Reemplaza 'any' con una definición de tipo adecuada
+			const { email, password } = body as any; // toca reemplazar 'any' con una definición de tipo adecuada
 
 			// CRUD - Crea usuario en Firebase
 			const user = await UserService.createUser(email, password);
