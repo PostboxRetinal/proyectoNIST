@@ -6,7 +6,10 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/swagger": "^1.2.2",
     "elysia": "latest",
+    "firebase": "^11.5.0",
     "logestic": "^1.2.4"
   },
   "devDependencies": {
