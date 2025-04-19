@@ -96,7 +96,7 @@ export class UserService {
 	}
 
 	/**
-	 * Actializa el perfil del usuario
+	 * Actualiza el perfil del usuario
 	 * @param {User} user - The user to update
 	 * @param {object} profileData - The profile data to update
 	 * @returns {Promise<void>}
