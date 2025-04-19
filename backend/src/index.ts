@@ -38,27 +38,34 @@ const api = new Elysia({ prefix: '/api' }).post(
 			});
 		} catch (error: any) {
 			// manejo de errores
-			let status: number = 400; // código de error (numérico) por defectolet status: number = 400; // código de error (numérico) por defecto
-			let errorMessage: string = error.message || 'Error al crear usuario';
-			if (error.code === 'auth/api-key-not-valid') {
-				status = 500;
-				errorMessage =
-					'Error de configuración del servidor. Por favor contacte al administrador.';
-			} else if (error.code === 'auth/email-already-in-use') {
-				status = 409;
-				errorMessage = 'El correo electrónico ya está en uso';
-			} else if (error.code === 'auth/invalid-email') {
-				status = 400;
-				errorMessage = 'El correo electrónico no es válido';
-			} else if (error.code === 'auth/weak-password') {
-				status = 400;
-				errorMessage = 'La contraseña es demasiado débil';
-			}
+			const errorMapping: { [key: string]: { status: number; message: string } } = {
+				'auth/api-key-not-valid': {
+					status: 500,
+					message: 'Error de configuración del servidor. Por favor contacte al administrador.',
+				},
+				'auth/email-already-in-use': {
+					status: 409,
+					message: 'El correo electrónico ya está en uso',
+				},
+				'auth/invalid-email': {
+					status: 400,
+					message: 'El correo electrónico no es válido',
+				},
+				'auth/weak-password': {
+					status: 400,
+					message: 'La contraseña es demasiado débil',
+				},
+			};
+
+			const { status, message } = errorMapping[error.code] || {
+				status: 400,
+				message: error.message || 'Error al crear usuario',
+			};
 
 			// uso de función error como se sugiere para retornos custom
 			return error(status, {
 				success: false,
-				message: errorMessage,
+				message: message,
 				errorCode: error.code,
 			});
 		}
