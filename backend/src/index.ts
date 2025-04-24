@@ -56,7 +56,7 @@ const app = new Elysia()
 	})
 	.use(
 		cors({
-			origin: ['127.0.0.1', 'localhost'], // permite el acceso desde localhost o 127.0.0.1 que es lo mismo
+			origin: ['127.0.0.1', 'localhost', '0.0.0.0'], // permite el acceso desde localhost o 127.0.0.1 que es lo mismo
 			methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 			allowedHeaders: ['Content-Type', 'Authorization'],
 		})

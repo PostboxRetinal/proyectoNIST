@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# Dockerfile for the backend service
 FROM docker.io/oven/bun:latest
 
 WORKDIR /app

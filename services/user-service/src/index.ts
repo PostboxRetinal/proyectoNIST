@@ -162,6 +162,7 @@ const app = new Elysia({ prefix: '/api' }).post(
 	}
 );
 
+
 const port = Bun.env.USER_SERVICE_PORT || 4001;
 app.listen(port);
 console.log(`🦊 User Service ejecutándose en http://localhost:${port}`);
