@@ -116,7 +116,7 @@ export class UserService {
 
 	/**
 	 * Obtiene el usuario actualmente conectado
-	 * @returns {User | null} The current user or null if no user is signed in
+	 * @returns {User | null} usuario actual o ninguno si no hay
 	 */
 	static getCurrentUser(): User | null {
 		return auth.currentUser;

@@ -1,0 +1,14 @@
+{
+  "name": "user-service",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "latest",
+    "firebase": "^11.5.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}

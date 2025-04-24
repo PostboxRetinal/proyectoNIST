@@ -1,10 +1,7 @@
 import { t } from 'elysia';
 
-/**
- * Validador de esquema para la creación de usuario
- */
 export const createUserValidator = t.Object({
-	email: t.String({
+	email: t.String({ // Schema validator for user registration and login
 		format: 'email',
 		error: 'Debe proporcionar un email válido',
 	}),
@@ -14,9 +11,6 @@ export const createUserValidator = t.Object({
 	}),
 });
 
-/**
- * Validador de esquema para el inicio de sesión de usuario
- */
 export const loginUserValidator = t.Object({
 	email: t.String({
 		format: 'email',
@@ -27,9 +21,6 @@ export const loginUserValidator = t.Object({
 	}),
 });
 
-/**
- * Validador de esquema para la actualización del perfil de usuario
- */
 export const resetPasswordValidator = t.Object({
 	email: t.String({
 		format: 'email',
