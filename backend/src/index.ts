@@ -63,7 +63,7 @@ const app = new Elysia()
 	)
 	.use(swagger()) // genera la documentación de la API
 	.use(Logestic.preset('fancy')) // logs habilitados en CLI
-	.listen(Bun.env.BACKEND_PORT || 3000);
+	.listen(Bun.env.BACKEND_PORT || 3001);
 
 console.log(
 	`🦊 API GATEWAY ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
