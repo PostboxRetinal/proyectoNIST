@@ -160,8 +160,6 @@ const app = new Elysia({ prefix: '/api' }).post(
 			tags: ['Usuarios'],
 		},
 	}
-);
+).listen(Bun.env.USER_SERVICE_PORT || 4001);
 
-const port = Bun.env.USER_SERVICE_PORT || 4001;
-app.listen(port);
-console.log(`🦊 User Service ejecutándose en http://localhost:${port}`);
+console.log(`🦊 User Service ejecutándose en http://${app.server?.hostname}:${app.server?.port}`);
