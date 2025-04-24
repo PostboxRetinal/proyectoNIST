@@ -66,7 +66,7 @@ const app = new Elysia()
 	.listen(Bun.env.BACKEND_PORT || 3000);
 
 console.log(
-	`🦊 ElysiaJS backend ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
+	`🦊 API GATEWAY ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
 );
 
 //debugging .env test

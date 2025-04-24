@@ -42,7 +42,7 @@ export class UserService {
 	 * @returns {Promise<User>} - El objeto de usuario de Firebase
 	 * @throws {Error} - Si el inicio de sesión falla
 	 */
-	static async signIn(email: string, password: string): Promise<User> {
+	static async loginUser(email: string, password: string): Promise<User> {
 		try {
 			const userCredential: UserCredential = await signInWithEmailAndPassword(
 				auth,

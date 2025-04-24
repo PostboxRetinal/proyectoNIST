@@ -91,6 +91,75 @@ const app = new Elysia({ prefix: '/api' }).post(
 			tags: ['Usuarios'],
 		},
 	}
+).post(
+	'/loginUser',
+	async ({ body, error }) => {
+		try {
+			const { email, password } = body as any;
+			const user = await UserService.loginUser(email, password);
+			return error(200, {
+				success: true,
+				message: 'Inicio de sesión exitoso',
+				userId: user.uid,
+			});
+		} catch (error: any) {
+			const errorMapping: {
+				[key: string]: { status: number; message: string };
+			} = {
+				'auth/user-not-found': {
+					status: 404,
+					message: 'Usuario no encontrado',
+				},
+				'auth/invalid-email': {
+					status: 400,
+					message: 'El correo electrónico no es válido',
+				},
+				'auth/wrong-password': {
+					status: 401,
+					message: 'Contraseña incorrecta',
+				},
+			};
+			const { status, message } = errorMapping[error.code] || {
+				status: 400,
+				message: error.message || 'Error al iniciar sesión',
+			};
+			return error(status, {
+				success: false,
+				message: message,
+				errorCode: error.code,
+			});
+		}
+	},
+	{
+		body: loginUserValidator,
+		response: {
+			200: t.Object({
+				success: t.Boolean(),
+				message: t.String(),
+				userId: t.String(),
+			}),
+			400: t.Object({
+				success: t.Boolean(),
+				message: t.String(),
+				errorCode: t.Optional(t.String()),
+			}),
+			401: t.Object({
+				success: t.Boolean(),
+				message: t.String(),
+				errorCode: t.Optional(t.String()),
+			}),
+			404: t.Object({
+				success: t.Boolean(),
+				message: t.String(),
+				errorCode: t.Optional(t.String()),
+			}),
+		},
+		detail: {
+			summary: 'Inicia sesión de usuario',
+			description: 'Inicia sesión de usuario en Firebase con email y contraseña',
+			tags: ['Usuarios'],
+		},
+	}
 );
 
 const port = Bun.env.USER_SERVICE_PORT || 4001;
