@@ -2,10 +2,10 @@ version: '3.8'
 services:
   api-gateway:
     build:
-      context: ./backend
+      context: ./services/api-gateway
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "3001:80"
     environment:
       - NODE_ENV=production
     depends_on:
