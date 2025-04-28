@@ -14,27 +14,40 @@ import {
  */
 export class UserService {
 	/**
-	 * Crea un nuevo usuario con el correo electrónico y la contraseña
-	 * @param {string} email - Correo electrónico del nuevo usuario
-	 * @param {string} password - Contraseña del nuevo usuario
-	 * @returns {Promise<User>} - El objeto de usuario de Firebase creado
-	 * @throws {Error} - Si la creación del usuario falla
-	 */
-	static async createUser(email: string, password: string): Promise<User> {
-		try {
-			const userCredential: UserCredential =
-				await createUserWithEmailAndPassword(auth, email, password);
-			const user: User = userCredential.user;
-			console.log('Usuario creado:', user); // CRUD - Usuario creado
-			return user;
-		} catch (error: any) {
-			//const errorCode = error.code;
-			const errorMessage = error.message;
-			console.error(errorMessage);
-			throw error;
-		}
-	}
-
+ * Crea un nuevo usuario con el correo electrónico y la contraseña
+ * @param {string} email - Correo electrónico del nuevo usuario
+ * @param {string} password - Contraseña del nuevo usuario
+ * @param {string} role - Rol del usuario (opciones: "admin", "gestor", "auditor", default: "user")
+ * @returns {Promise<User>} - El objeto de usuario de Firebase creado
+ * @throws {Error} - Si la creación del usuario falla o el rol es inválido
+ */
+static async createUser(email: string, password: string, role: string = "user"): Promise<User> {
+    // Validate that the role is one of the allowed options
+    const validRoles = ["admin", "gestor", "auditor"];
+    if (!validRoles.includes(role)) {
+        throw new Error(`Rol inválido: ${role}. Roles permitidos: admin, gestor, auditor`);
+    }
+    
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        await updateProfile(user, {
+            displayName: user.displayName || email.split('@')[0], // Use email username as display name if not set
+        });
+    
+        // Here we log the role information
+        console.log(`Usuario creado con rol: ${role}`); 
+        console.log('Usuario creado:', user.uid); // CRUD - Usuario creado
+        
+        return user;
+    } catch (error: any) {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.error(`Error creating user: ${errorCode} - ${errorMessage}`);
+        throw errorMessage;
+    }
+}
 	/**
 	 * Loggea un usuario con el correo electrónico y la contraseña proporcionados
 	 * @param {string} email - El correo electrónico del usuario

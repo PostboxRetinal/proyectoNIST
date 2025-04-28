@@ -1,5 +1,8 @@
 import { Elysia, t } from 'elysia';
 import { UserService } from './services/userService';
+import { swagger } from '@elysiajs/swagger';
+import { Logestic } from 'logestic';
+import { cors } from '@elysiajs/cors';
 import { validateFirebaseConfig } from './utils/firebaseValidator';
 import {
 	createUserValidator,
@@ -21,8 +24,8 @@ const app = new Elysia({ prefix: '/api' }).post(
 	'/newUser',
 	async ({ body, error }) => {
 		try {
-			const { email, password } = body as any;
-			const user = await UserService.createUser(email, password);
+			const { email, password, role } = body as any;
+			const user = await UserService.createUser(email, password, role);
 			return error(201, {
 				success: true,
 				message: 'Usuario creado exitosamente',
@@ -160,6 +163,14 @@ const app = new Elysia({ prefix: '/api' }).post(
 			tags: ['Usuarios'],
 		},
 	}
-).listen(Bun.env.USER_SERVICE_PORT || 4001);
+).use(
+	cors({
+		origin: ['127.0.0.1', 'localhost'], // permite el acceso desde localhost o 127.0.0.1 que es lo mismo
+		methods: ['GET', 'POST'],
+		allowedHeaders: ['Content-Type', 'Authorization'],
+	}))
+	.use(swagger())
+	.use(Logestic.preset('fancy'))
+	.listen(Bun.env.USER_SERVICE_PORT || 4001);
 
 console.log(`🦊 User Service ejecutándose en http://${app.server?.hostname}:${app.server?.port}`);
