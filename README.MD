@@ -1,10 +1,6 @@
 # ProyectoNIST
 
-A React TypeScript application built with Vite using bun as drop-in replacement for nodeJS
-
-## Description
-
-This project implements a modern web application using React and TypeScript, with Vite as the build tool and Bun as the JavaScript runtime.
+Backend microservices standalone instance running on ElysiaJS and bun for effective load and faster response times.
 
 ## Getting Started
 
@@ -18,10 +14,10 @@ This project implements a modern web application using React and TypeScript, wit
 
    ```bash
    git clone https://github.com/PostboxRetinal/proyectoNIST.git
-   cd proyectoNIST/frontend
+   cd proyectoNIST/services
    ```
 
-2. Install dependencies:
+2. Install dependencies per service:
 
    ```bash
    bun install
@@ -42,7 +38,6 @@ This project implements a modern web application using React and TypeScript, wit
 
 ## Technology Stack
 
-- [React](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
-- [Vite](https://vitejs.dev/)
 - [Bun](https://bun.sh/)
+- [ElysiaJS](https://elysiajs.com/)
