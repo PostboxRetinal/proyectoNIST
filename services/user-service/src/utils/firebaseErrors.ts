@@ -1,31 +1,65 @@
-// firebaseErrors.ts
 import { FirebaseError } from 'firebase/app';
 
-// Define custom error response type
 export interface ErrorResponse {
   status: number;
   message: string;
   code: string;
 }
 
-// Define Firebase error code types
+/* Aquí busqué y definí los tipos de códigos de error de Firebase con base en la documentación oficial
+*  https://firebase.google.com/docs/auth/admin/errors
+ */
+
 export type FirebaseAuthErrorCode =
-  | 'auth/email-already-in-use'
-  | 'auth/invalid-email'
-  | 'auth/user-disabled'
-  | 'auth/user-not-found'
-  | 'auth/wrong-password'
-  | 'auth/invalid-login-credentials'
-  | 'auth/weak-password'
-  | 'auth/requires-recent-login'
-  | 'auth/too-many-requests'
-  | 'auth/api-key-not-valid'
-  | 'auth/network-request-failed'
-  | 'auth/popup-closed-by-user'
-  | 'auth/invalid-credential'
+  | 'auth/claims-too-large'
+  | 'auth/email-already-exists'
+  | 'auth/id-token-expired'
+  | 'auth/id-token-revoked'
+  | 'auth/insufficient-permission'
   | 'auth/internal-error'
-  | 'auth/account-exists-with-different-credential'
-  | 'auth/operation-not-allowed';
+  | 'auth/invalid-argument'
+  | 'auth/invalid-claims'
+  | 'auth/invalid-continue-uri'
+  | 'auth/invalid-creation-time'
+  | 'auth/invalid-credential'
+  | 'auth/invalid-custom-token'
+  | 'auth/invalid-disabled-field'
+  | 'auth/invalid-display-name'
+  | 'auth/invalid-dynamic-link-domain'
+  | 'auth/invalid-email'
+  | 'auth/invalid-email-verified'
+  | 'auth/invalid-hash-algorithm'
+  | 'auth/invalid-hash-block-size'
+  | 'auth/invalid-hash-derived-key-length'
+  | 'auth/invalid-hash-key'
+  | 'auth/invalid-hash-memory-cost'
+  | 'auth/invalid-hash-parallelization'
+  | 'auth/invalid-hash-rounds'
+  | 'auth/invalid-hash-salt-separator'
+  | 'auth/invalid-id-token'
+  | 'auth/invalid-last-sign-in-time'
+  | 'auth/invalid-page-token'
+  | 'auth/invalid-password'
+  | 'auth/invalid-password-hash'
+  | 'auth/invalid-password-salt'
+  | 'auth/invalid-phone-number'
+  | 'auth/invalid-photo-url'
+  | 'auth/invalid-provider-id'
+  | 'auth/invalid-session-cookie-duration'
+  | 'auth/invalid-uid'
+  | 'auth/invalid-user-import'
+  | 'auth/maximum-user-count-exceeded'
+  | 'auth/missing-hash-algorithm'
+  | 'auth/missing-uid'
+  | 'auth/operation-not-allowed'
+  | 'auth/phone-number-already-exists'
+  | 'auth/project-not-found'
+  | 'auth/reserved-claims'
+  | 'auth/session-cookie-expired'
+  | 'auth/session-cookie-revoked'
+  | 'auth/uid-already-exists'
+  | 'auth/password-does-not-meet-requirements'
+  | 'auth/email-already-in-use';
 
 export type FirestoreErrorCode =
   | 'cancelled'
@@ -48,92 +82,259 @@ export type FirestoreErrorCode =
 export type FirebaseErrorCode = FirebaseAuthErrorCode | FirestoreErrorCode;
 
 /**
- * Global error mapping for different Firebase errors with appropriate HTTP status codes
+ * Mapeo de errores de Firebase a respuestas de error
  */
 export const FIREBASE_ERROR_MAP: Record<FirebaseErrorCode, ErrorResponse> = {
-  // Authentication Errors
-  'auth/email-already-in-use': {
+  // Errores de autenticación
+  'auth/claims-too-large': {
+    status: 400,
+    message: 'Las claims personalizadas exceden el tamaño máximo permitido',
+    code: 'auth/claims-too-large'
+  },
+  'auth/email-already-exists': {
     status: 409,
-    message: 'El correo electrónico ya está en uso',
-    code: 'auth/email-already-in-use'
+    message: 'El correo electrónico ya existe',
+    code: 'auth/email-already-exists'
   },
-  'auth/invalid-email': {
-    status: 400,
-    message: 'El correo electrónico no es válido',
-    code: 'auth/invalid-email'
+  'auth/id-token-expired': {
+    status: 401,
+    message: 'El ID token ha expirado',
+    code: 'auth/id-token-expired'
   },
-  'auth/user-disabled': {
+  'auth/id-token-revoked': {
+    status: 401,
+    message: 'El ID token ha sido revocado',
+    code: 'auth/id-token-revoked'
+  },
+  'auth/insufficient-permission': {
     status: 403,
-    message: 'Esta cuenta de usuario ha sido deshabilitada',
-    code: 'auth/user-disabled'
-  },
-  'auth/user-not-found': {
-    status: 404,
-    message: 'Usuario no encontrado',
-    code: 'auth/user-not-found'
-  },
-  'auth/wrong-password': {
-    status: 401,
-    message: 'Contraseña incorrecta',
-    code: 'auth/wrong-password'
-  },
-  'auth/invalid-login-credentials': {
-    status: 401,
-    message: 'Credenciales de acceso inválidas',
-    code: 'auth/invalid-login-credentials'
-  },
-  'auth/weak-password': {
-    status: 400,
-    message: 'La contraseña es demasiado débil',
-    code: 'auth/weak-password'
-  },
-  'auth/requires-recent-login': {
-    status: 403,
-    message: 'Esta operación requiere un inicio de sesión reciente',
-    code: 'auth/requires-recent-login'
-  },
-  'auth/too-many-requests': {
-    status: 429,
-    message: 'Demasiados intentos fallidos. Intente más tarde',
-    code: 'auth/too-many-requests'
-  },
-  'auth/api-key-not-valid': {
-    status: 500,
-    message: 'Error de configuración del servidor. Por favor contacte al administrador',
-    code: 'auth/api-key-not-valid'
-  },
-  'auth/network-request-failed': {
-    status: 503,
-    message: 'Error de red. Verifique su conexión a internet',
-    code: 'auth/network-request-failed'
-  },
-  'auth/popup-closed-by-user': {
-    status: 400,
-    message: 'Operación cancelada por el usuario',
-    code: 'auth/popup-closed-by-user'
-  },
-  'auth/invalid-credential': {
-    status: 401,
-    message: 'Credencial inválida',
-    code: 'auth/invalid-credential'
+    message: 'Permisos insuficientes para realizar la operación',
+    code: 'auth/insufficient-permission'
   },
   'auth/internal-error': {
     status: 500,
     message: 'Error interno de Firebase. Intente nuevamente más tarde',
     code: 'auth/internal-error'
   },
-  'auth/account-exists-with-different-credential': {
-    status: 409,
-    message: 'Ya existe una cuenta con este correo electrónico pero con credenciales diferentes',
-    code: 'auth/account-exists-with-different-credential'
+  'auth/invalid-argument': {
+    status: 400,
+    message: 'Argumento inválido proporcionado a un método de autenticación',
+    code: 'auth/invalid-argument'
+  },
+  'auth/invalid-claims': {
+    status: 400,
+    message: 'Las claims proporcionadas no son válidas',
+    code: 'auth/invalid-claims'
+  },
+  'auth/invalid-continue-uri': {
+    status: 400,
+    message: 'La URI de continuación no es válida',
+    code: 'auth/invalid-continue-uri'
+  },
+  'auth/invalid-creation-time': {
+    status: 400,
+    message: 'El tiempo de creación no es válido',
+    code: 'auth/invalid-creation-time'
+  },
+  'auth/invalid-credential': {
+    status: 400,
+    message: 'La credencial proporcionada no es válida',
+    code: 'auth/invalid-credential'
+  },
+  'auth/invalid-custom-token': {
+    status: 400,
+    message: 'El token personalizado no es válido',
+    code: 'auth/invalid-custom-token'
+  },
+  'auth/invalid-disabled-field': {
+    status: 400,
+    message: 'El campo disabled no es válido',
+    code: 'auth/invalid-disabled-field'
+  },
+  'auth/invalid-display-name': {
+    status: 400,
+    message: 'El displayName no es válido',
+    code: 'auth/invalid-display-name'
+  },
+  'auth/invalid-dynamic-link-domain': {
+    status: 400,
+    message: 'El dominio de Dynamic Link no es válido',
+    code: 'auth/invalid-dynamic-link-domain'
+  },
+  'auth/invalid-email': {
+    status: 400,
+    message: 'El correo electrónico no es válido',
+    code: 'auth/invalid-email'
+  },
+  'auth/invalid-email-verified': {
+    status: 400,
+    message: 'El campo emailVerified no es válido',
+    code: 'auth/invalid-email-verified'
+  },
+  'auth/invalid-hash-algorithm': {
+    status: 400,
+    message: 'El algoritmo de hash no es válido',
+    code: 'auth/invalid-hash-algorithm'
+  },
+  'auth/invalid-hash-block-size': {
+    status: 400,
+    message: 'El tamaño de bloque de hash no es válido',
+    code: 'auth/invalid-hash-block-size'
+  },
+  'auth/invalid-hash-derived-key-length': {
+    status: 400,
+    message: 'La longitud de la clave derivada de hash no es válida',
+    code: 'auth/invalid-hash-derived-key-length'
+  },
+  'auth/invalid-hash-key': {
+    status: 400,
+    message: 'La clave de hash no es válida',
+    code: 'auth/invalid-hash-key'
+  },
+  'auth/invalid-hash-memory-cost': {
+    status: 400,
+    message: 'El costo de memoria de hash no es válido',
+    code: 'auth/invalid-hash-memory-cost'
+  },
+  'auth/invalid-hash-parallelization': {
+    status: 400,
+    message: 'El parámetro de paralelización de hash no es válido',
+    code: 'auth/invalid-hash-parallelization'
+  },
+  'auth/invalid-hash-rounds': {
+    status: 400,
+    message: 'El número de rondas de hash no es válido',
+    code: 'auth/invalid-hash-rounds'
+  },
+  'auth/invalid-hash-salt-separator': {
+    status: 400,
+    message: 'El separador de sal de hash no es válido',
+    code: 'auth/invalid-hash-salt-separator'
+  },
+  'auth/invalid-id-token': {
+    status: 400,
+    message: 'El ID token no es válido',
+    code: 'auth/invalid-id-token'
+  },
+  'auth/invalid-last-sign-in-time': {
+    status: 400,
+    message: 'El tiempo de último inicio de sesión no es válido',
+    code: 'auth/invalid-last-sign-in-time'
+  },
+  'auth/invalid-page-token': {
+    status: 400,
+    message: 'El page token no es válido',
+    code: 'auth/invalid-page-token'
+  },
+  'auth/invalid-password': {
+    status: 400,
+    message: 'La contraseña proporcionada no es válida',
+    code: 'auth/invalid-password'
+  },
+  'auth/invalid-password-hash': {
+    status: 400,
+    message: 'El hash de la contraseña no es válido',
+    code: 'auth/invalid-password-hash'
+  },
+  'auth/invalid-password-salt': {
+    status: 400,
+    message: 'La sal de la contraseña no es válida',
+    code: 'auth/invalid-password-salt'
+  },
+  'auth/password-does-not-meet-requirements': {
+    status: 400,
+    message: 'La contraseña no cumple con los requisitos de seguridad, ebe contener un carácter en minúsculas, un carácter numérico y un carácter no alfanumérico',
+    code: 'auth/password-does-not-meet-requirements'
+  },
+  'auth/invalid-phone-number': {
+    status: 400,
+    message: 'El número de teléfono proporcionado no es válido',
+    code: 'auth/invalid-phone-number'
+  },
+  'auth/invalid-photo-url': {
+    status: 400,
+    message: 'La URL de la foto no es válida',
+    code: 'auth/invalid-photo-url'
+  },
+  'auth/invalid-provider-id': {
+    status: 400,
+    message: 'El provider ID no es válido',
+    code: 'auth/invalid-provider-id'
+  },
+  'auth/invalid-session-cookie-duration': {
+    status: 400,
+    message: 'La duración de la cookie de sesión no es válida',
+    code: 'auth/invalid-session-cookie-duration'
+  },
+  'auth/invalid-uid': {
+    status: 400,
+    message: 'El UID proporcionado no es válido',
+    code: 'auth/invalid-uid'
+  },
+  'auth/invalid-user-import': {
+    status: 400,
+    message: 'El usuario importado no es válido',
+    code: 'auth/invalid-user-import'
+  },
+  'auth/maximum-user-count-exceeded': {
+    status: 400,
+    message: 'Se ha excedido el número máximo de usuarios permitidos para la importación',
+    code: 'auth/maximum-user-count-exceeded'
+  },
+  'auth/missing-hash-algorithm': {
+    status: 400,
+    message: 'Falta el algoritmo de hash',
+    code: 'auth/missing-hash-algorithm'
+  },
+  'auth/missing-uid': {
+    status: 400,
+    message: 'Falta el UID',
+    code: 'auth/missing-uid'
   },
   'auth/operation-not-allowed': {
     status: 403,
     message: 'Operación no permitida',
     code: 'auth/operation-not-allowed'
   },
+  'auth/phone-number-already-exists': {
+    status: 409,
+    message: 'El número de teléfono ya existe',
+    code: 'auth/phone-number-already-exists'
+  },
+  'auth/project-not-found': {
+    status: 404,
+    message: 'Proyecto de Firebase no encontrado',
+    code: 'auth/project-not-found'
+  },
+  'auth/reserved-claims': {
+    status: 400,
+    message: 'Se intentó establecer una claim reservada',
+    code: 'auth/reserved-claims'
+  },
+  'auth/session-cookie-expired': {
+    status: 401,
+    message: 'La cookie de sesión ha expirado',
+    code: 'auth/session-cookie-expired'
+  },
+  'auth/session-cookie-revoked': {
+    status: 401,
+    message: 'La cookie de sesión ha sido revocada',
+    code: 'auth/session-cookie-revoked'
+  },
+  'auth/uid-already-exists': {
+    status: 409,
+    message: 'El UID ya existe',
+    code: 'auth/uid-already-exists'
+  },
+  'auth/email-already-in-use': {
+    status: 409,
+    message: 'Este e-mail ya se encuentra en uso. Intententa con otro',
+    code: 'auth/email-already-in-use'
+  },
+  
 
-  // Firestore Errors
+
+  // Errores de Firestore
   'cancelled': {
     status: 499,
     message: 'Operación cancelada',
@@ -217,7 +418,7 @@ export const FIREBASE_ERROR_MAP: Record<FirebaseErrorCode, ErrorResponse> = {
 };
 
 /**
- * Default error response for unhandled Firebase errors
+ * Respuesta de error por defecto
  */
 export const DEFAULT_ERROR_RESPONSE: ErrorResponse = {
   status: 500,
@@ -226,13 +427,12 @@ export const DEFAULT_ERROR_RESPONSE: ErrorResponse = {
 };
 
 /**
- * Process Firebase error and return appropriate error response
- * @param error Firebase error or any error
- * @param defaultMessage Custom default message if not defined in the error map
- * @returns Error response with status code and message
+ * Respuesta de error por defecto
+ * @param error Error de Firebase o cualquier error
+ * @param defaultMessage Mensaje por defecto personalizado si no está definido en el mapa de errores
+ * @returns Respuesta de error con código de estado y mensaje
  */
 export function handleFirebaseError(error: unknown, defaultMessage?: string): ErrorResponse {
-  // Firebase-specific error handling
   if (error instanceof FirebaseError) {
     const errorCode = error.code as FirebaseErrorCode;
     return FIREBASE_ERROR_MAP[errorCode] || {
@@ -242,7 +442,7 @@ export function handleFirebaseError(error: unknown, defaultMessage?: string): Er
     };
   }
   
-  // Generic error with code property
+  // Error genérico de Firebase
   if (typeof error === 'object' && error !== null && 'code' in error) {
     const errorWithCode = error as { code: string; message?: string };
     const errorCode = errorWithCode.code as FirebaseErrorCode;
@@ -258,7 +458,7 @@ export function handleFirebaseError(error: unknown, defaultMessage?: string): Er
     };
   }
   
-  // For other types of errors
+  // Para otros tipos de error
   const errorMessage = error instanceof Error ? error.message : String(error);
   return {
     status: 500,
@@ -268,9 +468,9 @@ export function handleFirebaseError(error: unknown, defaultMessage?: string): Er
 }
 
 /**
- * Helper to log error details to console
- * @param context The context/function where the error occurred
- * @param error The error object
+ * Ayudante para registrar detalles del error en la consola
+ * @param context El contexto/función donde ocurrió el error
+ * @param error El objeto de error
  */
 export function logFirebaseError(context: string, error: unknown): void {
   if (error instanceof FirebaseError) {
@@ -286,10 +486,10 @@ export function logFirebaseError(context: string, error: unknown): void {
 }
 
 /**
- * Create a standard error response for API responses
- * @param error The error from Firebase or any other source
- * @param defaultMessage Default message to show if none is provided in the error
- * @returns A standardized response object for API error responses
+ * Crea una respuesta de error estándar para respuestas de API
+ * @param error El error de Firebase o cualquier otra fuente
+ * @param defaultMessage Mensaje por defecto a mostrar si no se proporciona en el error
+ * @returns Un objeto de respuesta estandarizado para respuestas de error de API
  */
 export function createErrorResponse(error: unknown, defaultMessage?: string) {
   const { status, message, code } = handleFirebaseError(error, defaultMessage);
@@ -300,4 +500,4 @@ export function createErrorResponse(error: unknown, defaultMessage?: string) {
     errorCode: code,
     status: status as 400 | 401 | 403 | 404 | 409 | 429 | 500 | 503 | 504
   };
-} 
+}
