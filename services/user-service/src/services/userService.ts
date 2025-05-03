@@ -10,6 +10,7 @@ import {
   User,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; // Asegúrate de importar Firestore
+import { handleFirebaseError, logFirebaseError } from '../utils/firebaseErrors';
 
 export class UserService {
   /**
@@ -20,7 +21,7 @@ export class UserService {
    * @returns {Promise<User>} - El objeto de usuario de Firebase creado
    * @throws {Error} - Si la creación del usuario falla o el rol es inválido
    */
-  static async createUser(email: string, password: string, role: string = "admin"): Promise<User> { // props: User
+  	static async createUser(email: string, password: string, role: string = "admin"): Promise<User> { // props: User
     const validRoles = ["admin", "gestor", "auditor"];
 
     console.log("Rol recibido:", role); // Verifica el valor del rol recibido
@@ -45,15 +46,13 @@ export class UserService {
       try{
         await setDoc(userRef, { role });
       } catch (error) {
-        console.error("Error al guardar el rol en Firestore:", error);
+        logFirebaseError('createUser:setDoc', error);
       }
       console.log(`Usuario creado con rol: ${role}`);
       return user;
     } catch (error: any) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      console.error(`Error al crear el usuario: ${errorCode} - ${errorMessage}`);
-      throw new Error(`Error al crear el usuario: ${errorMessage}`);
+      logFirebaseError('createUser', error);
+      throw error; // Relanzo el error original para que lo maneje la capa de API
     }
   }
 
@@ -72,11 +71,8 @@ export class UserService {
       console.log('Usuario conectado:', user);
       return user;
     } catch (error: any) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-
-      console.error('Error conectando usuario:', errorCode, errorMessage);
-      throw new Error(errorMessage);
+      logFirebaseError('loginUser', error);
+      throw error; // Relanzo el error original para que lo maneje la capa de API
     }
   }
 
@@ -90,8 +86,8 @@ export class UserService {
       await signOut(auth);
       console.log('Usuario desconectado');
     } catch (error: any) {
-      console.error('Error desconectando usuario:', error);
-      throw new Error(error.message);
+      logFirebaseError('signOut', error);
+      throw error;
     }
   }
 
@@ -106,8 +102,8 @@ export class UserService {
       await sendPasswordResetEmail(auth, email);
       console.log('Email de recuperación enviado a:', email);
     } catch (error: any) {
-      console.error('Error enviando email de recuperación:', error);
-      throw new Error(error.message);
+      logFirebaseError('resetPassword', error);
+      throw error;
     }
   }
 
@@ -126,8 +122,8 @@ export class UserService {
       await updateProfile(user, profileData);
       console.log('Perfil actualizado:', profileData);
     } catch (error: any) {
-      console.error('Error actualizando perfil:', error);
-      throw new Error(error.message);
+      logFirebaseError('updateUserProfile', error);
+      throw error;
     }
   }
 

@@ -9,6 +9,8 @@ import {
 	loginUserValidator,
 	resetPasswordValidator,
 } from './utils/schemaValidator';
+import { createErrorResponse } from './utils/firebaseErrors';
+import { authRoutes } from './routes/authRoutes';
 
 const firebaseConfigValid = validateFirebaseConfig();
 if (!firebaseConfigValid) {
@@ -20,7 +22,11 @@ if (!firebaseConfigValid) {
 	console.log(`✅ Configuración de Firebase válida`);
 }
 
-const app = new Elysia({ prefix: '/api' }).post(
+// Aplicación principal Elysia con prefijo /api
+const app = new Elysia({ prefix: '/api' })
+
+// Rutas de usuarios
+.post(
 	'/newUser',
 	async ({ body, error }) => {
 		try {
@@ -31,37 +37,27 @@ const app = new Elysia({ prefix: '/api' }).post(
 				message: 'Usuario creado exitosamente',
 				userId: user.uid,
 			});
-		} catch (error: any) {
-			const errorMapping: {
-				[key: string]: { status: number; message: string };
-			} = {
-				'auth/api-key-not-valid': {
-					status: 500,
-					message:
-						'Error de configuración del servidor. Por favor contacte al administrador.',
-				},
-				'auth/email-already-in-use': {
-					status: 409,
-					message: 'El correo electrónico ya está en uso',
-				},
-				'auth/invalid-email': {
-					status: 400,
-					message: 'El correo electrónico no es válido',
-				},
-				'auth/weak-password': {
-					status: 400,
-					message: 'La contraseña es demasiado débil',
-				},
-			};
-			const { status, message } = errorMapping[error.code] || {
-				status: 400,
-				message: error.message || 'Error al crear usuario',
-			};
-			return error(status, {
-				success: false,
-				message: message,
-				errorCode: error.code,
-			});
+		} catch (err: any) {
+			const errorResponse = createErrorResponse(err, 'Error al crear usuario');
+			if (errorResponse.status === 409) {
+				return error(409, {
+					success: false,
+					message: errorResponse.message,
+					errorCode: errorResponse.errorCode,
+				});
+			} else if (errorResponse.status === 500) {
+				return error(500, {
+					success: false,
+					message: errorResponse.message,
+					errorCode: errorResponse.errorCode,
+				});
+			} else {
+				return error(400, {
+					success: false,
+					message: errorResponse.message,
+					errorCode: errorResponse.errorCode,
+				});
+			}
 		}
 	},
 	{
@@ -94,43 +90,39 @@ const app = new Elysia({ prefix: '/api' }).post(
 			tags: ['Usuarios'],
 		},
 	}
-).post(
+)
+.post(
 	'/loginUser',
 	async ({ body, error }) => {
 		try {
 			const { email, password } = body as any;
 			const user = await UserService.loginUser(email, password);
-			return error(200, {
+			return {
 				success: true,
 				message: 'Inicio de sesión exitoso',
 				userId: user.uid,
-			});
-		} catch (error: any) {
-			const errorMapping: {
-				[key: string]: { status: number; message: string };
-			} = {
-				'auth/user-not-found': {
-					status: 404,
-					message: 'Usuario no encontrado',
-				},
-				'auth/invalid-email': {
-					status: 400,
-					message: 'El correo electrónico no es válido',
-				},
-				'auth/wrong-password': {
-					status: 401,
-					message: 'Contraseña incorrecta',
-				},
 			};
-			const { status, message } = errorMapping[error.code] || {
-				status: 400,
-				message: error.message || 'Error al iniciar sesión',
-			};
-			return error(status, {
-				success: false,
-				message: message,
-				errorCode: error.code,
-			});
+		} catch (err: any) {
+			const errorResponse = createErrorResponse(err, 'Error al iniciar sesión');
+			if (errorResponse.status === 404) {
+				return error(404, {
+					success: false,
+					message: errorResponse.message,
+					errorCode: errorResponse.errorCode,
+				});
+			} else if (errorResponse.status === 401) {
+				return error(401, {
+					success: false,
+					message: errorResponse.message,
+					errorCode: errorResponse.errorCode,
+				});
+			} else {
+				return error(400, {
+					success: false,
+					message: errorResponse.message,
+					errorCode: errorResponse.errorCode,
+				});
+			}
 		}
 	},
 	{
@@ -163,14 +155,57 @@ const app = new Elysia({ prefix: '/api' }).post(
 			tags: ['Usuarios'],
 		},
 	}
-).use(
+)
+.post(
+	'/resetPassword',
+	async ({ body, error }) => {
+		try {
+			const { email } = body as any;
+			await UserService.resetPassword(email);
+			return {
+				success: true,
+				message: 'Email de recuperación enviado',
+			};
+		} catch (err: any) {
+			const errorResponse = createErrorResponse(err, 'Error al enviar email de recuperación');
+			return error(400, {
+				success: false,
+				message: errorResponse.message,
+				errorCode: errorResponse.errorCode,
+			});
+		}
+	},
+	{
+		body: resetPasswordValidator,
+		response: {
+			200: t.Object({
+				success: t.Boolean(),
+				message: t.String(),
+			}),
+			400: t.Object({
+				success: t.Boolean(),
+				message: t.String(),
+				errorCode: t.Optional(t.String()),
+			}),
+		},
+		detail: {
+			summary: 'Recuperación de contraseña',
+			description: 'Envía un email de recuperación de contraseña al usuario',
+			tags: ['Usuarios'],
+		},
+	}
+)
+// Grupo de rutas de autenticación
+.use(authRoutes)
+// Middlewares y configuración
+.use(
 	cors({
 		origin: ['127.0.0.1', 'localhost'], // permite el acceso desde localhost o 127.0.0.1 que es lo mismo
-		methods: ['GET', 'POST'],
+		methods: ['GET', 'POST', 'DELETE'],
 		allowedHeaders: ['Content-Type', 'Authorization'],
 	}))
-	.use(swagger())
-	.use(Logestic.preset('fancy'))
-	.listen(Bun.env.USER_SERVICE_PORT || 4001);
+.use(swagger())
+.use(Logestic.preset('fancy'))
+.listen(Bun.env.USER_SERVICE_PORT || 4001);
 
 console.log(`🦊 User Service ejecutándose en http://${app.server?.hostname}:${app.server?.port}`);

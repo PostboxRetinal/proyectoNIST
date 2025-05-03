@@ -7,6 +7,8 @@ Backend microservices standalone instance running on ElysiaJS and bun for effect
 ### Prerequisites
 
 - [Bun](https://bun.sh/) (latest version)
+- [Podman](https://bun.sh/) (latest version)
+- [Docker](https://bun.sh/) (latest version)
 
 ### Installation
 
@@ -17,24 +19,6 @@ Backend microservices standalone instance running on ElysiaJS and bun for effect
    cd proyectoNIST/services
    ```
 
-2. Install dependencies per service:
-
-   ```bash
-   bun install
-   ```
-
-3. Start the development server:
-
-   ```bash
-   bun dev
-   ```
-
-## Scripts
-
-- `bun dev` - Start the development server (using bunx runtime)
-- `bun build` - Build for production
-- `bun preview` - Preview the production build locally
-- `bun test` - Run tests
 
 ## Technology Stack
 
