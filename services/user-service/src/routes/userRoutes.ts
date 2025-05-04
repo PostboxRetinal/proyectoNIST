@@ -25,9 +25,6 @@ export function registerUserRoutes(app: Elysia<any>) {
 						userId: user.uid,
 					};
 				} catch (err: any) {
-					//FLAG DEBUG
-					console.error('ERROR:', err);
-					//FLAG DEBUG
 
 					// Si es un error de rol inválido, devolvemos un error personalizado
 					if (err instanceof InvalidRoleError || err.code === 'auth/invalid-role') {

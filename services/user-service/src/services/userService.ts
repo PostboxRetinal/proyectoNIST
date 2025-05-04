@@ -62,10 +62,6 @@ export class UserService {
 				const userRef = doc(db, 'users', user.uid);
 				await setDoc(userRef, { email, role });
 			} catch (error) {
-				// DEBUG
-				console.log('RAW ERROR:', error);
-				// DEBUG
-
 				logFirebaseError('createUser:setDoc', error);
 			}
 
@@ -73,7 +69,6 @@ export class UserService {
 
 			return user;
 		} catch (error: any) {
-			console.log('Error al crear el usuario:', error);
 			logFirebaseError('createUser', error);
 			throw error;
 		}
