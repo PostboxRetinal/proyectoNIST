@@ -59,7 +59,8 @@ export type FirebaseAuthErrorCode =
   | 'auth/session-cookie-revoked'
   | 'auth/uid-already-exists'
   | 'auth/password-does-not-meet-requirements'
-  | 'auth/email-already-in-use';
+  | 'auth/email-already-in-use'
+  | 'auth/invalid-role'; // Añadido nuevo tipo de error para roles inválidos
 
 export type FirestoreErrorCode =
   | 'cancelled'
@@ -243,7 +244,7 @@ export const FIREBASE_ERROR_MAP: Record<FirebaseErrorCode, ErrorResponse> = {
   },
   'auth/password-does-not-meet-requirements': {
     status: 400,
-    message: 'La contraseña no cumple con los requisitos de seguridad, ebe contener un carácter en minúsculas, un carácter numérico y un carácter no alfanumérico',
+    message: 'La contraseña no cumple con los requisitos de seguridad, debe contener un carácter en minúsculas, un carácter numérico y un carácter no alfanumérico',
     code: 'auth/password-does-not-meet-requirements'
   },
   'auth/invalid-phone-number': {
@@ -331,8 +332,11 @@ export const FIREBASE_ERROR_MAP: Record<FirebaseErrorCode, ErrorResponse> = {
     message: 'Este e-mail ya se encuentra en uso. Intententa con otro',
     code: 'auth/email-already-in-use'
   },
-  
-
+  'auth/invalid-role': {
+    status: 400,
+    message: 'El rol proporcionado no es válido. Debe ser uno de los siguientes: admin, gestor, auditor',
+    code: 'auth/invalid-role'
+  },
 
   // Errores de Firestore
   'cancelled': {

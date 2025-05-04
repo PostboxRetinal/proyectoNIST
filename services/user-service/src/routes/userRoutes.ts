@@ -1,11 +1,12 @@
 import { Elysia, t } from 'elysia';
-import { UserService } from '../services/userService';
+import { UserService, InvalidRoleError } from '../services/userService';
 import {
 	createUserValidator,
 	loginUserValidator,
 	resetPasswordValidator,
 } from '../utils/schemaValidator';
 import { createErrorResponse } from '../utils/firebaseErrors';
+import { VALID_ROLES } from '../constants/roles';
 
 export function registerUserRoutes(app: Elysia<any>) {
 	app
@@ -14,47 +15,50 @@ export function registerUserRoutes(app: Elysia<any>) {
 			async ({ body, error }) => {
 				try {
 					const { email, password } = body as any;
-					const role = body.role ?? 'auditor';
+					const role = body.role || 'auditor'; // Valor por defecto si no se proporciona
+
+					// Intentamos crear el usuario - el servicio validará el rol
 					const user = await UserService.createUser(email, password, role);
-					return error(201, {
+					return {
 						success: true,
 						message: 'Usuario creado exitosamente',
 						userId: user.uid,
-					});
+					};
 				} catch (err: any) {
 					//FLAG DEBUG
 					console.error('ERROR:', err);
 					//FLAG DEBUG
 
+					// Si es un error de rol inválido, devolvemos un error personalizado
+					if (err instanceof InvalidRoleError || err.code === 'auth/invalid-role') {
+						const invalidRole = body?.role;
+						return error(400, {
+							success: false,
+							message: `El rol '${invalidRole}' no es válido`,
+							details: { 
+								role: `Debe ser uno de los siguientes: ${VALID_ROLES.join(', ')}` 
+							},
+							invalidValues: { role: invalidRole }
+						});
+					}
+
+					// Para otros errores de Firebase, usamos el sistema existente
 					const errorResponse = createErrorResponse(
 						err,
 						'Error general de servidor'
 					);
-					if (errorResponse.status === 409) {
-						return error(409, {
-							success: false,
-							message: errorResponse.message,
-							errorCode: errorResponse.errorCode,
-						});
-					} else if (errorResponse.status === 500) {
-						return error(500, {
-							success: false,
-							message: errorResponse.message,
-							errorCode: errorResponse.errorCode,
-						});
-					} else {
-						return error(400, {
-							success: false,
-							message: errorResponse.message,
-							errorCode: errorResponse.errorCode,
-						});
-					}
+					
+					return error(400, {
+						success: false,
+						message: errorResponse.message,
+						errorCode: errorResponse.errorCode,
+					});
 				}
 			},
 			{
 				body: createUserValidator,
 				response: {
-					201: t.Object({
+					200: t.Object({
 						success: t.Boolean(),
 						message: t.String(),
 						userId: t.String(),
@@ -62,6 +66,8 @@ export function registerUserRoutes(app: Elysia<any>) {
 					400: t.Object({
 						success: t.Boolean(),
 						message: t.String(),
+						details: t.Optional(t.Record(t.String(), t.String())),
+						invalidValues: t.Optional(t.Record(t.String(), t.Any())),
 						errorCode: t.Optional(t.String()),
 					}),
 					409: t.Object({

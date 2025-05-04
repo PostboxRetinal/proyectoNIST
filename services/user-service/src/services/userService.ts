@@ -1,23 +1,42 @@
-// userService.ts
 import { auth, db } from '../firebase/firebase';
 import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
 	signOut,
-	updateProfile,
 	sendPasswordResetEmail,
 	UserCredential,
 	User,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore'; // Asegúrate de importar Firestore
+import { doc, setDoc } from 'firebase/firestore';
 import { logFirebaseError } from '../utils/firebaseErrors';
+import { VALID_ROLES, Role } from '../constants/roles';
+
+// Error personalizado para roles inválidos
+export class InvalidRoleError extends Error {
+	code: string;
+	
+	constructor(role: string) {
+		super(`El rol '${role}' no es válido. Debe ser uno de los siguientes: ${VALID_ROLES.join(', ')}`);
+		this.name = "InvalidRoleError";
+		this.code = "auth/invalid-role";
+	}
+}
 
 export class UserService {
+	/**
+	 * Valida si un rol es válido
+	 * @param {string} role - Rol a validar
+	 * @returns {boolean} - true si el rol es válido, false en caso contrario
+	 */
+	static isValidRole(role: string): boolean {
+		return VALID_ROLES.includes(role as Role);
+	}
+
 	/**
 	 * Crea un nuevo usuario con el correo electrónico, la contraseña y el rol
 	 * @param {string} email - Correo electrónico del nuevo usuario
 	 * @param {string} password - Contraseña del nuevo usuario
-	 * @param {string} role - Rol del usuario (opciones: "admin", "gestor", "auditor", por defecto "admin")
+	 * @param {string} role - Rol del usuario (opciones: "admin", "gestor", "auditor", por defecto "auditor")
 	 * @returns {Promise<User>} - El objeto de usuario de Firebase creado
 	 * @throws {Error} - Si la creación del usuario falla o el rol es inválido
 	 */
@@ -27,17 +46,26 @@ export class UserService {
 		role: string
 	): Promise<User> {
 		try {
+			// Validación de rol - lanza error específico
+			if (!this.isValidRole(role)) {
+				throw new InvalidRoleError(role);
+			}
+
 			const userCredential = await createUserWithEmailAndPassword(
 				auth,
 				email,
 				password
 			);
 			const user = userCredential.user;
-			const userRef = doc(db, 'users', user.uid);
+
 			try {
-				await setDoc(userRef, { role });
+				const userRef = doc(db, 'users', user.uid);
+				await setDoc(userRef, { email, role });
 			} catch (error) {
-				console.error('Error al guardar el rol en Firestore:', error);
+				// DEBUG
+				console.log('RAW ERROR:', error);
+				// DEBUG
+
 				logFirebaseError('createUser:setDoc', error);
 			}
 
@@ -45,7 +73,7 @@ export class UserService {
 
 			return user;
 		} catch (error: any) {
-			console.error('Error al crear el usuario:', error);
+			console.log('Error al crear el usuario:', error);
 			logFirebaseError('createUser', error);
 			throw error;
 		}
@@ -102,26 +130,6 @@ export class UserService {
 			console.log('Email de recuperación enviado a:', email);
 		} catch (error: any) {
 			logFirebaseError('resetPassword', error);
-			throw error;
-		}
-	}
-
-	/**
-	 * Actualiza el perfil del usuario
-	 * @param {User} user - The user to update
-	 * @param {object} profileData - The profile data to update
-	 * @returns {Promise<void>}
-	 * @throws {Error} If profile update fails
-	 */
-	static async updateUserProfile(
-		user: User, // auth from firebase not user
-		profileData: { displayName?: string; photoURL?: string }
-	): Promise<void> {
-		try {
-			await updateProfile(user, profileData);
-			console.log('Perfil actualizado:', profileData);
-		} catch (error: any) {
-			logFirebaseError('updateUserProfile', error);
 			throw error;
 		}
 	}
