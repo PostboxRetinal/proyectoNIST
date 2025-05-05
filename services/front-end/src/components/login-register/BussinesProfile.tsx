@@ -2,18 +2,27 @@
 import { useState } from "react";
 import logo from "../../assets/C&C logo2.png";
 import { profileTexts } from "../../data/profileTexts";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+
+interface RegisterResponse {
+  success: boolean;
+  message: string;
+  userId?: string;
+}
 
 export default function ProfileBusiness() {
   const profile = profileTexts["businessProfile"];
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const handleChange = (label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const missingFields = profile.inputs.filter(input => 
@@ -31,8 +40,52 @@ export default function ProfileBusiness() {
     }
 
     setError('');
-    console.log('Registro Empresa:', formData);
+    setLoading(true);
+    
+    try {
+      // Preparamos los datos para el backend según su estructura esperada
+      const businessData = {
+          companyName: formData["Nombre de la Empresa"],
+          nit: formData["Número de Identificación Fiscal"],
+          businessType: formData["Industria"],
+          employeeRange: formData["Tamaño de la Empresa"],
+          address: formData["Dirección"],
+          phone: formData["Teléfono"],
+          userId: "123456",
+          email: formData["Correo Electrónico"],
+          
+        
+      };
+      
+      // Realizamos la petición al backend
+      const response = await axios.post<RegisterResponse>(
+        'http://localhost:4002/api/company/newCompany', 
+        businessData
+      );
+      
+      if (response.data.success) {
+        console.log('Registro exitoso:', response.data);
+        // Opcional: guardar datos en localStorage o context si es necesario
+        
+        // Redirigir al usuario a la página de login o dashboard
+        navigate('/');
+      } else {
+        setError(response.data.message || 'Error en el registro');
+      }
+    } catch (err: any) {
+      console.error('Error de registro:', err);
+      
+      if (err.response) {
+        const errorMessage = err.response.data.message || 'Error en el registro';
+        setError(errorMessage);
+      } else {
+        setError('Error en la conexión con el servidor. Intenta más tarde.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   if (!profile) return <p className="text-gray-500">Cargando perfil...</p>;
 
@@ -98,14 +151,15 @@ export default function ProfileBusiness() {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md transition"
+            disabled={loading}
+            className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md transition ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            Crear Perfil
+            {loading ? 'Procesando...' : 'Crear Perfil'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600">
               ¿Tienes cuenta?{' '}
-              <Link to="/api/loginuser" className="text-blue-500 hover:underline">
+              <Link to="/api/loginUser" className="text-blue-500 hover:underline">
                 Iniciar Sesion
               </Link>
         </p>

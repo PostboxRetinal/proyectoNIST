@@ -1,21 +1,63 @@
 import { useState } from "react";
 import logo from '../../assets/C&C logo2.png';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
+interface LoginResponse {
+  success: boolean;
+  message: string;
+  userId: string;
+}
 
 export default function PanelLogin() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validación básica
     if (!email || !password) {
       setError('Por favor completa todos los campos.');
       return;
     }
-    console.log('Email:', email, 'Password:', password);
+    
+    setLoading(true);
     setError('');
+    
+    try {
+      // Llamada al endpoint de login del backend
+      const response = await axios.post<LoginResponse>('http://localhost:4001/api/user/login', {
+        email,
+        password
+      });
+      
+      // Si la respuesta es exitosa
+      if (response.data.success) {
+        console.log('Login exitoso:', response.data);
+        
+        // Guardar la información de usuario en localStorage para mantener la sesión
+        localStorage.setItem('userId', response.data.userId);
+        
+        // Redirigir al usuario a la página principal
+        navigate('/');
+      }
+    } catch (err: any) {
+      console.error('Error de login:', err);
+      
+      // Manejar diferentes tipos de errores basados en las respuestas del backend
+      if (err.response) {
+        const errorMessage = err.response.data.message || 'Error en la autenticación';
+        setError(errorMessage);
+      } else {
+        setError('Error en la conexión con el servidor. Intenta más tarde.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -62,9 +104,10 @@ export default function PanelLogin() {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-md transition"
+            disabled={loading}
+            className={`w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-md transition ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            Iniciar sesión
+            {loading ? 'Procesando...' : 'Iniciar sesión'}
           </button>
 
           <p className="text-center text-sm text-gray-600">
