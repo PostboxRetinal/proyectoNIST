@@ -16,6 +16,9 @@ export const Items = () => {
           <Link to= "/api/registerUser"className="px-3 py-3 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">
             Registrarse
           </Link>
+          <Link to= "/" className="px-3 py-3 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">
+            Inicio
+          </Link>
         </div>
       </div>
     </nav>
