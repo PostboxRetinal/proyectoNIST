@@ -2,7 +2,7 @@ import { useState } from 'react';
 import NavBar from '../components/auditory/NavBar';
 import Controlrenderer from '../components/auditory/Controlrenderer';
 
-export default function Auditory() {
+export default function Iso27001() {
   const [selectedControl, setSelectedControl] = useState<string>("");
   
   return (
@@ -18,4 +18,4 @@ export default function Auditory() {
   );
 }
 
-export { Auditory };
+export { Iso27001 };
