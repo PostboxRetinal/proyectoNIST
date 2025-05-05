@@ -1,19 +1,5 @@
-# User Service Microservice
+# Microservicio de Servicio de Usuarios
 
-This service handles user authentication and management using Firebase.
+Este servicio gestiona la autenticación y administración de usuarios utilizando Firebase.
 
-## Getting Started
-
-1. Install dependencies:
-
-   ```bash
-   bun install
-   ```
-
-2. Start the service:
-
-   ```bash
-   bun run dev
-   ```
-
-The service will run on the port specified via `.env` file (default: 4001).
+El servicio se ejecutará en el puerto especificado en el archivo `.env` (por defecto: 4001).

@@ -5,16 +5,29 @@ services:
       context: ./services/api-gateway
       dockerfile: Dockerfile
     ports:
-      - "3001:80"
+      - '3000:80'
     environment:
       - NODE_ENV=production
     depends_on:
       - user-service
+      - doc-manager
   user-service:
     build:
       context: ./services/user-service
       dockerfile: Dockerfile
     ports:
-      - "4001:4001"
+      - '4001:4001'
     environment:
       - NODE_ENV=production
+    env_file:
+      - ./services/user-service/.env
+  doc-manager:
+    build:
+      context: ./services/doc-manager
+      dockerfile: Dockerfile
+    ports:
+      - '4002:4002'
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./services/doc-manager/.env

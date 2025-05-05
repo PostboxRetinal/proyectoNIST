@@ -18,3 +18,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); // Exportar auth para autenticación
 export const db = getFirestore(app); // Exportar db para Firestore
+
+// Función para validar la configuración de Firebase
+export function validateFirebaseConfig() {
+  // Valida que todas las variables estén presentes
+  for (const [key, value] of Object.entries(firebaseConfig)) {
+    if (!value) {
+      throw new Error(`Missing Firebase var: ${key}`);
+    }
+  }
+  console.log(`Valid Firebase config for user-service 😎`);
+}
+
+// Ejecutar validación al inicializar
+validateFirebaseConfig();
