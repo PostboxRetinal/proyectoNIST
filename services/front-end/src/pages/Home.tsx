@@ -3,7 +3,7 @@ import GuestHome from "../components/home/Panel_home_guest"; // Asegúrate de te
 import Navbar from "../components/home/Navbar_home";
 
 // Simulación de autenticación (reemplázalo con tu lógica real)
-const isAuthenticated = true; // cambia a true para probar
+const isAuthenticated = false; // cambia a true para probar
 
 export default function Home() {
   return (

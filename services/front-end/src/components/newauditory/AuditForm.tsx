@@ -115,7 +115,7 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
     // En el futuro puedes agregar más rutas para otros estándares
     switch (formData.standardId) {
       case 'iso27001':
-        return '/iso27001'; // Ruta para ISO27001
+        return '/auditory';
       // Aquí puedes agregar más casos en el futuro:
       // case 'iso9001':
       //   return '/iso9001-audit';
@@ -215,7 +215,38 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
           error={errors.standardId}
         />
       </div>
-           
+      
+      {/* Sección de objetivo y alcance */}
+      <div className="p-6 bg-blue-50 rounded-lg space-y-6">
+        <h2 className="text-xl font-semibold text-blue-800 mb-4">Objetivo y Alcance</h2>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Objetivo de la Auditoría
+          </label>
+          <textarea
+            value={formData.objective}
+            onChange={(e) => handleChange('objective', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto resize-none"
+            rows={3}
+            placeholder="Describe el objetivo principal de esta evaluación"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Alcance de la Auditoría
+          </label>
+          <textarea
+            value={formData.scope}
+            onChange={(e) => handleChange('scope', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto resize-none"
+            rows={3}
+            placeholder="Define el alcance y límites de esta evaluación"
+          />
+        </div>
+      </div>
+      
       {/* Botones de acción */}
       <div className="flex justify-end gap-4">
         <Link to="/"
