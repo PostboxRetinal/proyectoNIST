@@ -2,9 +2,9 @@ import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { Logestic } from 'logestic';
 import { cors } from '@elysiajs/cors';
-import { registerUserRoutes } from './routes/userRoutes';
+import { registerCompanyRoutes } from './routes/companyRoutes';
 
-const app = new Elysia({ prefix: '/api/user' });
+const app = new Elysia({ prefix: '/api/company' });
 
 app
 	.use(
@@ -14,23 +14,19 @@ app
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
 		})
 	)
-
 	.use(
 		swagger({
 			documentation: {
 				info: {
-					title: 'proyectoNIST User Service API',
+					title: 'proyectoNIST doc-manager service API',
 					version: '1.0.0',
 				},
 			},
 		})
 	)
 	.use(Logestic.preset('fancy'))
-	// Verificación de gateway antes de las rutas
-
-	// Registrar rutas después de la verificación del gateway
-	.use(registerUserRoutes)
-
+	// Registrar rutas de empresas
+	.use(registerCompanyRoutes)
 	// Gestión de errores y lanzamiento del servidor
 	.onError(({ code, error, set }) => {
 		if (code === 'VALIDATION') {
@@ -42,16 +38,6 @@ app
 			// Definimos objetos vacíos con tipos específicos
 			const errorMessages: Record<string, string> = {}; // Objeto que tendrá claves de tipo string y valores de tipo string
 			const invalidValues: Record<string, any> = {}; // Objeto que tendrá claves de tipo string y valores de cualquier tipo
-
-			/* FRIENDLY REMINDER de los errores que manejamos
-			 *
-			 * El tipo Record<K, V> es un alias en TypeScript para un objeto donde:
-			 *
-			 * - K es el tipo de las claves (en este caso, string)
-			 * - V es el tipo de los valores (string para errorMessages, any para invalidValues)
-			 *
-			 * Después se llenarán con los mensajes de error y valores inválidos respectivamente
-			 **/
 
 			// Procesamos cada error de campo
 			for (const fieldError of fieldErrors) {
@@ -77,8 +63,8 @@ app
 			message: error.message || 'Error interno del servidor',
 		};
 	})
-	.listen(Bun.env.USER_SERVICE_PORT ?? 4001);
+	.listen(Bun.env.SERVICE_PORT ?? 4002);
 
 console.log(
-	`🦊 User Service ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
+	`📄 Document Manager ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
 );

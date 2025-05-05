@@ -3,7 +3,6 @@ import { UserService, InvalidRoleError } from '../services/userService';
 import {
 	createUserValidator,
 	loginUserValidator,
-	resetPasswordValidator,
 } from '../utils/schemaValidator';
 import { createErrorResponse } from '../utils/firebaseErrors';
 import { VALID_ROLES } from '../constants/roles';
@@ -25,17 +24,21 @@ export function registerUserRoutes(app: Elysia<any>) {
 						userId: user.uid,
 					};
 				} catch (err: any) {
-
 					// Si es un error de rol inválido, devolvemos un error personalizado
-					if (err instanceof InvalidRoleError || err.code === 'auth/invalid-role') {
+					if (
+						err instanceof InvalidRoleError ||
+						err.code === 'auth/invalid-role'
+					) {
 						const invalidRole = body?.role;
 						return error(400, {
 							success: false,
 							message: `El rol '${invalidRole}' no es válido`,
-							details: { 
-								role: `Debe ser uno de los siguientes: ${VALID_ROLES.join(', ')}` 
+							details: {
+								role: `Debe ser uno de los siguientes: ${VALID_ROLES.join(
+									', '
+								)}`,
 							},
-							invalidValues: { role: invalidRole }
+							invalidValues: { role: invalidRole },
 						});
 					}
 
@@ -44,7 +47,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 						err,
 						'Error general de servidor'
 					);
-					
+
 					return error(400, {
 						success: false,
 						message: errorResponse.message,
@@ -87,7 +90,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 			}
 		)
 		.post(
-			'/loginUser',
+			'/login',
 			async ({ body, error }) => {
 				try {
 					const { email, password } = body as any;
@@ -151,49 +154,6 @@ export function registerUserRoutes(app: Elysia<any>) {
 					summary: 'Inicia sesión de usuario',
 					description:
 						'Inicia sesión de usuario en Firebase con email y contraseña',
-					tags: ['Usuarios'],
-				},
-			}
-		)
-		.post(
-			'/resetPassword',
-			async ({ body, error }) => {
-				try {
-					const { email } = body as any;
-					await UserService.resetPassword(email);
-					return {
-						success: true,
-						message: 'Email de recuperación enviado',
-					};
-				} catch (err: any) {
-					const errorResponse = createErrorResponse(
-						err,
-						'Error al enviar email de recuperación'
-					);
-					return error(400, {
-						success: false,
-						message: errorResponse.message,
-						errorCode: errorResponse.errorCode,
-					});
-				}
-			},
-			{
-				body: resetPasswordValidator,
-				response: {
-					200: t.Object({
-						success: t.Boolean(),
-						message: t.String(),
-					}),
-					400: t.Object({
-						success: t.Boolean(),
-						message: t.String(),
-						errorCode: t.Optional(t.String()),
-					}),
-				},
-				detail: {
-					summary: 'Recuperación de contraseña',
-					description:
-						'Envía un email de recuperación de contraseña al usuario',
 					tags: ['Usuarios'],
 				},
 			}

@@ -1,7 +1,7 @@
 # Dockerfile for User Service
 FROM docker.io/oven/bun:latest
 
-WORKDIR /app
+WORKDIR /user-service
 
 COPY . .
 
