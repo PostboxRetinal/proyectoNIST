@@ -2,13 +2,11 @@ import { db } from '../firebase/firebase';
 import {
 	doc,
 	setDoc,
-	getDoc,
 	updateDoc,
 	query,
 	collection,
 	where,
 	getDocs,
-	DocumentData,
 } from 'firebase/firestore';
 import {
 	logCompanyError,
@@ -112,11 +110,11 @@ export class CompanyService {
 			// Guardar empresa en Firestore
 			await setDoc(companyRef, completeCompanyData);
 
-			console.log(`Empresa creada con ID: ${companyRef.id}`);
+			console.log(`Empresa creada con NIT: ${companyRef.nit}`);
 
-			// Retornar la empresa creada con su ID
+			// Retornar la empresa creada con su NIT
 			return {
-				id: companyRef.id,
+				nit: companyRef.nit,
 				...completeCompanyData,
 			};
 		} catch (error) {
@@ -126,57 +124,55 @@ export class CompanyService {
 	}
 
 	/**
-	 * Obtiene una empresa por su ID
-	 * @param {string} companyId - ID de la empresa a buscar
+	 * Obtiene una empresa por su NIT
+	 * @param {string} nit - NIT de la empresa a buscar
 	 * @returns {Promise<{id: string, ...CompanyData}>} - La empresa encontrada con su ID
 	 * @throws {CompanyNotFoundError} - Si la empresa no existe
 	 */
-	static async getCompanyById(
-		companyId: string
+	static async getCompanyByNit(
+		nit: string
 	): Promise<{ id: string } & CompanyData> {
 		try {
-			const companyRef = doc(db, 'companies', companyId);
-			const companySnap = await getDoc(companyRef);
+			const q = query(collection(db, 'companies'), where('nit', '==', nit));
+			const querySnapshot = await getDocs(q);
 
-			if (!companySnap.exists()) {
-				throw new CompanyNotFoundError(companyId);
+			if (querySnapshot.empty) {
+				throw new CompanyNotFoundError(`NIT: ${nit}`);
 			}
 
-			const companyData = companySnap.data() as CompanyData;
+			// Tomar el primer documento que coincida (debería ser único por el NIT)
+			const companyDoc = querySnapshot.docs[0];
+			const companyData = companyDoc.data() as CompanyData;
 
 			return {
-				id: companySnap.id,
+				id: companyDoc.id,
 				...companyData,
 			};
 		} catch (error) {
-			logCompanyError('getCompanyById', error);
+			logCompanyError('getCompanyByNit', error);
 			throw error;
 		}
 	}
 
 	/**
-	 * Actualiza los datos de una empresa
-	 * @param {string} companyId - ID de la empresa a actualizar
+	 * Actualiza los datos de una empresa usando su NIT
+	 * @param {string} nit - NIT de la empresa a actualizar
 	 * @param {Partial<CompanyData>} updateData - Datos a actualizar
 	 * @returns {Promise<{id: string, ...CompanyData}>} - La empresa actualizada
 	 * @throws {CompanyNotFoundError} - Si la empresa no existe
 	 */
-	static async updateCompany(
-		companyId: string,
+	static async updateCompanyByNit(
+		nit: string,
 		updateData: Partial<
 			Omit<CompanyData, 'nit' | 'createdAt' | 'updatedAt' | 'userId'>
 		>
 	): Promise<{ id: string } & CompanyData> {
 		try {
-			// Verificar que la empresa existe
-			const companyRef = doc(db, 'companies', companyId);
-			const companySnap = await getDoc(companyRef);
+			// Buscar la empresa por NIT para obtener su ID
+			const company = await this.getCompanyByNit(nit);
+			const companyId = company.id;
 
-			if (!companySnap.exists()) {
-				throw new CompanyNotFoundError(companyId);
-			}
-
-			// Validar tipo de empresa si viene en los datos a actualizar
+			// Verificar tipo de empresa si viene en los datos a actualizar
 			if (
 				updateData.businessType &&
 				!this.isValidBusinessType(updateData.businessType)
@@ -199,52 +195,17 @@ export class CompanyService {
 			};
 
 			// Actualizar la empresa en Firestore
+			const companyRef = doc(db, 'companies', companyId);
 			await updateDoc(companyRef, dataToUpdate);
 
 			// Obtener la empresa actualizada
-			const updatedCompanySnap = await getDoc(companyRef);
-			const updatedCompanyData = updatedCompanySnap.data() as CompanyData;
+			const updatedCompany = await this.getCompanyByNit(nit);
 
-			console.log(`Empresa actualizada con ID: ${companyId}`);
+			console.log(`Empresa con NIT ${nit} actualizada exitosamente`);
 
-			return {
-				id: companyId,
-				...updatedCompanyData,
-			};
+			return updatedCompany;
 		} catch (error) {
-			logCompanyError('updateCompany', error);
-			throw error;
-		}
-	}
-
-	/**
-	 * Obtiene todas las empresas asociadas a un usuario
-	 * @param {string} userId - ID del usuario
-	 * @returns {Promise<Array<{id: string} & CompanyData>>} - Lista de empresas
-	 */
-	static async getCompaniesByUser(
-		userId: string
-	): Promise<Array<{ id: string } & CompanyData>> {
-		try {
-			const q = query(
-				collection(db, 'companies'),
-				where('userId', '==', userId)
-			);
-			const querySnapshot = await getDocs(q);
-
-			const companies: Array<{ id: string } & CompanyData> = [];
-
-			querySnapshot.forEach((doc) => {
-				const companyData = doc.data() as CompanyData;
-				companies.push({
-					id: doc.id,
-					...companyData,
-				});
-			});
-
-			return companies;
-		} catch (error) {
-			logCompanyError('getCompaniesByUser', error);
+			logCompanyError('updateCompanyByNit', error);
 			throw error;
 		}
 	}
