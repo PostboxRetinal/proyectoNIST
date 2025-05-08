@@ -75,7 +75,7 @@ const SideBar = ({ isOpen, onClose, onSelect }: SidebarProps) => {
       className={`sidebar fixed top-0 left-0 h-full font-sans bg-white text-gray-800 shadow-xl z-50 transition-all duration-300 ease-in-out ${
         isOpen ? 'w-64' : 'w-0 opacity-0'
       }`}
-      style={{ top: '85px', paddingTop: '0.5rem' }} // Ajuste para el navbar
+      style={{ top: '80px', paddingTop: '0.5rem' }} // Ajuste para el navbar
     >
       {isOpen && (
         <div className="flex flex-col h-full relative">
