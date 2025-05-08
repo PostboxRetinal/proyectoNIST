@@ -9,7 +9,7 @@ const app = new Elysia({ prefix: '/api/company' });
 app
 	.use(
 		cors({
-			origin: ['http://api-gateway', 'http://api-gateway:80','http://localhost:5173' ],
+			origin: ['http://api-gateway:80','http://localhost:5173'],
 			methods: ['GET', 'POST', 'PUT', 'DELETE'],
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
 		})
