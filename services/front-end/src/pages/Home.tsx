@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Content from "../components/home/PanelHomeLog";
 import GuestHome from "../components/home/PanelHomeGuest";
-import NavBar from "../components/reusable/NavBar";
+import NavBar from "../components/shared/NavBar";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

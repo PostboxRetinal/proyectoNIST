@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import logo from '../../assets/C&C logo2.png';
 import NavigationMenu from "../auditory/NavigationMenu";
-import UserName from '../reusable/UserName';
+import UserName from './UserName';
 import LogOutButton from './buttons/LogOutButton';
 import LoginButton from './buttons/LogInButton';
 import RegisterButton from './buttons/RegisterButton';

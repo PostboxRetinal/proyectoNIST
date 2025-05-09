@@ -1,5 +1,5 @@
 import AuditoryMain from "../components/crudAuditory/AuditoryMain";
-import Navbar from "../components/reusable/NavBar";
+import Navbar from "../components/shared/NavBar";
 
 export default function Mainauditory() {
     return(

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import NavBar from '../components/reusable/NavBar';
+import NavBar from '../components/shared/NavBar';
 import Controlrenderer from '../components/auditory/ControlRenderer';
 
 export default function Iso27001() {

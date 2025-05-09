@@ -1,5 +1,5 @@
 import CreateAuditForm from '../components/crudAuditory/CreateAuditForm';
-import Navbar from "../components/reusable/NavBar";
+import Navbar from "../components/shared/NavBar";
 
 export default function CreateAuditory() {
     return(
