@@ -1,4 +1,4 @@
-import PanelLogin from "../components/login-register/PanelLogin";
+import PanelLogin from "../components/login/PanelLogin";
 
 export default function Login() {
     return <PanelLogin />;

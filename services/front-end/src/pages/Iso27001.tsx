@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import NavBar from '../components/auditory/NavBar';
-import Controlrenderer from '../components/auditory/Controlrenderer';
+import NavBar from '../components/reusable/NavBar';
+import Controlrenderer from '../components/auditory/ControlRenderer';
 
 export default function Iso27001() {
   const [selectedControl, setSelectedControl] = useState<string>("");
   
   return (
     <div className="flex flex-col h-screen">
-      {/* Navbar con NavigationMenu integrado */}
-      <NavBar onSelectControl={setSelectedControl} />
+      {/* NavBar unificado con el controlador de selección */}
+      <NavBar 
+        onSelectControl={setSelectedControl} 
+        pageTitle="ISO 27001 - Nist 800-30" 
+      />
 
-      {/* Contenido Principal con la clase content-container para el desplazamiento */}
+      {/* Contenido Principal */}
       <div className="flex-1 overflow-y-auto content-container p-4">
         <Controlrenderer controlId={selectedControl} />
       </div>

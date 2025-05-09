@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import Content from "../components/home/Panel_home_log";
-import GuestHome from "../components/home/Panel_home_guest";
-import Navbar from "../components/home/Navbar_home";
+import Content from "../components/home/PanelHomeLog";
+import GuestHome from "../components/home/PanelHomeGuest";
+import NavBar from "../components/reusable/NavBar";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,9 +11,10 @@ export default function Home() {
     const userId = localStorage.getItem('userId');
     setIsAuthenticated(!!userId);
   }, []);
+
   return (
     <div>
-      <Navbar />
+      <NavBar pageTitle="Inicio" />
       {isAuthenticated ? <Content /> : <GuestHome />}
     </div>
   );

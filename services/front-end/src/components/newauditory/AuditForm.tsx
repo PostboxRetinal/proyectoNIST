@@ -115,7 +115,7 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
     // En el futuro puedes agregar más rutas para otros estándares
     switch (formData.standardId) {
       case 'iso27001':
-        return '/auditory';
+        return '/iso27001';
       // Aquí puedes agregar más casos en el futuro:
       // case 'iso9001':
       //   return '/iso9001-audit';

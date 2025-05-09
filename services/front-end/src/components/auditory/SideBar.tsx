@@ -25,13 +25,6 @@ const SideBar = ({ isOpen, onClose, onSelect }: SidebarProps) => {
       ] 
     },
     { 
-      label: nav.Empresa, 
-      submenu: [
-        `${breadcrumb.options} 1`, 
-        `${breadcrumb.options} 2`
-      ] 
-    },
-    { 
       label: nav.Lineamiento, 
       submenu: [
         `${breadcrumb.options} 1`, 

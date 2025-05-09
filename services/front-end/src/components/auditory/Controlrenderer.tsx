@@ -91,13 +91,14 @@ const inputs = controlTextsTyped[useControlId]?.inputs;
               <label className="block font-semibold mb-1">{input.label}</label>
               {input.options.map((opt, idx) => (
                 <div key={idx}>
-                  <label className="inline-flex items-center gap-2">
+                  <label className="inline-flex items-center cursor-pointer gap-2">
                     <input
                       type="radio"
                       name={fullId}
                       value={opt.value}
                       onChange={() => handleChange(fullId, opt.value)}
                       checked={answers[fullId] === opt.value}
+                      className="cursor-pointer"
                     />
                     {opt.label}
                   </label>
