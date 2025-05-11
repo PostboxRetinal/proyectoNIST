@@ -21,8 +21,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 						success: true,
 						message: 'Empresa creada exitosamente',
 						company: {
-							companyName: company.companyName,
 							nit: company.nit,
+							companyName: company.companyName,
 							email: company.email,
 							phone: company.phone,
 							address: company.address,

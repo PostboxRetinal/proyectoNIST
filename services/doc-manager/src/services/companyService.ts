@@ -24,8 +24,8 @@ import {
 
 // Interfaz para los datos de la empresa
 export interface CompanyData {
-	companyName: string;
 	nit: string;
+	companyName: string;
 	email: string;
 	phone: string;
 	address: string;
@@ -33,7 +33,6 @@ export interface CompanyData {
 	employeeRange: EmployeeRange;
 	createdAt: number;
 	updatedAt: number;
-	userId: string; // ID del usuario que creó la empresa
 }
 
 export class CompanyService {
@@ -74,12 +73,12 @@ export class CompanyService {
 	/**
 	 * Crea una nueva empresa en Firestore
 	 * @param {CompanyData} companyData - Datos de la empresa a crear
-	 * @returns {Promise<{id: string, ...CompanyData}>} - La empresa creada con su ID
+	 * @returns {Promise<{nit: string, ...CompanyData}>} - La empresa creada con su ID
 	 * @throws {Error} - Si la creación falla
 	 */
 	static async createCompany(
 		companyData: Omit<CompanyData, 'createdAt' | 'updatedAt'>
-	): Promise<{ id: string } & CompanyData> {
+	): Promise<{ nit: string } & CompanyData> {
 		try {
 			// Validar tipo de empresa
 			if (!this.isValidBusinessType(companyData.businessType)) {
@@ -97,7 +96,7 @@ export class CompanyService {
 				throw new DuplicateNITError(companyData.nit);
 			}
 
-			// Generar un nuevo ID para la empresa
+			// Crear referencia para la nueva empresa
 			const companyRef = doc(collection(db, 'companies'));
 			const timestamp = Date.now();
 
@@ -110,11 +109,10 @@ export class CompanyService {
 			// Guardar empresa en Firestore
 			await setDoc(companyRef, completeCompanyData);
 
-			console.log(`Empresa creada con NIT: ${companyRef.nit}`);
+			console.log(`Empresa creada con NIT: ${companyData.nit}`);
 
 			// Retornar la empresa creada con su NIT
 			return {
-				nit: companyRef.nit,
 				...completeCompanyData,
 			};
 		} catch (error) {

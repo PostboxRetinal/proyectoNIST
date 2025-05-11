@@ -1,5 +1,3 @@
-import { BusinessType, EmployeeRange } from '../constants/businessTypes';
-
 // Errores específicos para el servicio de empresas
 export class CompanyError extends Error {
 	public errorCode: string;
