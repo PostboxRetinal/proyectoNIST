@@ -1,4 +1,8 @@
-// Errores específicos para el servicio de empresas
+import {
+	VALID_BUSINESS_TYPES,
+	VALID_EMPLOYEE_RANGES,
+} from '../constants/businessTypes';
+
 export class CompanyError extends Error {
 	public errorCode: string;
 
@@ -21,7 +25,7 @@ export function logCompanyError(functionName: string, error: unknown): void {
 export class InvalidBusinessTypeError extends CompanyError {
 	constructor(businessType: string) {
 		super(
-			`El tipo de empresa '${businessType}' no es válido`,
+			`El tipo de empresa '${businessType}' no es válido.  Debe ser uno de los siguientes: ${VALID_BUSINESS_TYPES.join(', ')}`,
 			'INVALID_BUSINESS_TYPE'
 		);
 	}
@@ -30,7 +34,7 @@ export class InvalidBusinessTypeError extends CompanyError {
 export class InvalidEmployeeRangeError extends CompanyError {
 	constructor(employeeRange: string) {
 		super(
-			`El rango de empleados '${employeeRange}' no es válido`,
+			`El rango de empleados '${employeeRange}' no es válido. Debe ser uno de los siguientes: ${VALID_EMPLOYEE_RANGES.map(range => `"${range}"`).join(', ')}`,
 			'INVALID_EMPLOYEE_RANGE'
 		);
 	}
@@ -43,11 +47,8 @@ export class DuplicateNITError extends CompanyError {
 }
 
 export class CompanyNotFoundError extends CompanyError {
-	constructor(identifier: string) {
-		super(
-			`No se encontró la empresa con el identificador '${identifier}'`,
-			'COMPANY_NOT_FOUND'
-		);
+	constructor(nit: string) {
+		super(`No se encontró la empresa con el NIT '${nit}'`, 'COMPANY_NOT_FOUND');
 	}
 }
 
