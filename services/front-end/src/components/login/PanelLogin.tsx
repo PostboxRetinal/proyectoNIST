@@ -2,6 +2,7 @@ import { useState } from "react";
 import logo from '../../assets/C&C logo2.png';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ChevronLeft } from 'lucide-react';
 
 interface LoginResponse {
   success: boolean;
@@ -38,6 +39,9 @@ export default function PanelLogin() {
       // Si la respuesta es exitosa
       if (response.data.success) {
         console.log('Login exitoso:', response.data);
+
+        // Guardar el nombre de usuario (usando el email como nombre temporal)
+        localStorage.setItem('userName', email.split('@')[0]);
         
         // Guardar la información de usuario en localStorage para mantener la sesión
         localStorage.setItem('userId', response.data.userId);
@@ -63,7 +67,13 @@ export default function PanelLogin() {
 
   return (
     <div className="flex min-h-screen justify-center font-sans items-center">
-      <div className="w-full max-w-md bg-white p-9 rounded-lg shadow-md flex flex-col items-center font-sans">
+      <div className="w-full max-w-md bg-white p-9 rounded-lg shadow-md flex flex-col items-center font-sans relative">
+      <div className="absolute top-4 left-4">
+        <Link to="/" className="flex items-center text-gray-500 hover:text-blue-600 transition-colors text-sm">
+          <ChevronLeft size={18} />
+          <span className="ml-1">Volver</span>
+        </Link>
+      </div>
         {/* Logo centrado arriba */}
         {logo && (
           <img src={logo} alt="Logo" className="h-35 mb-7" />

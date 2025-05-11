@@ -49,7 +49,7 @@ const NavigationMenu = ({ onSelect }: { onSelect: (id: string) => void }) => {
     <div className="relative">
       {/* Botón hamburguesa para abrir/cerrar el sidebar */}
       <button 
-        className="toggle-button p-2 text-gray-800 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none"
+        className="toggle-button p-2 text-gray-800 border cursor-pointer border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none"
         onClick={toggleSidebar}
         aria-label="Toggle menu"
       >

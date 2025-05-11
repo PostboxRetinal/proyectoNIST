@@ -1,7 +1,7 @@
-import CreateAuditForm from '../components/CRUD-auditory/Create-auditory';
-import Navbar from "../components/home/Navbar_home";
+import CreateAuditForm from '../components/crudAuditory/CreateAuditForm';
+import Navbar from "../components/shared/NavBar";
 
-export default function CreateformAu() {
+export default function CreateAuditory() {
     return(
 
     <div>
@@ -13,4 +13,4 @@ export default function CreateformAu() {
     )
 }
 
-export { CreateformAu };
+export { CreateAuditory };

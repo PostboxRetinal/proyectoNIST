@@ -4,8 +4,8 @@ import Login from '../pages/Login';
 import Home from '../pages/Home';
 import Register from '../pages/Register';
 import NewAuditory from '../components/newauditory/NewAuditory';
-import Mainauditory from '../pages/Gestor-auditoria';
-import CreateformAu from '../pages/Create-auditory';
+import Mainauditory from '../pages/ManagerAuditory';
+import CreateAuditory from '../pages/CreateAuditory';
 
 
 const AppRoutes = () => {
@@ -16,7 +16,7 @@ const AppRoutes = () => {
         { path: '/api/loginUser', element: <Login /> },
         { path: '/api/registerUser', element: <Register /> },
         { path: '/mainauditory', element: <Mainauditory /> },
-        { path: '/createauditory', element: <CreateformAu /> }
+        { path: '/createauditory', element: <CreateAuditory /> }
         //{ path: '/*', element: <NotFound /> }
       
 

@@ -1,14 +1,20 @@
-import Content from "../components/home/Panel_home_log";
-import GuestHome from "../components/home/Panel_home_guest"; // Asegúrate de tener este archivo
-import Navbar from "../components/home/Navbar_home";
-
-// Simulación de autenticación (reemplázalo con tu lógica real)
-const isAuthenticated = false; // cambia a true para probar
+import { useEffect, useState } from "react";
+import Content from "../components/home/PanelHomeLog";
+import GuestHome from "../components/home/PanelHomeGuest";
+import NavBar from "../components/shared/NavBar";
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  useEffect(() => {
+    // Verificar si hay un userId en localStorage
+    const userId = localStorage.getItem('userId');
+    setIsAuthenticated(!!userId);
+  }, []);
+
   return (
     <div>
-      <Navbar />
+      <NavBar pageTitle="Inicio" />
       {isAuthenticated ? <Content /> : <GuestHome />}
     </div>
   );
