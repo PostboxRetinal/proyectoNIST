@@ -7,9 +7,9 @@
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/swagger": "^1.2.2",
+    "@rasla/logify": "^5.0.0",
     "elysia": "latest",
-    "firebase": "^11.5.0",
-    "logestic": "^1.2.4"
+    "firebase": "^11.5.0"
   },
   "devDependencies": {
     "bun-types": "latest"

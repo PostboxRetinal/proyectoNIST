@@ -14,11 +14,11 @@ import { VALID_ROLES, Role } from '../constants/roles';
 // Error personalizado para roles inválidos
 export class InvalidRoleError extends Error {
 	code: string;
-	
+
 	constructor(role: string) {
 		super(`El rol '${role}' no es válido. Debe ser uno de los siguientes: ${VALID_ROLES.join(', ')}`);
-		this.name = "InvalidRoleError";
-		this.code = "auth/invalid-role";
+		this.name = 'InvalidRoleError';
+		this.code = 'auth/invalid-role';
 	}
 }
 

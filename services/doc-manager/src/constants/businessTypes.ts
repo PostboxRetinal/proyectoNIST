@@ -1,19 +1,22 @@
 /**
- * Define los tipos de empresas permitidos en la aplicación
+ * Tipos de empresa válidos
  */
 export const VALID_BUSINESS_TYPES = [
 	'Tecnología',
-	'Manufactura',
-	'Servicios',
-	'Comercio',
+	'Finanzas',
 	'Salud',
 	'Educación',
-	'Financiero',
+	'Manufactura',
+	'Comercio',
+	'Servicios',
 	'Construcción',
 	'Transporte',
+	'Entretenimiento',
+	'Agricultura',
 	'Otro',
 ] as const;
 
+// Tipo para usar con TypeScript
 export type BusinessType = (typeof VALID_BUSINESS_TYPES)[number];
 
 /**

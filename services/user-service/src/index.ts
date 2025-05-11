@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
-import { Logestic } from 'logestic';
+import { logger } from '@rasla/logify';
 import { cors } from '@elysiajs/cors';
 import { registerUserRoutes } from './routes/userRoutes';
 
@@ -9,7 +9,7 @@ const app = new Elysia({ prefix: '/api/user' });
 app
 	.use(
 		cors({
-			origin: ['http://api-gateway', 'http://api-gateway:80'],
+			origin: ['http://api-gateway:80', 'http://localhost:5173'],
 			methods: ['GET', 'POST', 'PUT', 'DELETE'],
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
 		})
@@ -25,7 +25,7 @@ app
 			},
 		})
 	)
-	.use(Logestic.preset('fancy'))
+	.use(logger({ includeIp: true }))
 	// Verificación de gateway antes de las rutas
 
 	// Registrar rutas después de la verificación del gateway
@@ -53,17 +53,6 @@ app
 			 * Después se llenarán con los mensajes de error y valores inválidos respectivamente
 			 **/
 
-			// Procesamos cada error de campo
-			for (const fieldError of fieldErrors) {
-				const field = fieldError.path?.join('.') || 'unknown';
-				errorMessages[field] = fieldError.message;
-
-				// Solo incluimos el valor inválido específico
-				if (error.value && field in error.value) {
-					invalidValues[field] = error.value[field];
-				}
-			}
-
 			return {
 				success: false,
 				message: 'Error de validación',
@@ -74,7 +63,7 @@ app
 
 		return {
 			success: false,
-			message: error.message || 'Error interno del servidor',
+			message: 'Error interno del servidor',
 		};
 	})
 	.listen(Bun.env.USER_SERVICE_PORT ?? 4001);

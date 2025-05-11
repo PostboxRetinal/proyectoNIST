@@ -478,11 +478,13 @@ export function handleFirebaseError(error: unknown, defaultMessage?: string): Er
  */
 export function logFirebaseError(context: string, error: unknown): void {
   if (error instanceof FirebaseError) {
-    console.error(`[${context}] Firebase Error - Code: ${error.code}, Message: ${error.message}`);
+    console.error(`[${context}] [FIREBASE ERROR] - [CODE ${error.code}], Message: ${error.message}`);
   } else if (error instanceof Error) {
-    console.error(`[${context}] Error: ${error.message}`);
+    console.error(`[${context}] [ERROR] ${error.message}`);
     if (error.stack) {
-      console.error(`Stack: ${error.stack}`);
+      console.error('** ENABLE LOG DEBUG TO SEE STACK TRACE **');
+      //console.error(`[${context}] Stack trace: ${error.stack}`);
+
     }
   } else {
     console.error(`[${context}] Unknown error:`, error);

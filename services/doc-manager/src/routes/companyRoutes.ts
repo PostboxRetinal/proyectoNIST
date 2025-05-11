@@ -5,7 +5,6 @@ import {
 	updateCompanyValidator,
 } from '../utils/schemaValidator';
 import { createCompanyErrorResponse } from '../utils/companyErrors';
-import { VALID_BUSINESS_TYPES } from '../constants/businessTypes';
 
 export function registerCompanyRoutes(app: Elysia<any>) {
 	app
@@ -22,16 +21,13 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 						success: true,
 						message: 'Empresa creada exitosamente',
 						company: {
-							id: company.id,
-							companyName: company.companyName,
 							nit: company.nit,
+							companyName: company.companyName,
 							email: company.email,
 							phone: company.phone,
 							address: company.address,
 							businessType: company.businessType,
 							employeeRange: company.employeeRange,
-							createdAt: company.createdAt,
-							updatedAt: company.updatedAt,
 						},
 					};
 				} catch (err: any) {
@@ -68,7 +64,6 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 						success: t.Boolean(),
 						message: t.String(),
 						company: t.Object({
-							id: t.String(),
 							companyName: t.String(),
 							nit: t.String(),
 							email: t.String(),
@@ -76,8 +71,6 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							address: t.String(),
 							businessType: t.String(),
 							employeeRange: t.String(),
-							createdAt: t.Number(),
-							updatedAt: t.Number(),
 						}),
 					}),
 					400: t.Object({
@@ -104,18 +97,17 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 			}
 		)
 		.get(
-			'/:companyId',
+			'/nit/:nit',
 			async ({ params, error }) => {
 				try {
-					const { companyId } = params;
+					const { nit } = params;
 
-					// Obtener la empresa por su ID
-					const company = await CompanyService.getCompanyById(companyId);
+					// Obtener la empresa por su NIT
+					const company = await CompanyService.getCompanyByNit(nit);
 
 					return {
 						success: true,
 						company: {
-							id: company.id,
 							companyName: company.companyName,
 							nit: company.nit,
 							email: company.email,
@@ -125,7 +117,6 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							employeeRange: company.employeeRange,
 							createdAt: company.createdAt,
 							updatedAt: company.updatedAt,
-							userId: company.userId,
 						},
 					};
 				} catch (err: any) {
@@ -151,13 +142,12 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 			},
 			{
 				params: t.Object({
-					companyId: t.String(),
+					nit: t.String(),
 				}),
 				response: {
 					200: t.Object({
 						success: t.Boolean(),
 						company: t.Object({
-							id: t.String(),
 							companyName: t.String(),
 							nit: t.String(),
 							email: t.String(),
@@ -167,7 +157,6 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							employeeRange: t.String(),
 							createdAt: t.Number(),
 							updatedAt: t.Number(),
-							userId: t.String(),
 						}),
 					}),
 					404: t.Object({
@@ -182,94 +171,22 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 					}),
 				},
 				detail: {
-					summary: 'Obtener empresa por ID',
-					description: 'Obtiene una empresa por su ID',
-					tags: ['Empresas'],
-				},
-			}
-		)
-		.get(
-			'/user/:userId',
-			async ({ params, error }) => {
-				try {
-					const { userId } = params;
-
-					// Obtener todas las empresas de un usuario
-					const companies = await CompanyService.getCompaniesByUser(userId);
-
-					return {
-						success: true,
-						companies: companies.map((company) => ({
-							id: company.id,
-							companyName: company.companyName,
-							nit: company.nit,
-							email: company.email,
-							phone: company.phone,
-							address: company.address,
-							businessType: company.businessType,
-							employeeRange: company.employeeRange,
-							createdAt: company.createdAt,
-							updatedAt: company.updatedAt,
-						})),
-					};
-				} catch (err: any) {
-					const errorResponse = createCompanyErrorResponse(
-						err,
-						'Error al obtener las empresas del usuario'
-					);
-
-					return error(500, {
-						success: false,
-						message: errorResponse.message,
-						errorCode: errorResponse.errorCode,
-					});
-				}
-			},
-			{
-				params: t.Object({
-					userId: t.String(),
-				}),
-				response: {
-					200: t.Object({
-						success: t.Boolean(),
-						companies: t.Array(
-							t.Object({
-								id: t.String(),
-								companyName: t.String(),
-								nit: t.String(),
-								email: t.String(),
-								phone: t.String(),
-								address: t.String(),
-								businessType: t.String(),
-								employeeRange: t.String(),
-								createdAt: t.Number(),
-								updatedAt: t.Number(),
-							})
-						),
-					}),
-					500: t.Object({
-						success: t.Boolean(),
-						message: t.String(),
-						errorCode: t.Optional(t.String()),
-					}),
-				},
-				detail: {
-					summary: 'Obtener empresas por usuario',
-					description: 'Obtiene todas las empresas asociadas a un usuario',
+					summary: 'Obtener empresa por NIT',
+					description: 'Obtiene una empresa por su NIT',
 					tags: ['Empresas'],
 				},
 			}
 		)
 		.put(
-			'/update/:companyId',
+			'/update/:nit',
 			async ({ params, body, error }) => {
 				try {
-					const { companyId } = params;
+					const { nit } = params;
 					const updateData = body as any;
 
-					// Actualizar la empresa
-					const updatedCompany = await CompanyService.updateCompany(
-						companyId,
+					// Actualizar la empresa por NIT
+					const updatedCompany = await CompanyService.updateCompanyByNit(
+						nit,
 						updateData
 					);
 
@@ -277,8 +194,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 						success: true,
 						message: 'Empresa actualizada exitosamente',
 						company: {
-							id: updatedCompany.id,
 							companyName: updatedCompany.companyName,
+							nit: updatedCompany.nit,
 							email: updatedCompany.email,
 							phone: updatedCompany.phone,
 							address: updatedCompany.address,
@@ -316,7 +233,7 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 			},
 			{
 				params: t.Object({
-					companyId: t.String(),
+					nit: t.String(),
 				}),
 				body: updateCompanyValidator,
 				response: {
@@ -324,8 +241,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 						success: t.Boolean(),
 						message: t.String(),
 						company: t.Object({
-							id: t.String(),
 							companyName: t.String(),
+							nit: t.String(),
 							email: t.String(),
 							phone: t.String(),
 							address: t.String(),
@@ -353,28 +270,6 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 				detail: {
 					summary: 'Actualizar empresa',
 					description: 'Actualiza los datos de una empresa',
-					tags: ['Empresas'],
-				},
-			}
-		)
-		.get(
-			'/types',
-			() => {
-				return {
-					success: true,
-					businessTypes: [...VALID_BUSINESS_TYPES],
-				};
-			},
-			{
-				response: {
-					200: t.Object({
-						success: t.Boolean(),
-						businessTypes: t.Array(t.String()),
-					}),
-				},
-				detail: {
-					summary: 'Obtener tipos de empresas',
-					description: 'Obtiene la lista de tipos de empresas válidos',
 					tags: ['Empresas'],
 				},
 			}
