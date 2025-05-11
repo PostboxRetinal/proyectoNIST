@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
-import { Logestic } from 'logestic';
+import { logger } from "@rasla/logify";
 import { cors } from '@elysiajs/cors';
 import { registerCompanyRoutes } from './routes/companyRoutes';
 
@@ -24,31 +24,17 @@ app
 			},
 		})
 	)
-	.use(Logestic.preset('fancy'))
+	.use(logger())
 	// Registrar rutas de empresas
 	.use(registerCompanyRoutes)
 	// Gestión de errores y lanzamiento del servidor
-	.onError(({ code, error, set }) => {
+	.onError(({ code, set }) => {
 		if (code === 'VALIDATION') {
 			set.status = 400;
-
-			// Extraemos los detalles de validación del error
-			const fieldErrors = error.all || [];
 
 			// Definimos objetos vacíos con tipos específicos
 			const errorMessages: Record<string, string> = {}; // Objeto que tendrá claves de tipo string y valores de tipo string
 			const invalidValues: Record<string, any> = {}; // Objeto que tendrá claves de tipo string y valores de cualquier tipo
-
-			// Procesamos cada error de campo
-			for (const fieldError of fieldErrors) {
-				const field = fieldError.path?.join('.') || 'unknown';
-				errorMessages[field] = fieldError.message;
-
-				// Solo incluimos el valor inválido específico
-				if (error.value && field in error.value) {
-					invalidValues[field] = error.value[field];
-				}
-			}
 
 			return {
 				success: false,
@@ -60,7 +46,7 @@ app
 
 		return {
 			success: false,
-			message: error.message || 'Error interno del servidor',
+			message: 'Error interno del servidor',
 		};
 	})
 	.listen(Bun.env.SERVICE_PORT ?? 4002);
