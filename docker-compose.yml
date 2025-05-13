@@ -26,3 +26,11 @@ services:
       - '4002:4002'
     env_file:
       - ./services/doc-manager/.env
+  forms-manager:
+    build:
+      context: ./services/forms-manager
+      dockerfile: Dockerfile
+    ports:
+      - '4003:4003'
+    env_file:
+      - ./services/forms-manager/.env

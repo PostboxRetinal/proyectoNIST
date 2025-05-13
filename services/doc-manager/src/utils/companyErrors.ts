@@ -34,7 +34,7 @@ export class InvalidBusinessTypeError extends CompanyError {
 export class InvalidEmployeeRangeError extends CompanyError {
 	constructor(employeeRange: string) {
 		super(
-			`El rango de empleados '${employeeRange}' no es válido. Debe ser uno de los siguientes: ${VALID_EMPLOYEE_RANGES.map(range => `"${range}"`).join(', ')}`,
+			`El rango de empleados '${employeeRange}' no es válido. Debe ser uno de los siguientes: ${VALID_EMPLOYEE_RANGES.join(', ')}`,
 			'INVALID_EMPLOYEE_RANGE'
 		);
 	}

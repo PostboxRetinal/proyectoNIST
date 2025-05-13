@@ -1,15 +1,15 @@
 import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
-import { logger } from "@rasla/logify";
+import { logger } from '@rasla/logify';
 import { cors } from '@elysiajs/cors';
-import { registerCompanyRoutes } from './routes/companyRoutes';
+import { registerCompanyRoutes } from './routes/routes';
 
 const app = new Elysia({ prefix: '/api/company' });
 
 app
 	.use(
 		cors({
-			origin: ['http://api-gateway:80','http://localhost:5173'],
+			origin: ['http://api-gateway:80', 'http://localhost:5173'],
 			methods: ['GET', 'POST', 'PUT', 'DELETE'],
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
 		})
@@ -24,7 +24,7 @@ app
 			},
 		})
 	)
-	.use(logger())
+	.use(logger({ includeIp: true }))
 	// Registrar rutas de empresas
 	.use(registerCompanyRoutes)
 	// Gestión de errores y lanzamiento del servidor
