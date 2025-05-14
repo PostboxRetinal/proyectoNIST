@@ -36,7 +36,7 @@ export const Content = () => {
         <Link to="/newauditory" className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg text-xl ">
             Nueva Auditoría
           </Link>
-          <Link to="/iso27001" className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-xl hover:bg-gray-300">
+          <Link to="/auditory" className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-xl hover:bg-gray-300">
             Ver Auditorías
           </Link>
         </div>

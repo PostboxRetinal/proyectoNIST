@@ -20,7 +20,7 @@ const NavBar = ({
   const location = useLocation();
   
   // Verificar si estamos en la página de auditoría o en el inicio
-  const isAuditoryPage = location.pathname.includes('/iso27001');
+  const isAuditoryPage = location.pathname.includes('/auditory');
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
   
   useEffect(() => {
