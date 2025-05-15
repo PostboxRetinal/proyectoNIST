@@ -1,5 +1,7 @@
 import React, { useState, ChangeEvent } from "react";
 import { useAlerts } from '../alert/AlertContext';
+import { ChevronLeft} from "lucide-react";
+import { Link } from "react-router-dom";
 
 // Definición de interfaces
 
@@ -963,7 +965,13 @@ const CreateAuditForm: React.FC = () => {
       </div>
       
       {/* Botones de acción */}
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-end mt-6 relative">
+        <div className="absolute left-2">
+        <Link to="/mainauditory" className="flex items-center px-2 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 hover:text-blue-600 transition-colors text-sm">
+          <ChevronLeft size={18} />
+          <span className="ml-1">Volver</span>
+        </Link>
+      </div>
         <button
           type="button"
           className="px-4 py-2 mr-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
@@ -991,10 +999,10 @@ const CreateAuditForm: React.FC = () => {
               opciones: ["Sí", "No", "Parcialmente", "No aplica"],
               esObligatoria: true
             });
-            addAlert('info', "Formulario reiniciado");
+            addAlert('info', "Formulario Limpio");
           }}
         >
-          Cancelar
+          Limpiar Formulario
         </button>
         <button
           type="button"

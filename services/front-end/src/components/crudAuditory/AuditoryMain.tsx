@@ -8,34 +8,26 @@ export default function AuditoryMain() {
     {
       id: 1,
       titulo: "Auditoría ISO 9001:2015",
-      normativa: "ISO 9001:2015",
-      fecha: "2025-05-15",
-      estado: "Activa",
-      responsable: "Carlos Méndez"
+      fecha: "2025-05-15"
+      
     },
     {
       id: 2,
       titulo: "Auditoría Procesos Financieros",
-      normativa: "NIIF",
-      fecha: "2025-05-20",
-      estado: "Activa",
-      responsable: "María González"
+      fecha: "2025-05-20"
+      
     },
     {
       id: 3, 
       titulo: "Auditoría Seguridad Informática",
-      normativa: "ISO 27001",
-      fecha: "2025-05-10",
-      estado: "Activa",
-      responsable: "Juan Pérez"
+      fecha: "2025-05-10"
+      
     },
     {
       id: 4,
       titulo: "Auditoría Recursos Humanos",
-      normativa: "NOM-035-STPS-2018",
-      fecha: "2025-05-25",
-      estado: "Activa",
-      responsable: "Ana Ramírez" 
+      fecha: "2025-05-25"
+      
     }
   ]);
   
@@ -44,8 +36,8 @@ export default function AuditoryMain() {
   
   // Filtrar auditorías por título o normativa
   const auditoriasFiltradas = auditorias.filter(auditoria => 
-    auditoria.titulo.toLowerCase().includes(filtro.toLowerCase()) ||
-    auditoria.normativa.toLowerCase().includes(filtro.toLowerCase())
+    auditoria.titulo.toLowerCase().includes(filtro.toLowerCase())
+    
   );
   
   // Eliminar una auditoría
@@ -100,10 +92,7 @@ export default function AuditoryMain() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="py-3 px-4 text-left text-gray-700">Título</th>
-                <th className="py-3 px-4 text-left text-gray-700">Normativa</th>
                 <th className="py-3 px-4 text-left text-gray-700">Fecha</th>
-                <th className="py-3 px-4 text-left text-gray-700">Estado</th>
-                <th className="py-3 px-4 text-left text-gray-700">Responsable</th>
                 <th className="py-3 px-4 text-left text-gray-700">Acciones</th>
               </tr>
             </thead>
@@ -111,14 +100,8 @@ export default function AuditoryMain() {
               {auditoriasFiltradas.map((auditoria) => (
                 <tr key={auditoria.id} className="hover:bg-gray-50">
                   <td className="py-3 px-4">{auditoria.titulo}</td>
-                  <td className="py-3 px-4">{auditoria.normativa}</td>
+                  
                   <td className="py-3 px-4">{auditoria.fecha}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 rounded-full text-xs text-white bg-green-500">
-                      {auditoria.estado}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">{auditoria.responsable}</td>
                   <td className="py-3 px-4">
                     <div className="flex space-x-2">
                       <button 

@@ -16,7 +16,7 @@ const AppRoutes = () => {
         { path: '/auditory', element: <Auditory /> },
         { path: '/newauditory', element: <NewAuditory /> },
         { path: '/api/loginUser', element: <Login /> },
-        { path: '/api/registerCompany', element: <Register /> },
+        { path: '/api/registerUser', element: <Register /> },
         { path: '/mainauditory', element: <Mainauditory /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
