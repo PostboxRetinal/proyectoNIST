@@ -2,30 +2,27 @@ import React, { useState, ChangeEvent } from "react";
 import { useAlerts } from '../alert/AlertContext';
 import { ChevronLeft} from "lucide-react";
 import { Link } from "react-router-dom";
+import axios from 'axios';
 
 // Definición de interfaces
-
 interface Pregunta {
   id: string;
   texto: string;
   tipo: "si_no" | "numerica";
   opciones: string[];
   esObligatoria: boolean;
-  editando?: boolean;
 }
 
 interface SubSeccion {
   id: string;
   titulo: string;
   preguntas: Pregunta[];
-  editando?: boolean;
 }
 
 interface Seccion {
   id: string;
   titulo: string;
   subSecciones: SubSeccion[];
-  editando?: boolean;
 }
 
 interface FormularioData {
@@ -45,21 +42,21 @@ const CreateAuditForm: React.FC = () => {
   // Estado para las secciones del formulario
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   
-  // Estado para la sección actualmente en edición
+  // Estado para la sección actualmente en creación
   const [currentSeccion, setCurrentSeccion] = useState<Seccion>({
     id: "",
     titulo: "",
     subSecciones: []
   });
 
-  // Estado para la sección actualmente en edición
+  // Estado para la subsección actualmente en creación
   const [currentSubSeccion, setCurrentSubSeccion] = useState<SubSeccion>({
     id: "",
     titulo: "",
     preguntas: []
   });
   
-  // Estado para la pregunta actualmente en edición
+  // Estado para la pregunta actualmente en creación
   const [currentPregunta, setCurrentPregunta] = useState<Pregunta>({
     id: "",
     texto: "",
@@ -68,12 +65,16 @@ const CreateAuditForm: React.FC = () => {
     esObligatoria: true,
   });
   
+  // Estados para edición (separados de los de creación)
+  const [seccionEnEdicion, setSeccionEnEdicion] = useState<Seccion | null>(null);
+  const [subSeccionEnEdicion, setSubSeccionEnEdicion] = useState<SubSeccion | null>(null);
+  const [preguntaEnEdicion, setPreguntaEnEdicion] = useState<Pregunta | null>(null);
   
-  // Estado para indicar qué elemento se está editando
-  const [editandoSeccion, setEditandoSeccion] = useState<string | null>(null);
-  const [editandoSubSeccion, setEditandoSubSeccion] = useState<string | null>(null);
-  const [editandoPregunta, setEditandoPregunta] = useState<string | null>(null);
-  
+  // Estados para indicar qué se está editando (IDs)
+  const [editandoSeccionId, setEditandoSeccionId] = useState<string | null>(null);
+  const [editandoSubSeccionId, setEditandoSubSeccionId] = useState<string | null>(null);
+  const [editandoPreguntaId, setEditandoPreguntaId] = useState<string | null>(null);
+
   // Manejador para cambios en datos generales
   const handleFormDataChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
@@ -83,7 +84,7 @@ const CreateAuditForm: React.FC = () => {
     });
   };
   
-  // Manejador para cambios en sección actual
+  // Manejador para cambios en sección actual (creación)
   const handleSeccionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
     setCurrentSeccion({
@@ -92,7 +93,7 @@ const CreateAuditForm: React.FC = () => {
     });
   };
 
-  // Manejador para cambios en subSección actual
+  // Manejador para cambios en subsección actual (creación)
   const handleSubSeccionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
     setCurrentSubSeccion({
@@ -101,37 +102,77 @@ const CreateAuditForm: React.FC = () => {
     });
   };
   
-  // Manejador para cambios en pregunta actual
+  // Manejador para cambios en pregunta actual (creación)
   const handlePreguntaChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
-    if (name === "tipo" && value === "numerica") {
-      // Si cambia a tipo numérica, actualizamos las opciones automáticamente
+    if (name === "tipo") {
+      // Si cambia el tipo, actualizamos las opciones automáticamente
+      const opciones = value === "numerica" 
+        ? ["1", "2", "3", "4", "5"] 
+        : ["Sí", "No", "Parcialmente", "No aplica"];
+      
       setCurrentPregunta({
         ...currentPregunta,
         tipo: value as "si_no" | "numerica", 
-        opciones: ["1", "2", "3", "4", "5"]
-      });
-    } else if (name === "tipo" && value === "si_no") {
-      // Si cambia a tipo si/no, actualizamos las opciones automáticamente
-      setCurrentPregunta({
-        ...currentPregunta,
-        tipo: value as "si_no" | "numerica", 
-        opciones: ["Sí", "No", "Parcialmente", "No aplica"]
+        opciones
       });
     } else {
-      // Para otros cambios, manejamos checkbox vs. otros tipos
+      // Para otros cambios
       setCurrentPregunta({
         ...currentPregunta,
-        [name]: type === "checkbox" ? checked : 
-                (name === "tipo" ? value as "si_no" | "numerica" : value)
+        [name]: type === "checkbox" ? checked : value
       });
     }
   };
   
+  // Manejadores para cambios en elementos en edición
+  const handleSeccionEnEdicionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+    const { name, value } = e.target;
+    if (seccionEnEdicion) {
+      setSeccionEnEdicion({
+        ...seccionEnEdicion,
+        [name]: value
+      });
+    }
+  };
+
+  const handleSubSeccionEnEdicionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+    const { name, value } = e.target;
+    if (subSeccionEnEdicion) {
+      setSubSeccionEnEdicion({
+        ...subSeccionEnEdicion,
+        [name]: value
+      });
+    }
+  };
+
+  const handlePreguntaEnEdicionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    if (!preguntaEnEdicion) return;
+    
+    if (name === "tipo") {
+      const opciones = value === "numerica" 
+        ? ["1", "2", "3", "4", "5"] 
+        : ["Sí", "No", "Parcialmente", "No aplica"];
+      
+      setPreguntaEnEdicion({
+        ...preguntaEnEdicion,
+        tipo: value as "si_no" | "numerica",
+        opciones
+      });
+    } else {
+      setPreguntaEnEdicion({
+        ...preguntaEnEdicion,
+        [name]: type === "checkbox" ? checked : value
+      });
+    }
+  };
   
-  // Agregar la pregunta actual a la SubSección actual
+  // Agregar la pregunta actual a la subsección actual (creación)
   const agregarPregunta = (): void => {
     if (currentPregunta.texto.trim() === "") {
       addAlert('error', "El texto de la pregunta no puede estar vacío");
@@ -166,7 +207,7 @@ const CreateAuditForm: React.FC = () => {
     addAlert('success', "Pregunta añadida correctamente");
   };
   
-  // Eliminar una pregunta de la subsección actual
+  // Eliminar una pregunta de la subsección actual (creación)
   const eliminarPreguntaSubSeccion = (index: number): void => {
     const nuevasPreguntas = [...currentSubSeccion.preguntas];
     nuevasPreguntas.splice(index, 1);
@@ -220,7 +261,7 @@ const CreateAuditForm: React.FC = () => {
     addAlert('info', "Sección eliminada");
   };
 
-  // Agregar la subsección actual a la sección actual
+  // Agregar la subsección actual a la sección actual (creación)
   const agregarSubSeccion = (): void => {
     if (currentSubSeccion.titulo.trim() === "") {
       addAlert('error', "El título de la subsección no puede estar vacío");
@@ -258,7 +299,7 @@ const CreateAuditForm: React.FC = () => {
     addAlert('success', "Subsección agregada correctamente");
   };
 
-  // Eliminar una subsección de la sección actual
+  // Eliminar una subsección de la sección actual (creación)
   const eliminarSubSeccion = (index: number): void => {
     const nuevasSubSecciones = [...currentSeccion.subSecciones];
     nuevasSubSecciones.splice(index, 1);
@@ -269,79 +310,110 @@ const CreateAuditForm: React.FC = () => {
     addAlert('info', "Subsección eliminada");
   };
 
-  // Comenzar a editar una sección existente
+  // Comenzar a editar una sección guardada
   const editarSeccion = (seccion: Seccion, index: number): void => {
-    setEditandoSeccion(seccion.id);
-    
-    // Crear una copia temporal de la sección para editar
-    const seccionEditada = { ...seccion, editando: true };
-    const nuevasSecciones = [...secciones];
-    nuevasSecciones[index] = seccionEditada;
-    setSecciones(nuevasSecciones);
+    setEditandoSeccionId(seccion.id);
+    setSeccionEnEdicion({...seccion});
   };
   
   // Guardar cambios de una sección editada
-  const guardarEdicionSeccion = (index: number, nuevosDatos: Partial<Seccion>): void => {
+  const guardarEdicionSeccion = (index: number): void => {
+    if (!seccionEnEdicion) return;
+    
     const nuevasSecciones = [...secciones];
-    nuevasSecciones[index] = { 
-      ...nuevasSecciones[index], 
-      ...nuevosDatos,
-      editando: false 
-    };
+    nuevasSecciones[index] = { ...seccionEnEdicion };
     setSecciones(nuevasSecciones);
-    setEditandoSeccion(null);
+    
+    setEditandoSeccionId(null);
+    setSeccionEnEdicion(null);
     
     addAlert('success', "Cambios guardados en la sección");
   };
   
-  // Comenzar a editar una subsección existente
+  // Comenzar a editar una subsección guardada
   const editarSubSeccion = (seccionIndex: number, subSeccion: SubSeccion, subIndex: number): void => {
-    setEditandoSubSeccion(subSeccion.id);
-    
-    // Crear una copia temporal de la subsección para editar
-    const nuevasSecciones = [...secciones];
-    const subSeccionEditada = { ...subSeccion, editando: true };
-    nuevasSecciones[seccionIndex].subSecciones[subIndex] = subSeccionEditada;
-    setSecciones(nuevasSecciones);
+    setEditandoSubSeccionId(subSeccion.id);
+    setSubSeccionEnEdicion({...subSeccion});
   };
   
-  // Guardar cambios de una subsección editada
-  const guardarEdicionSubSeccion = (seccionIndex: number, subIndex: number, nuevosDatos: Partial<SubSeccion>): void => {
+  // Guardar cambios de una subsección editada (de una sección guardada)
+  const guardarEdicionSubSeccion = (seccionIndex: number, subIndex: number): void => {
+    if (!subSeccionEnEdicion) return;
+    
     const nuevasSecciones = [...secciones];
-    nuevasSecciones[seccionIndex].subSecciones[subIndex] = {
-      ...nuevasSecciones[seccionIndex].subSecciones[subIndex],
-      ...nuevosDatos,
-      editando: false
-    };
+    nuevasSecciones[seccionIndex].subSecciones[subIndex] = { ...subSeccionEnEdicion };
     setSecciones(nuevasSecciones);
-    setEditandoSubSeccion(null);
+    
+    setEditandoSubSeccionId(null);
+    setSubSeccionEnEdicion(null);
     
     addAlert('success', "Cambios guardados en la subsección");
   };
   
-  // Comenzar a editar una pregunta existente
+  // Comenzar a editar una pregunta guardada (de una sección guardada)
   const editarPregunta = (seccionIndex: number, subIndex: number, pregunta: Pregunta, pregIndex: number): void => {
-    setEditandoPregunta(pregunta.id);
-    
-    // Crear una copia temporal de la pregunta para editar
-    const nuevasSecciones = [...secciones];
-    const preguntaEditada = { ...pregunta, editando: true };
-    nuevasSecciones[seccionIndex].subSecciones[subIndex].preguntas[pregIndex] = preguntaEditada;
-    setSecciones(nuevasSecciones);
+    setEditandoPreguntaId(pregunta.id);
+    setPreguntaEnEdicion({...pregunta});
   };
   
-  // Guardar cambios de una pregunta editada
-  const guardarEdicionPregunta = (seccionIndex: number, subIndex: number, pregIndex: number, nuevosDatos: Partial<Pregunta>): void => {
+  // Guardar cambios de una pregunta editada (de una sección guardada)
+  const guardarEdicionPregunta = (seccionIndex: number, subIndex: number, pregIndex: number): void => {
+    if (!preguntaEnEdicion) return;
+    
     const nuevasSecciones = [...secciones];
-    nuevasSecciones[seccionIndex].subSecciones[subIndex].preguntas[pregIndex] = {
-      ...nuevasSecciones[seccionIndex].subSecciones[subIndex].preguntas[pregIndex],
-      ...nuevosDatos,
-      editando: false
-    };
+    nuevasSecciones[seccionIndex].subSecciones[subIndex].preguntas[pregIndex] = { ...preguntaEnEdicion };
     setSecciones(nuevasSecciones);
-    setEditandoPregunta(null);
+    
+    setEditandoPreguntaId(null);
+    setPreguntaEnEdicion(null);
     
     addAlert('success', "Cambios guardados en la pregunta");
+  };
+
+  // Editar una pregunta de una subsección en creación
+  const editarPreguntaCreacion = (pregunta: Pregunta, index: number): void => {
+    setEditandoPreguntaId(pregunta.id);
+    setPreguntaEnEdicion({...pregunta});
+  };
+  
+  // Guardar cambios de una pregunta editada (de una subsección en creación)
+  const guardarEdicionPreguntaCreacion = (index: number): void => {
+    if (!preguntaEnEdicion) return;
+    
+    const nuevasPreguntas = [...currentSubSeccion.preguntas];
+    nuevasPreguntas[index] = { ...preguntaEnEdicion };
+    setCurrentSubSeccion({
+      ...currentSubSeccion,
+      preguntas: nuevasPreguntas
+    });
+    
+    setEditandoPreguntaId(null);
+    setPreguntaEnEdicion(null);
+    
+    addAlert('success', "Cambios guardados en la pregunta");
+  };
+
+  // Editar una subsección de la sección en creación
+  const editarSubSeccionCreacion = (subSeccion: SubSeccion, index: number): void => {
+    setEditandoSubSeccionId(subSeccion.id);
+    setSubSeccionEnEdicion({...subSeccion});
+  };
+  
+  // Guardar cambios de una subsección editada (de la sección en creación)
+  const guardarEdicionSubSeccionCreacion = (index: number): void => {
+    if (!subSeccionEnEdicion) return;
+    
+    const nuevasSubSecciones = [...currentSeccion.subSecciones];
+    nuevasSubSecciones[index] = { ...subSeccionEnEdicion };
+    setCurrentSeccion({
+      ...currentSeccion,
+      subSecciones: nuevasSubSecciones
+    });
+    
+    setEditandoSubSeccionId(null);
+    setSubSeccionEnEdicion(null);
+    
+    addAlert('success', "Cambios guardados en la subsección");
   };
 
   // Función para crear un JSON del formulario
@@ -419,28 +491,47 @@ const CreateAuditForm: React.FC = () => {
     return jsonString;
   };
 
-
   // Guardar el formulario completo
-  const guardarFormulario = (): void => {
+  const guardarFormulario = async (): Promise<void> => {
     const jsonFormulario = crearJSON();
     
     if (!jsonFormulario) return;
     
     try {
-      // Simplemente mostrar el resultado en la consola y guardar en localStorage
-      console.log("JSON del formulario:", JSON.parse(jsonFormulario));
+      // Parse the JSON string to get the object
+      const formularioObj = JSON.parse(jsonFormulario);
       
-      // Guardar en localStorage 
-      localStorage.setItem('formularioAuditoria', jsonFormulario);
+      // Make the API call to save the form
+      const response = await axios.post(
+        'http://localhost:3000/api/forms/newForm', 
+        formularioObj
+      );
       
-      // También guardar en sessionStorage (persistirá solo durante la sesión actual)
-      sessionStorage.setItem('formularioAuditoria_reciente', jsonFormulario);
-      
-      // Mostrar mensaje de éxito
-      addAlert('success', "Formulario guardado exitosamente en el almacenamiento local");
-    } catch (error) {
+      if (response.status === 200 || response.status === 201) {
+        console.log("Formulario guardado exitosamente:", response.data);
+        
+        // Opcional: guardar en localStorage para respaldo
+        localStorage.setItem('formularioAuditoria', jsonFormulario);
+        
+        // Mostrar mensaje de éxito
+        addAlert('success', "Formulario guardado exitosamente en el servidor");
+      } else {
+        console.error("Error al guardar el formulario:", response);
+        addAlert('error', `Error al guardar el formulario: ${response.data.message || 'Error en el servidor'}`);
+      }
+    } catch (error: any) {
       console.error("Error al guardar el formulario:", error);
-      addAlert('error', "Error al guardar el formulario");
+      
+      if (error.response) {
+        // El servidor respondió con un código de error
+        addAlert('error', `Error al guardar el formulario: ${error.response.data.message || error.response.statusText}`);
+      } else if (error.request) {
+        // La petición fue hecha pero no se recibió respuesta
+        addAlert('error', 'Error de conexión con el servidor. Verifique que el servidor esté en ejecución.');
+      } else {
+        // Otros errores
+        addAlert('error', `Error: ${error.message}`);
+      }
     }
   };
 
@@ -478,19 +569,16 @@ const CreateAuditForm: React.FC = () => {
           
           {secciones.map((seccion, sIndex) => (
             <div key={seccion.id} className="mb-4 p-4 border border-gray-200 rounded-md">
-              {seccion.editando ? (
+              {editandoSeccionId === seccion.id && seccionEnEdicion ? (
                 <div className="mb-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
                       <input
                         type="text"
-                        value={seccion.id}
-                        onChange={(e) => {
-                          const nuevasSecciones = [...secciones];
-                          nuevasSecciones[sIndex].id = e.target.value;
-                          setSecciones(nuevasSecciones);
-                        }}
+                        name="id"
+                        value={seccionEnEdicion.id}
+                        onChange={handleSeccionEnEdicionChange}
                         className="w-full p-2 border border-gray-300 rounded-md"
                       />
                     </div>
@@ -498,12 +586,9 @@ const CreateAuditForm: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
                       <input
                         type="text"
-                        value={seccion.titulo}
-                        onChange={(e) => {
-                          const nuevasSecciones = [...secciones];
-                          nuevasSecciones[sIndex].titulo = e.target.value;
-                          setSecciones(nuevasSecciones);
-                        }}
+                        name="titulo"
+                        value={seccionEnEdicion.titulo}
+                        onChange={handleSeccionEnEdicionChange}
                         className="w-full p-2 border border-gray-300 rounded-md"
                       />
                     </div>
@@ -511,7 +596,7 @@ const CreateAuditForm: React.FC = () => {
                   <div className="flex justify-end mt-2">
                     <button
                       type="button"
-                      onClick={() => guardarEdicionSeccion(sIndex, { id: seccion.id, titulo: seccion.titulo })}
+                      onClick={() => guardarEdicionSeccion(sIndex)}
                       className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                     >
                       Guardar Cambios
@@ -549,19 +634,16 @@ const CreateAuditForm: React.FC = () => {
                   <h4 className="text-md font-medium mb-2">Subsecciones:</h4>
                   {seccion.subSecciones.map((subSeccion, subIndex) => (
                     <div key={subSeccion.id} className="mb-3 p-3 bg-gray-50 rounded-md">
-                      {subSeccion.editando ? (
+                      {editandoSubSeccionId === subSeccion.id && subSeccionEnEdicion ? (
                         <div className="mb-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
                               <input
                                 type="text"
-                                value={subSeccion.id}
-                                onChange={(e) => {
-                                  const nuevasSecciones = [...secciones];
-                                  nuevasSecciones[sIndex].subSecciones[subIndex].id = e.target.value;
-                                  setSecciones(nuevasSecciones);
-                                }}
+                                name="id"
+                                value={subSeccionEnEdicion.id}
+                                onChange={handleSubSeccionEnEdicionChange}
                                 className="w-full p-2 border border-gray-300 rounded-md"
                               />
                             </div>
@@ -569,12 +651,9 @@ const CreateAuditForm: React.FC = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
                               <input
                                 type="text"
-                                value={subSeccion.titulo}
-                                onChange={(e) => {
-                                  const nuevasSecciones = [...secciones];
-                                  nuevasSecciones[sIndex].subSecciones[subIndex].titulo = e.target.value;
-                                  setSecciones(nuevasSecciones);
-                                }}
+                                name="titulo"
+                                value={subSeccionEnEdicion.titulo}
+                                onChange={handleSubSeccionEnEdicionChange}
                                 className="w-full p-2 border border-gray-300 rounded-md"
                               />
                             </div>
@@ -582,7 +661,7 @@ const CreateAuditForm: React.FC = () => {
                           <div className="flex justify-end mt-2">
                             <button
                               type="button"
-                              onClick={() => guardarEdicionSubSeccion(sIndex, subIndex, { id: subSeccion.id, titulo: subSeccion.titulo })}
+                              onClick={() => guardarEdicionSubSeccion(sIndex, subIndex)}
                               className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                             >
                               Guardar Cambios
@@ -614,19 +693,16 @@ const CreateAuditForm: React.FC = () => {
                           <ul className="list-disc ml-5">
                             {subSeccion.preguntas.map((pregunta, pregIndex) => (
                               <li key={pregunta.id} className="mb-1">
-                                {pregunta.editando ? (
+                                {editandoPreguntaId === pregunta.id && preguntaEnEdicion ? (
                                   <div className="mb-3 bg-white p-2 rounded border">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                                       <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
                                         <input
                                           type="text"
-                                          value={pregunta.id}
-                                          onChange={(e) => {
-                                            const nuevasSecciones = [...secciones];
-                                            nuevasSecciones[sIndex].subSecciones[subIndex].preguntas[pregIndex].id = e.target.value;
-                                            setSecciones(nuevasSecciones);
-                                          }}
+                                          name="id"
+                                          value={preguntaEnEdicion.id}
+                                          onChange={handlePreguntaEnEdicionChange}
                                           className="w-full p-2 border border-gray-300 rounded-md"
                                         />
                                       </div>
@@ -634,12 +710,9 @@ const CreateAuditForm: React.FC = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
                                         <input
                                           type="text"
-                                          value={pregunta.texto}
-                                          onChange={(e) => {
-                                            const nuevasSecciones = [...secciones];
-                                            nuevasSecciones[sIndex].subSecciones[subIndex].preguntas[pregIndex].texto = e.target.value;
-                                            setSecciones(nuevasSecciones);
-                                          }}
+                                          name="texto"
+                                          value={preguntaEnEdicion.texto}
+                                          onChange={handlePreguntaEnEdicionChange}
                                           className="w-full p-2 border border-gray-300 rounded-md"
                                         />
                                       </div>
@@ -647,21 +720,9 @@ const CreateAuditForm: React.FC = () => {
                                     <div className="mb-2">
                                       <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                                       <select
-                                        value={pregunta.tipo}
-                                        onChange={(e) => {
-                                          const nuevasSecciones = [...secciones];
-                                          const nuevoPregunta = {...nuevasSecciones[sIndex].subSecciones[subIndex].preguntas[pregIndex]};
-                                          nuevoPregunta.tipo = e.target.value as "si_no" | "numerica";
-                                          
-                                          if (e.target.value === "numerica") {
-                                            nuevoPregunta.opciones = ["1", "2", "3", "4", "5"];
-                                          } else {
-                                            nuevoPregunta.opciones = ["Sí", "No", "Parcialmente", "No aplica"];
-                                          }
-                                          
-                                          nuevasSecciones[sIndex].subSecciones[subIndex].preguntas[pregIndex] = nuevoPregunta;
-                                          setSecciones(nuevasSecciones);
-                                        }}
+                                        name="tipo"
+                                        value={preguntaEnEdicion.tipo}
+                                        onChange={handlePreguntaEnEdicionChange}
                                         className="w-full p-2 border border-gray-300 rounded-md"
                                       >
                                         <option value="si_no">Sí/No</option>
@@ -671,12 +732,9 @@ const CreateAuditForm: React.FC = () => {
                                     <div className="flex items-center mb-2">
                                       <input
                                         type="checkbox"
-                                        checked={pregunta.esObligatoria}
-                                        onChange={(e) => {
-                                          const nuevasSecciones = [...secciones];
-                                          nuevasSecciones[sIndex].subSecciones[subIndex].preguntas[pregIndex].esObligatoria = e.target.checked;
-                                          setSecciones(nuevasSecciones);
-                                        }}
+                                        name="esObligatoria"
+                                        checked={preguntaEnEdicion.esObligatoria}
+                                        onChange={handlePreguntaEnEdicionChange}
                                         className="mr-2"
                                       />
                                       <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
@@ -684,13 +742,7 @@ const CreateAuditForm: React.FC = () => {
                                     <div className="flex justify-end mt-2">
                                       <button
                                         type="button"
-                                        onClick={() => guardarEdicionPregunta(sIndex, subIndex, pregIndex, {
-                                          id: pregunta.id,
-                                          texto: pregunta.texto,
-                                          tipo: pregunta.tipo,
-                                          esObligatoria: pregunta.esObligatoria,
-                                          opciones: pregunta.opciones
-                                        })}
+                                        onClick={() => guardarEdicionPregunta(sIndex, subIndex, pregIndex)}
                                         className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                                       >
                                         Guardar Cambios
@@ -776,18 +828,165 @@ const CreateAuditForm: React.FC = () => {
                   <div>
                     <span className="font-medium">{subSeccion.id}: {subSeccion.titulo}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => eliminarSubSeccion(subIndex)}
-                    className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
-                  >
-                    Eliminar
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => editarSubSeccionCreacion(subSeccion, subIndex)}
+                      className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => eliminarSubSeccion(subIndex)}
+                      className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
+                
+                {/* Mostrar editor de subsección si está en modo edición */}
+                {editandoSubSeccionId === subSeccion.id && subSeccionEnEdicion && (
+                  <div className="mt-3 p-3 bg-gray-100 rounded-md">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                        <input
+                          type="text"
+                          name="id"
+                          value={subSeccionEnEdicion.id}
+                          onChange={handleSubSeccionEnEdicionChange}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                        <input
+                          type="text"
+                          name="titulo"
+                          value={subSeccionEnEdicion.titulo}
+                          onChange={handleSubSeccionEnEdicionChange}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => guardarEdicionSubSeccionCreacion(subIndex)}
+                        className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                      >
+                        Guardar Cambios
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="mt-1 ml-4">
                   <span className="text-sm text-gray-500">Preguntas: </span>
                   {subSeccion.preguntas.length} preguntas
+                  
+                  {/* Mostrar lista de preguntas con botón de editar */}
+                  {subSeccion.preguntas.length > 0 && (
+                    <ul className="mt-2 ml-2">
+                      {subSeccion.preguntas.map((pregunta, pregIndex) => (
+                        <li key={pregunta.id} className="mb-2 p-2 bg-gray-100 rounded-md">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">{pregunta.id}: {pregunta.texto}</span>
+                              <span className="ml-2 text-sm text-gray-500">
+                                ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
+                              </span>
+                              {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
+                            </div>
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => editarPreguntaCreacion(pregunta, pregIndex)}
+                                className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => eliminarPreguntaSubSeccion(pregIndex)}
+                                className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Mostrar editor de pregunta si está en modo edición */}
+                          {editandoPreguntaId === pregunta.id && preguntaEnEdicion && (
+                            <div className="mt-3 p-3 bg-white rounded-md border">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                                  <input
+                                    type="text"
+                                    name="id"
+                                    value={preguntaEnEdicion.id}
+                                    onChange={handlePreguntaEnEdicionChange}
+                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
+                                  <input
+                                    type="text"
+                                    name="texto"
+                                    value={preguntaEnEdicion.texto}
+                                    onChange={handlePreguntaEnEdicionChange}
+                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                  />
+                                </div>
+                              </div>
+                              <div className="mb-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                <select
+                                  name="tipo"
+                                  value={preguntaEnEdicion.tipo}
+                                  onChange={handlePreguntaEnEdicionChange}
+                                  className="w-full p-2 border border-gray-300 rounded-md"
+                                >
+                                  <option value="si_no">Sí/No</option>
+                                  <option value="numerica">Numérica (1-5)</option>
+                                </select>
+                              </div>
+                              <div className="flex items-center mb-2">
+                                <input
+                                  type="checkbox"
+                                  name="esObligatoria"
+                                  checked={preguntaEnEdicion.esObligatoria}
+                                  onChange={handlePreguntaEnEdicionChange}
+                                  className="mr-2"
+                                />
+                                <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
+                              </div>
+                              <div className="flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => guardarEdicionPreguntaCreacion(pregIndex)}
+                                  className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                                >
+                                  Guardar Cambios
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {pregunta.opciones.length > 0 && !editandoPreguntaId && (
+                            <div className="mt-1 ml-4">
+                              <span className="text-sm text-gray-500">Opciones: </span>
+                              {pregunta.opciones.join(", ")}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             ))}
@@ -844,16 +1043,84 @@ const CreateAuditForm: React.FC = () => {
                       </span>
                       {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => eliminarPreguntaSubSeccion(pIndex)}
-                      className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
-                    >
-                      Eliminar
-                    </button>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => editarPreguntaCreacion(pregunta, pIndex)}
+                        className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => eliminarPreguntaSubSeccion(pIndex)}
+                        className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                   
-                  {pregunta.opciones.length > 0 && (
+                  {/* Mostrar editor de pregunta si está en modo edición */}
+                  {editandoPreguntaId === pregunta.id && preguntaEnEdicion && (
+                    <div className="mt-3 p-3 bg-white rounded-md border">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                          <input
+                            type="text"
+                            name="id"
+                            value={preguntaEnEdicion.id}
+                            onChange={handlePreguntaEnEdicionChange}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
+                          <input
+                            type="text"
+                            name="texto"
+                            value={preguntaEnEdicion.texto}
+                            onChange={handlePreguntaEnEdicionChange}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                        <select
+                          name="tipo"
+                          value={preguntaEnEdicion.tipo}
+                          onChange={handlePreguntaEnEdicionChange}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="si_no">Sí/No</option>
+                          <option value="numerica">Numérica (1-5)</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          name="esObligatoria"
+                          checked={preguntaEnEdicion.esObligatoria}
+                          onChange={handlePreguntaEnEdicionChange}
+                          className="mr-2"
+                        />
+                        <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => guardarEdicionPreguntaCreacion(pIndex)}
+                          className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                        >
+                          Guardar Cambios
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {pregunta.opciones.length > 0 && !editandoPreguntaId && (
                     <div className="mt-1 ml-4">
                       <span className="text-sm text-gray-500">Opciones: </span>
                       {pregunta.opciones.join(", ")}
@@ -967,18 +1234,18 @@ const CreateAuditForm: React.FC = () => {
       {/* Botones de acción */}
       <div className="flex justify-end mt-6 relative">
         <div className="absolute left-2">
-        <Link to="/mainauditory" className="flex items-center px-2 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 hover:text-blue-600 transition-colors text-sm">
-          <ChevronLeft size={18} />
-          <span className="ml-1">Volver</span>
-        </Link>
-      </div>
+          <Link to="/mainauditory" className="flex items-center px-2 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 hover:text-blue-600 transition-colors text-sm">
+            <ChevronLeft size={18} />
+            <span className="ml-1">Volver</span>
+          </Link>
+        </div>
         <button
           type="button"
           className="px-4 py-2 mr-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
           onClick={() => {
             // Reiniciar todos los estados a sus valores iniciales
             setFormData({
-              fechaCreacion: new Date().toISOString().split('T')[0],
+              fechaCreacion: new Date().toISOString(),
               normativa: ""
             });
             setSecciones([]);
