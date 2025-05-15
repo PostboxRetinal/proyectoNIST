@@ -3,6 +3,7 @@ import { UserService, InvalidRoleError } from '../services/userService';
 import {
 	createUserValidator,
 	loginUserValidator,
+	resetPasswordValidator,
 } from '../utils/schemaValidator';
 import { createErrorResponse } from '../utils/firebaseErrors';
 import { VALID_ROLES } from '../constants/roles';
@@ -215,6 +216,64 @@ export function registerUserRoutes(app: Elysia<any>) {
 					summary: 'Obtiene todos los usuarios',
 					description:
 						'Obtiene la lista de todos los usuarios registrados en Firestore',
+					tags: ['Usuarios'],
+				},
+			}
+		)
+		.post(
+			'/resetPassword',
+			async ({ body, error }) => {
+				try {
+					const { email } = body as { email: string };
+					await UserService.resetPassword(email);
+					return {
+						success: true,
+						message:
+							'Se ha enviado un enlace de recuperación al correo electrónico proporcionado',
+					};
+				} catch (err: any) {
+					const errorResponse = createErrorResponse(
+						err,
+						'Error al enviar el correo de recuperación'
+					);
+
+					if (errorResponse.status === 404) {
+						return error(404, {
+							success: false,
+							message: 'El correo electrónico no está registrado',
+							errorCode: errorResponse.errorCode,
+						});
+					} else {
+						return error(400, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					}
+				}
+			},
+			{
+				body: resetPasswordValidator,
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+					}),
+					400: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+					404: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+				},
+				detail: {
+					summary: 'Recuperación de contraseña',
+					description:
+						'Envía un correo electrónico con un enlace para restablecer la contraseña',
 					tags: ['Usuarios'],
 				},
 			}
