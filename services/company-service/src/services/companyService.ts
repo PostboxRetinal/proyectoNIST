@@ -21,19 +21,7 @@ import {
 	BusinessType,
 	EmployeeRange,
 } from '../constants/businessTypes';
-
-// Interfaz para los datos de la empresa
-export interface CompanyData {
-	nit: string;
-	companyName: string;
-	email: string;
-	phone: string;
-	address: string;
-	businessType: BusinessType;
-	employeeRange: EmployeeRange;
-	createdAt: number;
-	updatedAt: number;
-}
+import { CompanyData } from '../schemas/companySchemas';
 
 export class CompanyService {
 	/**
@@ -98,7 +86,7 @@ export class CompanyService {
 
 			// Crear referencia para la nueva empresa
 			const companyRef = doc(collection(db, 'companies'));
-			const timestamp = Date.now();
+			const timestamp = new Date(); // Timestamp actual
 
 			const completeCompanyData: CompanyData = {
 				...companyData,
@@ -207,6 +195,32 @@ export class CompanyService {
 			throw error;
 		}
 	}
-}
 
-export default CompanyService;
+	/**
+	 * Obtiene todas las empresas registradas en Firestore
+	 * @returns {Promise<Array<{id: string, nit: string, companyName: string}>>} - Array con todas las empresas
+	 * @throws {Error} - Si ocurre un error al obtener las empresas
+	 */
+	static async getAllCompanies(): Promise<Array<{id: string, nit: string, companyName: string}>> {
+		try {
+			const companiesRef = collection(db, 'companies');
+			const querySnapshot = await getDocs(companiesRef);
+			
+			const companies: Array<{id: string, nit: string, companyName: string}> = [];
+			
+			querySnapshot.forEach((doc) => {
+				const data = doc.data();
+				companies.push({
+					id: doc.id,
+					nit: data.nit,
+					companyName: data.companyName,
+				});
+			});
+			
+			return companies;
+		} catch (error) {
+			logCompanyError('getAllCompanies', error);
+			throw error;
+		}
+	}
+}

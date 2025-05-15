@@ -32,7 +32,7 @@ app
 	.use(registerUserRoutes)
 
 	// Gestión de errores y lanzamiento del servidor
-	.onError(({ code, error, set }) => {
+	.onError(({ code, set }) => {
 		if (code === 'VALIDATION') {
 			set.status = 400;
 

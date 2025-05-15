@@ -2,7 +2,7 @@ import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { logger } from '@rasla/logify';
 import { cors } from '@elysiajs/cors';
-import { registerCompanyRoutes } from './routes/routes';
+import { registerCompanyRoutes } from './routes/companyRoutes';
 
 const app = new Elysia({ prefix: '/api/company' });
 
@@ -52,5 +52,5 @@ app
 	.listen(Bun.env.SERVICE_PORT ?? 4002);
 
 console.log(
-	`📄 Document Manager ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
+	`[COMPANY_SVC] ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
 );
