@@ -7,6 +7,7 @@ import NewAuditory from '../components/newauditory/NewAuditory';
 import Mainauditory from '../pages/ManagerAuditory';
 import CreateAuditory from '../pages/CreateAuditory';
 import ReportDashboard from '../pages/ReportDashboard';
+import UserManagement from '@/components/crudUsuario/UserManagement';
 
 
 const AppRoutes = () => {
@@ -18,7 +19,8 @@ const AppRoutes = () => {
         { path: '/api/registerUser', element: <Register /> },
         { path: '/mainauditory', element: <Mainauditory /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
-        { path: '/reportdashboard', element: <ReportDashboard /> }        
+        { path: '/reportdashboard', element: <ReportDashboard /> },
+        { path: '/api/user', element: <UserManagement /> } 
         //{ path: '/*', element: <NotFound /> }
       
 

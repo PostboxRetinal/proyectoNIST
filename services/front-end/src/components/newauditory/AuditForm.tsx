@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import ProfileSelector from './ProfileSelector';
+
 import CompanySelector from './CompanySelector';
 import StandardSelector from './StandardSelector';
 import { useAlerts } from '../alert/AlertContext';
@@ -44,14 +44,6 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
         return newErrors;
       });
     }
-  };
-
-  const handleProfileSelect = (id: string, name: string) => {
-    setFormData(prev => ({
-      ...prev,
-      profileId: id,
-      profileName: name
-    }));
   };
 
   const handleCompanySelect = (id: string, name: string) => {
@@ -198,12 +190,8 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
       </div>
       
       {/* Sección del perfil, empresa y estándar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ProfileSelector 
-          onSelect={handleProfileSelect} 
-          error={errors.profileId} 
-        />
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             
         <CompanySelector 
           onSelect={handleCompanySelect} 
           onManualEntry={(name) => handleChange('companyName', name)}
@@ -214,43 +202,11 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
           onSelect={handleStandardSelect} 
           error={errors.standardId}
         />
-      </div>
-      
-      {/* Sección de objetivo y alcance */}
-      <div className="p-6 bg-blue-50 rounded-lg space-y-6">
-        <h2 className="text-xl font-semibold text-blue-800 mb-4">Objetivo y Alcance</h2>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Objetivo de la Auditoría
-          </label>
-          <textarea
-            value={formData.objective}
-            onChange={(e) => handleChange('objective', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto resize-none"
-            rows={3}
-            placeholder="Describe el objetivo principal de esta evaluación"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Alcance de la Auditoría
-          </label>
-          <textarea
-            value={formData.scope}
-            onChange={(e) => handleChange('scope', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto resize-none"
-            rows={3}
-            placeholder="Define el alcance y límites de esta evaluación"
-          />
-        </div>
-      </div>
-      
+      </div>            
       {/* Botones de acción */}
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-center gap-4">
         <Link to="/"
-          className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+          className="px-6 py-2 bg-red-600 border border-gray-300 rounded-md text-white hover:bg-red-700 transition-colors"
         >
           Cancelar
         </Link>

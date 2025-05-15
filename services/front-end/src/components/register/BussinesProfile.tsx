@@ -93,11 +93,11 @@ export default function ProfileBusiness() {
 
   return (
     <div className="flex min-h-screen justify-center py-5 items-center font-sans">
-      <div className=" max-w-md bg-white p-8 rounded-lg shadow-md flex flex-col items-center font-sans">
-        <div className="absolute top-8 left-115">
+      <div className=" max-w-md bg-white p-8 rounded-lg shadow-md flex flex-col items-center font-sans relative">
+        <div className="absolute top-4 left-4">
           <Link to="/" className="flex items-center text-gray-500 hover:text-blue-600 transition-colors text-sm">
             <ChevronLeft size={18} />
-            <span className="ml-1">Volver a inicio</span>
+            <span className="ml-1">Volver</span>
           </Link>
         </div>
         {logo && (
