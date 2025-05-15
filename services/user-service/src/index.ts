@@ -36,9 +36,6 @@ app
 		if (code === 'VALIDATION') {
 			set.status = 400;
 
-			// Extraemos los detalles de validación del error
-			const fieldErrors = error.all || [];
-
 			// Definimos objetos vacíos con tipos específicos
 			const errorMessages: Record<string, string> = {}; // Objeto que tendrá claves de tipo string y valores de tipo string
 			const invalidValues: Record<string, any> = {}; // Objeto que tendrá claves de tipo string y valores de cualquier tipo
@@ -69,5 +66,5 @@ app
 	.listen(Bun.env.USER_SERVICE_PORT ?? 4001);
 
 console.log(
-	`🦊 User Service ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
+	`[USER_SVC] ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
 );

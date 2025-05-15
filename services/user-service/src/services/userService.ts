@@ -2,21 +2,25 @@ import { auth, db } from '../firebase/firebase';
 import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
-	signOut,
 	sendPasswordResetEmail,
 	UserCredential,
 	User,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { logFirebaseError } from '../utils/firebaseErrors';
 import { VALID_ROLES, Role } from '../constants/roles';
+import { UserData } from '../schemas/userSchema';
 
 // Error personalizado para roles inválidos
 export class InvalidRoleError extends Error {
 	code: string;
 
 	constructor(role: string) {
-		super(`El rol '${role}' no es válido. Debe ser uno de los siguientes: ${VALID_ROLES.join(', ')}`);
+		super(
+			`El rol '${role}' no es válido. Debe ser uno de los siguientes: ${VALID_ROLES.join(
+				', '
+			)}`
+		);
 		this.name = 'InvalidRoleError';
 		this.code = 'auth/invalid-role';
 	}
@@ -50,23 +54,32 @@ export class UserService {
 			if (!this.isValidRole(role)) {
 				throw new InvalidRoleError(role);
 			}
-
+			// Crear usuario en Firebase
 			const userCredential = await createUserWithEmailAndPassword(
 				auth,
 				email,
 				password
 			);
+			/*
+			 * - userCredential es un objeto que contiene información sobre el usuario creado
+			 * - userData es la interfaz que define la estructura de los datos del usuario
+			 */
 			const user = userCredential.user;
-
+			const userData: UserData = {
+				id: user.uid,
+				email: email,
+				role: role as Role,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 			try {
 				const userRef = doc(db, 'users', user.uid);
-				await setDoc(userRef, { email, role });
+				await setDoc(userRef, userData);
 			} catch (error) {
 				logFirebaseError('createUser:setDoc', error);
 			}
 
 			console.log(`Usuario creado con rol: ${role}`);
-
 			return user;
 		} catch (error: any) {
 			logFirebaseError('createUser', error);
@@ -99,21 +112,6 @@ export class UserService {
 	}
 
 	/**
-	 * Cierra la sesión del usuario actual
-	 * @returns {Promise<void>}
-	 * @throws {Error} If sign-out fails
-	 */
-	static async signOut(): Promise<void> {
-		try {
-			await signOut(auth);
-			console.log('Usuario desconectado');
-		} catch (error: any) {
-			logFirebaseError('signOut', error);
-			throw error;
-		}
-	}
-
-	/**
 	 * Envia un email de recuperación de contraseña al usuario
 	 * @param {string} email - The email address to send the reset link to
 	 * @returns {Promise<void>}
@@ -130,12 +128,37 @@ export class UserService {
 	}
 
 	/**
-	 * Obtiene el usuario actualmente conectado
-	 * @returns {User | null} usuario actual o ninguno si no hay
+	 * Obtiene todos los usuarios registrados en Firestore
+	 * @returns {Promise<UserData[]>} - Array con todos los usuarios
+	 * @throws {Error} - Si ocurre un error al obtener los usuarios
 	 */
-	static getCurrentUser(): User | null {
-		return auth.currentUser;
+	static async getAllUsers(): Promise<UserData[]> {
+		try {
+			const usersRef = collection(db, 'users');
+			const querySnapshot = await getDocs(usersRef);
+
+			const users: UserData[] = [];
+			querySnapshot.forEach((doc) => {
+				const data = doc.data();
+				// Convertir campos de fecha de Firestore a objetos Date de JavaScript
+				const user: UserData = {
+					id: doc.id,
+					email: data.email,
+					role: data.role,
+					createdAt: data.createdAt
+						? new Date(data.createdAt.seconds * 1000)
+						: new Date(),
+					updatedAt: data.updatedAt
+						? new Date(data.updatedAt.seconds * 1000)
+						: new Date(),
+				};
+				users.push(user);
+			});
+
+			return users;
+		} catch (error: any) {
+			logFirebaseError('getAllUsers', error);
+			throw error;
+		}
 	}
 }
-
-export default UserService;

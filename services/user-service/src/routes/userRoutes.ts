@@ -161,57 +161,63 @@ export function registerUserRoutes(app: Elysia<any>) {
 				},
 			}
 		)
-		// .get(
-		// 	'/getUsers',
-		// 	async ({ error }) => {
-		// 		try {
-		// 			const users = await UserService.getAllUsers();
-		// 			return {
-		// 				success: true,
-		// 				message: 'Usuarios obtenidos exitosamente',
-		// 				users: users,
-		// 			};
-		// 		} catch (err: any) {
-		// 			const errorResponse = createErrorResponse(
-		// 				err,
-		// 				'Error al obtener usuarios'
-		// 			);
+		.get(
+			'/getUsers',
+			async ({ error }) => {
+				try {
+					const users = await UserService.getAllUsers();
+					return {
+						success: true,
+						message: 'Usuarios obtenidos exitosamente',
+						users: users.map((user) => ({
+							uid: user.id,
+							email: user.email,
+							role: user.role,
+							createdAt: user.createdAt.toISOString(),
+							updatedAt: user.updatedAt.toISOString(),
+						})),
+					};
+				} catch (err: any) {
+					const errorResponse = createErrorResponse(
+						err,
+						'Error al obtener usuarios'
+					);
 
-		// 			return error(500, {
-		// 				success: false,
-		// 				message: errorResponse.message,
-		// 				errorCode: errorResponse.errorCode,
-		// 			});
-		// 		}
-		// 	},
-		// 	{
-		// 		response: {
-		// 			200: t.Object({
-		// 				success: t.Boolean(),
-		// 				message: t.String(),
-		// 				users: t.Array(
-		// 					t.Object({
-		// 						uid: t.String(),
-		// 						email: t.String(),
-		// 						role: t.String(),
-		// 						createdAt: t.Optional(t.String()),
-		// 						updatedAt: t.Optional(t.String()),
-		// 					})
-		// 				),
-		// 			}),
-		// 			500: t.Object({
-		// 				success: t.Boolean(),
-		// 				message: t.String(),
-		// 				errorCode: t.Optional(t.String()),
-		// 			}),
-		// 		},
-		// 		detail: {
-		// 			summary: 'Obtiene todos los usuarios',
-		// 			description:
-		// 				'Obtiene la lista de todos los usuarios registrados en Firestore',
-		// 			tags: ['Usuarios'],
-		// 		},
-		// 	}
-		// );
+					return error(500, {
+						success: false,
+						message: errorResponse.message,
+						errorCode: errorResponse.errorCode,
+					});
+				}
+			},
+			{
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						users: t.Array(
+							t.Object({
+								uid: t.String(),
+								email: t.String(),
+								role: t.String(),
+								createdAt: t.String(),
+								updatedAt: t.String(),
+							})
+						),
+					}),
+					500: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+				},
+				detail: {
+					summary: 'Obtiene todos los usuarios',
+					description:
+						'Obtiene la lista de todos los usuarios registrados en Firestore',
+					tags: ['Usuarios'],
+				},
+			}
+		);
 	return app;
 }
