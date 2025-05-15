@@ -26,7 +26,7 @@ export function validateFirebaseConfig() {
 			throw new Error(`Missing Firebase var: ${key}`);
 		}
 	}
-	console.log(`Valid Firebase config for doc-manager service 😎`);
+	console.log(`[COMPANY_SVC] Firebase config: OK`);
 }
 
 // Ejecutar validación al inicializar

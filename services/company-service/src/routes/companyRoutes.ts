@@ -17,6 +17,29 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 					// Crear la empresa en Firestore
 					const company = await CompanyService.createCompany(companyData);
 
+					// Convertir los objetos Timestamp de Firestore a formatos compatibles si se incluyen en la respuesta
+					const createdAt =
+						company.createdAt instanceof Date
+							? company.createdAt
+							: company.createdAt &&
+							  typeof company.createdAt === 'object' &&
+							  'seconds' in company.createdAt
+							? new Date(
+									(company.createdAt as { seconds: number }).seconds * 1000
+							  )
+							: new Date();
+
+					const updatedAt =
+						company.updatedAt instanceof Date
+							? company.updatedAt
+							: company.updatedAt &&
+							  typeof company.updatedAt === 'object' &&
+							  'seconds' in company.updatedAt
+							? new Date(
+									(company.updatedAt as { seconds: number }).seconds * 1000
+							  )
+							: new Date();
+
 					return {
 						success: true,
 						message: 'Empresa creada exitosamente',
@@ -28,6 +51,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							address: company.address,
 							businessType: company.businessType,
 							employeeRange: company.employeeRange,
+							createdAt: createdAt,
+							updatedAt: updatedAt,
 						},
 					};
 				} catch (err: any) {
@@ -71,6 +96,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							address: t.String(),
 							businessType: t.String(),
 							employeeRange: t.String(),
+							createdAt: t.Date(),
+							updatedAt: t.Date(),
 						}),
 					}),
 					400: t.Object({
@@ -97,13 +124,32 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 			}
 		)
 		.get(
-			'/nit/:nit',
+			'/getNit/:nit',
 			async ({ params, error }) => {
 				try {
 					const { nit } = params;
 
 					// Obtener la empresa por su NIT
 					const company = await CompanyService.getCompanyByNit(nit);
+
+					// Convertir los objetos Timestamp de Firestore a formatos compatibles
+					const createdAt =
+						company.createdAt instanceof Date
+							? company.createdAt
+							: company.createdAt &&
+							  typeof company.createdAt === 'object' &&
+							  'seconds' in company.createdAt
+							? new Date((company.createdAt as any).seconds * 1000)
+							: new Date();
+
+					const updatedAt =
+						company.updatedAt instanceof Date
+							? company.updatedAt
+							: company.updatedAt &&
+							  typeof company.updatedAt === 'object' &&
+							  'seconds' in company.updatedAt
+							? new Date((company.updatedAt as any).seconds * 1000)
+							: new Date();
 
 					return {
 						success: true,
@@ -115,8 +161,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							address: company.address,
 							businessType: company.businessType,
 							employeeRange: company.employeeRange,
-							createdAt: company.createdAt,
-							updatedAt: company.updatedAt,
+							createdAt: createdAt,
+							updatedAt: updatedAt,
 						},
 					};
 				} catch (err: any) {
@@ -155,8 +201,8 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							address: t.String(),
 							businessType: t.String(),
 							employeeRange: t.String(),
-							createdAt: t.Number(),
-							updatedAt: t.Number(),
+							createdAt: t.Date(),
+							updatedAt: t.Date(),
 						}),
 					}),
 					404: t.Object({
@@ -190,6 +236,16 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 						updateData
 					);
 
+					// Convertir el objeto Timestamp de updatedAt a un formato compatible
+					const updatedAtDate =
+						updatedCompany.updatedAt instanceof Date
+							? updatedCompany.updatedAt
+							: updatedCompany.updatedAt &&
+							  typeof updatedCompany.updatedAt === 'object' &&
+							  'seconds' in updatedCompany.updatedAt
+							? new Date((updatedCompany.updatedAt as any).seconds * 1000)
+							: new Date();
+
 					return {
 						success: true,
 						message: 'Empresa actualizada exitosamente',
@@ -201,7 +257,7 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 							address: updatedCompany.address,
 							businessType: updatedCompany.businessType,
 							employeeRange: updatedCompany.employeeRange,
-							updatedAt: updatedCompany.updatedAt,
+							updatedAt: updatedAtDate,
 						},
 					};
 				} catch (err: any) {
@@ -270,6 +326,59 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 				detail: {
 					summary: 'Actualizar empresa',
 					description: 'Actualiza los datos de una empresa',
+					tags: ['Empresas'],
+				},
+			}
+		)
+		.get(
+			'/getCompanies',
+			async ({ error }) => {
+				try {
+					const companies = await CompanyService.getAllCompanies();
+
+					return {
+						success: true,
+						message: 'Empresas obtenidas exitosamente',
+						companies: companies.map((company) => ({
+							nit: company.nit,
+							companyName: company.companyName,
+						})),
+					};
+				} catch (err: any) {
+					const errorResponse = createCompanyErrorResponse(
+						err,
+						'Error al obtener las empresas'
+					);
+
+					return error(500, {
+						success: false,
+						message: errorResponse.message,
+						errorCode: errorResponse.errorCode,
+					});
+				}
+			},
+			{
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						companies: t.Array(
+							t.Object({
+								nit: t.String(),
+								companyName: t.String(),
+							})
+						),
+					}),
+					500: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+				},
+				detail: {
+					summary: 'Obtener todas las empresas',
+					description:
+						'Obtiene la lista de todas las empresas registradas con su NIT y nombre',
 					tags: ['Empresas'],
 				},
 			}

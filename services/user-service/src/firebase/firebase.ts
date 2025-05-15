@@ -27,7 +27,7 @@ export function validateFirebaseConfig() {
       throw new Error(`Missing Firebase var: ${key}`);
     }
   }
-  console.log(`[USER-SVC] Firebase config: OK`);
+  console.log(`[USER_SVC] Firebase config: OK`);
 }
 
 // Ejecutar validación al inicializar
