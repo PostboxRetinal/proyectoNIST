@@ -92,6 +92,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 		.post(
 			'/login',
 			async ({ body, error }) => {
+				// Validación de rol - lanza error específico
 				try {
 					const { email, password } = body as any;
 					const user = await UserService.loginUser(email, password);
@@ -100,11 +101,13 @@ export function registerUserRoutes(app: Elysia<any>) {
 						message: 'Inicio de sesión exitoso',
 						userId: user.uid,
 					};
+					// Si el inicio de sesión es exitoso, devolvemos el ID del usuario
 				} catch (err: any) {
 					const errorResponse = createErrorResponse(
 						err,
 						'Error al iniciar sesión'
 					);
+					// Si el error es 400, 401 o 404, devolvemos un error específico
 					if (errorResponse.status === 404) {
 						return error(404, {
 							success: false,
@@ -157,6 +160,58 @@ export function registerUserRoutes(app: Elysia<any>) {
 					tags: ['Usuarios'],
 				},
 			}
-		);
+		)
+		// .get(
+		// 	'/getUsers',
+		// 	async ({ error }) => {
+		// 		try {
+		// 			const users = await UserService.getAllUsers();
+		// 			return {
+		// 				success: true,
+		// 				message: 'Usuarios obtenidos exitosamente',
+		// 				users: users,
+		// 			};
+		// 		} catch (err: any) {
+		// 			const errorResponse = createErrorResponse(
+		// 				err,
+		// 				'Error al obtener usuarios'
+		// 			);
+
+		// 			return error(500, {
+		// 				success: false,
+		// 				message: errorResponse.message,
+		// 				errorCode: errorResponse.errorCode,
+		// 			});
+		// 		}
+		// 	},
+		// 	{
+		// 		response: {
+		// 			200: t.Object({
+		// 				success: t.Boolean(),
+		// 				message: t.String(),
+		// 				users: t.Array(
+		// 					t.Object({
+		// 						uid: t.String(),
+		// 						email: t.String(),
+		// 						role: t.String(),
+		// 						createdAt: t.Optional(t.String()),
+		// 						updatedAt: t.Optional(t.String()),
+		// 					})
+		// 				),
+		// 			}),
+		// 			500: t.Object({
+		// 				success: t.Boolean(),
+		// 				message: t.String(),
+		// 				errorCode: t.Optional(t.String()),
+		// 			}),
+		// 		},
+		// 		detail: {
+		// 			summary: 'Obtiene todos los usuarios',
+		// 			description:
+		// 				'Obtiene la lista de todos los usuarios registrados en Firestore',
+		// 			tags: ['Usuarios'],
+		// 		},
+		// 	}
+		// );
 	return app;
 }

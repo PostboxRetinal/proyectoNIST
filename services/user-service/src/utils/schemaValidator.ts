@@ -21,7 +21,7 @@ export const createUserValidator = t.Object({
 		error:
 			'La contraseña debe tener al menos 6 caracteres, incluir una letra minúscula, un número y un carácter no alfanumérico',
 	}),
-	role: t.Optional(RoleValidator),
+	role: t.String(RoleValidator),
 });
 
 export const loginUserValidator = t.Object({

@@ -1,11 +1,11 @@
 FROM docker.io/oven/bun:1.2.12-alpine
 
-WORKDIR /forms-manager
+WORKDIR /company-service
 
 COPY . .
 
 RUN bun install
 
-EXPOSE 4003
+EXPOSE 4002
 
 CMD ["bun", "run", "dev"]

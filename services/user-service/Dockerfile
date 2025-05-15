@@ -1,5 +1,5 @@
 # Dockerfile for User Service
-FROM docker.io/oven/bun:latest
+FROM docker.io/oven/bun:1.2.12-alpine
 
 WORKDIR /user-service
 
