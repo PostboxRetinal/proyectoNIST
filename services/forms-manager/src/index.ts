@@ -47,8 +47,8 @@ app
 	)
 	.use(logger({ includeIp: true }))
 	.use(registerAuditRoutes)
-	.listen(Bun.env.PORT || 4003);
+	.listen(Bun.env.PORT ?? 4003);
 
 console.log(
-	`🚨 NIST 800-30 Audit app is running at ${app.server?.hostname}:${app.server?.port}`
+	`[FORM_SVC] ejecutándose en ${app.server?.hostname}:${app.server?.port}`
 );

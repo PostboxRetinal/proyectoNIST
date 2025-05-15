@@ -18,7 +18,7 @@ app
 		swagger({
 			documentation: {
 				info: {
-					title: 'proyectoNIST doc-manager service API',
+					title: 'proyectoNIST Company-service API',
 					version: '1.0.0',
 				},
 			},
