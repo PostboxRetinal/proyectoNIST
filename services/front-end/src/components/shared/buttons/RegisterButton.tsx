@@ -11,10 +11,10 @@ const RegisterButton = ({
 }: RegisterButtonProps) => {
   return (
     <Link
-      to="/api/registerUser"
+      to="/api/registerCompany"
       className={className}
     >
-      {showText && "Registrarse"}
+      {showText && "Crear Empresa"}
     </Link>
   );
 };

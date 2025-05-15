@@ -5,6 +5,7 @@ import { profileTexts } from "../../data/profileTexts";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ChevronLeft } from 'lucide-react';
+import { useAlerts } from "../alert/AlertContext";
 
 
 interface RegisterResponse {
@@ -16,72 +17,77 @@ interface RegisterResponse {
 export default function ProfileBusiness() {
   const profile = profileTexts["businessProfile"];
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { addAlert } = useAlerts(); // Usamos el hook de alertas
 
   const handleChange = (label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const missingFields = profile.inputs.filter(input => 
-      input.type !== "subtitle" && !formData[input.label]
+    e.preventDefault();    const missingFields = profile.inputs.filter(input => 
+      input.type !== "subtitle" && input.required && !formData[input.label]
     );
 
     if (missingFields.length > 0) {
-      setError('Por favor completa todos los campos.');
+      addAlert('error', 'Por favor completa todos los campos obligatorios');
       return;
     }
 
-    if (formData["Contraseña"] !== formData["Confirmar Contraseña"]) {
-      setError('Las contraseñas no coinciden.');
+    // Validar formato de correo electrónico
+    const emailField = formData["Email de la Compañía"];
+    if (emailField && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField)) {
+      addAlert('error', 'Por favor ingresa un correo electrónico válido');
+      return;
+    }    // Validar formato del NIT
+    const nitField = formData["NIT"];
+    if (nitField && !/^\d{9}-\d{1}$/.test(nitField)) {
+      addAlert('warning', 'El NIT debe tener el formato: 9 dígitos, guion, 1 dígito (Ej: 900123456-7)');
       return;
     }
 
-    setError('');
     setLoading(true);
-    
-    try {
+      try {
       // Preparamos los datos para el backend según su estructura esperada
       const businessData = {
           companyName: formData["Nombre de la Empresa"],
-          nit: formData["Número de Identificación Fiscal"],
-          businessType: formData["Industria"],
-          employeeRange: formData["Tamaño de la Empresa"],
+          nit: formData["NIT"],
+          businessType: formData["Área empresarial"],
+          employeeRange: formData["Número de Empleados"],
           address: formData["Dirección"],
           phone: formData["Teléfono"],
-          userId: "123456",
-          email: formData["Correo Electrónico"],
-          
-        
+          email: formData["Email de la Compañía"],
+                  
       };
       
       // Realizamos la petición al backend
       const response = await axios.post<RegisterResponse>(
-        'http://localhost:4002/api/company/newCompany', 
+        'http://localhost:3000/api/company/newCompany', 
         businessData
       );
       
       if (response.data.success) {
         console.log('Registro exitoso:', response.data);
-        // Opcional: guardar datos en localStorage o context si es necesario
         
-        // Redirigir al usuario a la página de login o dashboard
-        navigate('/');
+        // Mostrar mensaje de éxito
+        addAlert('success', 'Perfil de empresa creado exitosamente');
+        
+        // Redirigir al usuario a la página de login o dashboard después de un breve delay
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
       } else {
-        setError(response.data.message || 'Error en el registro');
+        addAlert('error', response.data.message || 'Error en el registro');
       }
     } catch (err: any) {
       console.error('Error de registro:', err);
       
       if (err.response) {
         const errorMessage = err.response.data.message || 'Error en el registro';
-        setError(errorMessage);
+        addAlert('error', errorMessage);
       } else {
-        setError('Error en la conexión con el servidor. Intenta más tarde.');
+        addAlert('error', 'Error en la conexión con el servidor. Intenta más tarde.');
       }
     } finally {
       setLoading(false);
@@ -102,9 +108,7 @@ export default function ProfileBusiness() {
         </div>
         {logo && (
           <img src={logo} alt="Logo" className="h-35 mb-7" />
-        )}
-
-        <form onSubmit={handleSubmit} className="w-full space-y-6">
+        )}        <form onSubmit={handleSubmit} className="w-full space-y-6" noValidate>
           <h2 className="text-2xl text-center">{profile.title}</h2>
           <p className="text-sm text-gray-600 mb-6 text-center">{profile.description}</p>
 
@@ -113,9 +117,7 @@ export default function ProfileBusiness() {
               return (
                 <h3 key={i} className="text-lg mt-6 mb-2">{input.label}</h3>
               );
-            }
-
-            if (input.type === "radio" && input.options) {
+            }            if (input.type === "radio" && input.options) {
               return (
                 <div key={i} className="mb-4">
                   <label className="block text-sm mb-2">{input.label}</label>
@@ -138,6 +140,29 @@ export default function ProfileBusiness() {
               );
             }
 
+            if (input.type === "select" && input.options) {
+              return (
+                <div key={i} className="mb-4">
+                  <label htmlFor={input.label} className="block text-sm mb-1">
+                    {input.label}
+                  </label>
+                  <select
+                    id={input.label}
+                    value={formData[input.label] || ""}
+                    onChange={(e) => handleChange(input.label, e.target.value)}
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {input.options.map((option, idx) => (
+                      <option key={idx} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }
+
             return (
               <div key={i}>
                 <label htmlFor={input.label} className="block text-sm mb-1">
@@ -153,11 +178,7 @@ export default function ProfileBusiness() {
                 />
               </div>
             );
-          })}
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <button
+          })}          <button
             type="submit"
             disabled={loading}
             className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md transition ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
