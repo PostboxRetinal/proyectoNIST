@@ -26,8 +26,15 @@ interface Seccion {
 }
 
 interface FormularioData {
-  fechaCreacion: string;
-  normativa: string;
+   fechaCreacion: string;
+  program: string;
+  config: {
+    nistThresholds: {
+      lowRisk: number;
+      mediumRisk: number;
+    }
+  };
+  
 }
 
 const CreateAuditForm: React.FC = () => {
@@ -36,7 +43,13 @@ const CreateAuditForm: React.FC = () => {
   // Estado para los datos generales del formulario
   const [formData, setFormData] = useState<FormularioData>({
     fechaCreacion: new Date().toISOString(),
-    normativa: ""
+    program: "",
+    config: {
+      nistThresholds: {
+        lowRisk: 80,
+        mediumRisk: 50
+      }
+    }
   });
 
   // Estado para las secciones del formulario
@@ -418,7 +431,7 @@ const CreateAuditForm: React.FC = () => {
 
   // Función para crear un JSON del formulario
   const crearJSON = (): string | null => {
-    if (formData.normativa.trim() === "") {
+    if (formData.program.trim() === "") {
       addAlert('error', "El nombre de la normativa no puede estar vacío");
       return null;
     }
@@ -515,6 +528,42 @@ const CreateAuditForm: React.FC = () => {
         
         // Mostrar mensaje de éxito
         addAlert('success', "Formulario guardado exitosamente en el servidor");
+      setFormData({
+        fechaCreacion: new Date().toISOString(),
+        program: "",
+        config: {
+          nistThresholds: {
+            lowRisk: 80,
+            mediumRisk: 50
+          }
+        }
+      });
+      setSecciones([]);
+      setCurrentSeccion({
+        id: "",
+        titulo: "",
+        subSecciones: []
+      });
+      setCurrentSubSeccion({
+        id: "",
+        titulo: "",
+        preguntas: []
+      });
+      setCurrentPregunta({
+        id: "",
+        texto: "",
+        tipo: "si_no",
+        opciones: ["Sí", "No", "Parcialmente", "No aplica"],
+        esObligatoria: true
+      });
+      
+      // Limpiar también los estados de edición por si acaso
+      setSeccionEnEdicion(null);
+      setSubSeccionEnEdicion(null);
+      setPreguntaEnEdicion(null);
+      setEditandoSeccionId(null);
+      setEditandoSubSeccionId(null);
+      setEditandoPreguntaId(null);
       } else {
         console.error("Error al guardar el formulario:", response);
         addAlert('error', `Error al guardar el formulario: ${response.data.message || 'Error en el servidor'}`);
@@ -547,12 +596,12 @@ const CreateAuditForm: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre de la normativa*
+              Nombre de la Normativa*
             </label>
             <input
               type="text"
-              name="normativa"
-              value={formData.normativa}
+              name="program"
+              value={formData.program}
               onChange={handleFormDataChange}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Ej: ISO 9001"
@@ -562,6 +611,76 @@ const CreateAuditForm: React.FC = () => {
         </div>
       </div>
       
+      <div className="mt-4 border-t pt-4 border-gray-200">
+        <h3 className="text-md font-semibold mb-2">Umbrales de Riesgo</h3>
+        <p className="text-sm text-gray-600 mb-3">
+          Los umbrales determinan cómo se clasifican los resultados de la evaluación:
+          <ul className="list-disc ml-5 mt-1">
+            <li>Por encima del umbral de <strong>Riesgo Bajo</strong>: Se considera bajo riesgo (color verde)</li>
+            <li>Entre ambos umbrales: Se considera riesgo medio (color amarillo)</li>
+            <li>Por debajo del umbral de <strong>Riesgo Medio</strong>: Se considera alto riesgo (color rojo)</li>
+          </ul>
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Umbral de Riesgo Bajo (%)
+            </label>
+            <input
+              type="number"
+              value={formData.config.nistThresholds.lowRisk}
+              onChange={(e) => setFormData({
+                ...formData,
+                config: {
+                  ...formData.config,
+                  nistThresholds: {
+                    ...formData.config.nistThresholds,
+                    lowRisk: parseInt(e.target.value) || 80
+                  }
+                }
+              })}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              min="0"
+              max="100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Umbral de Riesgo Medio (%)
+            </label>
+            <input
+              type="number"
+              value={formData.config.nistThresholds.mediumRisk}
+              onChange={(e) => setFormData({
+                ...formData,
+                config: {
+                  ...formData.config,
+                  nistThresholds: {
+                    ...formData.config.nistThresholds,
+                    mediumRisk: parseInt(e.target.value) || 50
+                  }
+                }
+              })}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              min="0"
+              max="100"
+            />
+          </div>
+        </div>
+        
+        <div className="mt-2 flex items-center">
+          <div className="w-4 h-4 bg-green-500 rounded-full mr-1"></div>
+          <span className="text-xs text-gray-600 mr-3">≥ {formData.config.nistThresholds.lowRisk}%</span>
+          
+          <div className="w-4 h-4 bg-yellow-500 rounded-full mr-1"></div>
+          <span className="text-xs text-gray-600 mr-3">{formData.config.nistThresholds.mediumRisk}% - {formData.config.nistThresholds.lowRisk - 1}%</span>
+          
+          <div className="w-4 h-4 bg-red-500 rounded-full mr-1"></div>
+          <span className="text-xs text-gray-600"> {formData.config.nistThresholds.mediumRisk}%</span>
+        </div>
+      </div>
+
       {/* Secciones existentes */}
       {secciones.length > 0 && (
         <div className="mb-8">
@@ -1246,7 +1365,13 @@ const CreateAuditForm: React.FC = () => {
             // Reiniciar todos los estados a sus valores iniciales
             setFormData({
               fechaCreacion: new Date().toISOString(),
-              normativa: ""
+              program: "",
+              config: {
+                nistThresholds: {
+                  lowRisk: 80,
+                  mediumRisk: 50
+                }
+              }
             });
             setSecciones([]);
             setCurrentSeccion({
@@ -1275,7 +1400,7 @@ const CreateAuditForm: React.FC = () => {
           type="button"
           onClick={guardarFormulario}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          disabled={secciones.length === 0}
+          disabled={secciones.length === 0 || formData.program.trim() === ""} // Cambiado de 'normativa' a 'program'
         >
           Guardar formulario
         </button>
