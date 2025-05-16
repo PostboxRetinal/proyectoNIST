@@ -61,6 +61,35 @@ export const profileTexts = {
           required: true
         }        
       ]
+    },
+    "userProfile": {
+      title: "Perfil de Usuario",
+      description: `Por favor, completa la siguiente información para crear tu perfil de usuario. Esta información será utilizada para identificarte dentro de la plataforma.`,
+      inputs: [
+        {
+          type: "subtitle",
+          label: "Información Personal"
+        },
+        {
+          type: "text",
+          label: "Email",
+          placeholder: "Ej: Sebastian@gmail.com",
+          required: true
+        },
+        {
+          type: "password",
+          label: "Contraseña",
+          placeholder: "Ej: ********",
+          required: true
+        },
+        {
+          type: "select",
+          label: "Rol",
+          options: ['Admin',
+                    'Auditor'],
+          required: true
+        },
+      ]
     }
 };
 

@@ -2,7 +2,8 @@ import { useRoutes } from 'react-router-dom';
 import Auditory from '../pages/Auditory';
 import Login from '../pages/Login';
 import Home from '../pages/Home';
-import Register from '../pages/Register';
+import RegisterBussines from '../pages/RegisterBussines';
+import RegisterUser from '../pages/RegisterUser';
 import NewAuditory from '../components/newauditory/NewAuditory';
 import Mainauditory from '../pages/ManagerAuditory';
 import CreateAuditory from '../pages/CreateAuditory';
@@ -16,7 +17,8 @@ const AppRoutes = () => {
         { path: '/auditory', element: <Auditory /> },
         { path: '/newauditory', element: <NewAuditory /> },
         { path: '/api/loginUser', element: <Login /> },
-        { path: '/api/registerCompany', element: <Register /> },
+        { path: '/api/registerCompany', element: <RegisterBussines /> },
+        { path: '/api/registerUser', element: <RegisterUser /> },
         { path: '/mainauditory', element: <Mainauditory /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
