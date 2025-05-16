@@ -8,6 +8,7 @@ interface LoginResponse {
   success: boolean;
   message: string;
   userId: string;
+  role: string;
 }
 
 export default function PanelLogin() {
@@ -31,22 +32,24 @@ export default function PanelLogin() {
     
     try {
       // Llamada al endpoint de login del backend
-      const response = await axios.post<LoginResponse>('http://localhost:4001/api/user/login', {
+      const response = await axios.post<LoginResponse>('http://localhost:3000/api/user/login', {
         email,
         password
       });
       
       // Si la respuesta es exitosa
       if (response.data.success) {
-        console.log('Login exitoso:', response.data);
-
+        
         // Guardar el nombre de usuario (usando el email como nombre temporal)
         localStorage.setItem('userName', email.split('@')[0]);
         
         // Guardar la información de usuario en localStorage para mantener la sesión
         localStorage.setItem('userId', response.data.userId);
         
+        // Guardar el rol del usuario
+        localStorage.setItem('role', response.data.role);
         // Redirigir al usuario a la página principal
+        
         navigate('/');
       }
     } catch (err: any) {

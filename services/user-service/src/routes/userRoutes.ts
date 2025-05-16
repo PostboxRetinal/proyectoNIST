@@ -63,6 +63,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 						success: t.Boolean(),
 						message: t.String(),
 						userId: t.String(),
+						role: t.String(),
 					}),
 					400: t.Object({
 						success: t.Boolean(),
@@ -97,10 +98,13 @@ export function registerUserRoutes(app: Elysia<any>) {
 				try {
 					const { email, password } = body as any;
 					const user = await UserService.loginUser(email, password);
+					const userData = await UserService.getUserData(user.uid);
+      				
 					return {
 						success: true,
 						message: 'Inicio de sesión exitoso',
 						userId: user.uid,
+						role: userData.role
 					};
 					// Si el inicio de sesión es exitoso, devolvemos el ID del usuario
 				} catch (err: any) {
@@ -137,6 +141,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 						success: t.Boolean(),
 						message: t.String(),
 						userId: t.String(),
+						role: t.String(),
 					}),
 					400: t.Object({
 						success: t.Boolean(),

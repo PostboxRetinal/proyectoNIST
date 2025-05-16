@@ -1,50 +1,183 @@
-import { useState } from "react";
-import { PlusCircle, Users, Eye, Edit, Trash2, Home } from "lucide-react";
+import { useState, useEffect } from "react";
+import { PlusCircle, Users, Edit, Trash2, Home, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { useAlerts } from "../alert/AlertContext";
+import EditModal from "./EditModal";
+import ConfirmModal from "./ConfirmModal";
+
+// Definimos las interfaces para la respuesta de la API y el modelo de usuario
+interface UserResponse {
+  success: boolean;
+  message: string;
+  users: User[];
+}
+
+interface User {
+  uid: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  newPassword?: string;
+}
 
 export default function UserManagement() {
-  // Estado para simular datos de usuarios
-  const [usuarios, setUsuarios] = useState([
-    {
-      id: 1,
-      nombre: "Carlos Méndez",
-      email: "carlos.mendez@ejemplo.com",
-      rol: "Administrador"
-    },
-    {
-      id: 2,
-      nombre: "María González",
-      email: "maria.gonzalez@ejemplo.com",
-      rol: "Auditor"
-    },
-    {
-      id: 3, 
-      nombre: "Juan Pérez",
-      email: "juan.perez@ejemplo.com",
-      rol: "Gestor"
-    },
-    {
-      id: 4,
-      nombre: "Ana Ramírez",
-      email: "ana.ramirez@ejemplo.com",
-      rol: "Auditor"        
-    }
-  ]);
+  // Obtenemos la función para mostrar alertas
+  const { addAlert } = useAlerts();
+  
+  // Estado para almacenar los usuarios desde la API
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Estado para el filtro de búsqueda
   const [filtro, setFiltro] = useState("");
   
+  // Estado para el usuario que se está editando
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  
+  // Estado para el usuario que se está eliminando
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Cargar usuarios desde la API al montar el componente
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Función para obtener los usuarios desde la API
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get<UserResponse>("http://localhost:3000/api/user/getUsers");
+      
+      if (response.data.success) {
+        // Transformamos los datos recibidos para adaptarlos a nuestra interfaz
+        const formattedUsers = response.data.users.map(user => ({
+          ...user,
+          nombre: user.email.split('@')[0] // Usamos parte del email como nombre si no hay campo de nombre
+        }));
+        
+        setUsuarios(formattedUsers);
+      } else {
+        setError("Error al cargar usuarios: " + response.data.message);
+        addAlert("error", "Error al cargar usuarios: " + response.data.message);
+      }
+    } catch (err: any) {
+      console.error("Error al cargar usuarios:", err);
+      setError(err.response?.data?.message || "Error al conectar con el servidor");
+      addAlert("error", err.response?.data?.message || "Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Filtrar usuarios por nombre o email
   const usuariosFiltrados = usuarios.filter(usuario => 
-    usuario.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
     usuario.email.toLowerCase().includes(filtro.toLowerCase())
   );
   
+  // Iniciar eliminación de un usuario
+  const iniciarEliminacionUsuario = (usuario: User) => {
+    setDeletingUser(usuario);
+    setShowDeleteModal(true);
+  };
+  
   // Eliminar un usuario
-  const eliminarUsuario = (id: number) => {
-    if(window.confirm("¿Está seguro que desea eliminar este usuario?")) {
-      setUsuarios(prevUsuarios => prevUsuarios.filter(usuario => usuario.id !== id));
+  const confirmarEliminarUsuario = async () => {
+    if (!deletingUser) return;
+    
+    try {
+      const response = await axios.delete(`http://localhost:3000/api/user/deleteUser/${deletingUser.uid}`);
+      
+      if (response.data.success) {
+        // Actualizar la lista de usuarios eliminando el usuario borrado
+        setUsuarios(prevUsuarios => prevUsuarios.filter(usuario => usuario.uid !== deletingUser.uid));
+        addAlert("success", "Usuario eliminado correctamente");
+        setShowDeleteModal(false);
+        setDeletingUser(null);
+      } else {
+        addAlert("error", "Error al eliminar usuario: " + response.data.message);
+      }
+    } catch (err: any) {
+      console.error("Error al eliminar usuario:", err);
+      addAlert("error", err.response?.data?.message || "Error al conectar con el servidor");
     }
+  };
+
+  // Iniciar edición de un usuario
+  const iniciarEdicionUsuario = (usuario: User) => {
+    setEditingUser({...usuario});
+    setShowEditModal(true);
+  };
+
+  // Guardar cambios del usuario editado
+  const guardarCambiosUsuario = async () => {
+    if (!editingUser) return;
+
+    const updateData = {
+      email: editingUser.email,
+      role: editingUser.role
+    };
+
+    if (editingUser.newPassword && editingUser.newPassword.trim() !== "") {
+      Object.assign(updateData, { password: editingUser.newPassword });
+    }
+
+    try {
+      const response = await axios.put(`http://localhost:3000/api/user/updateUser/${editingUser.uid}`, {
+        email: editingUser.email,
+        role: editingUser.role
+      });
+ 
+      if (response.data.success) {
+        // Actualizar la lista de usuarios con el usuario modificado
+        setUsuarios(prevUsuarios => 
+          prevUsuarios.map(usuario => 
+            usuario.uid === editingUser.uid ? {
+              ...editingUser,
+              updatedAt: new Date().toISOString(),
+              // Eliminamos el campo temporal de contraseña
+              newPassword: undefined
+            } : usuario
+          )
+        );
+        
+        setShowEditModal(false);
+        setEditingUser(null);
+        addAlert("success", "Usuario actualizado correctamente");
+      } else {
+        addAlert("error", "Error al actualizar usuario: " + response.data.message);
+      }
+    } catch (err: any) {
+      console.error("Error al actualizar usuario:", err);
+      addAlert("error", err.response?.data?.message || "Error al conectar con el servidor");
+    }
+  };
+
+  // Manejar cambios en el formulario de edición
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (editingUser) {
+      setEditingUser({
+        ...editingUser,
+        [name]: value
+      });
+    }
+  };
+
+  // Función para formatear fechas
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -72,6 +205,17 @@ export default function UserManagement() {
               <Users className="h-5 w-5 mr-2" />
               Gestionar Roles
             </Link>
+            <button
+              onClick={() => {
+                fetchUsers();
+                addAlert("info", "Actualizando lista de usuarios...");
+              }}
+              className="bg-green-600 text-white hover:bg-green-700 px-5 py-2 rounded-lg flex items-center transition-colors"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-5 w-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Recargar
+            </button>
           </div>
         </div>
         
@@ -86,60 +230,73 @@ export default function UserManagement() {
           />
         </div>
         
-        {/* Tabla de usuarios */}
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="min-w-full bg-white overflow-hidden">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="py-3 px-4 text-left text-gray-700">Nombre</th>
-                <th className="py-3 px-4 text-left text-gray-700">Email</th>
-                <th className="py-3 px-4 text-left text-gray-700">Rol</th>
-                
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {usuariosFiltrados.map((usuario) => (
-                <tr key={usuario.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4">{usuario.nombre}</td>
-                  <td className="py-3 px-4">{usuario.email}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs text-white ${
-                      usuario.rol === "Administrador" ? "bg-purple-500" : 
-                      usuario.rol === "Auditor" ? "bg-green-500" : "bg-blue-500"
-                    }`}>
-                      {usuario.rol}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <button 
-                        className="text-blue-500 hover:text-blue-700 transition-colors"
-                        aria-label="Ver usuario"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
-                      <button 
-                        className="text-yellow-500 hover:text-yellow-700 transition-colors"
-                        aria-label="Editar usuario"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button 
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        onClick={() => eliminarUsuario(usuario.id)}
-                        aria-label="Eliminar usuario"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Mensaje de error */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
         
-        {usuariosFiltrados.length === 0 && (
+        {/* Estado de carga */}
+        {loading ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">Cargando usuarios...</p>
+          </div>
+        ) : (
+          /* Tabla de usuarios */
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="min-w-full bg-white overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="py-3 px-4 text-left text-gray-700">Nombre/Email</th>
+                  <th className="py-3 px-4 text-left text-gray-700">Email</th>
+                  <th className="py-3 px-4 text-left text-gray-700">Rol</th>
+                  <th className="py-3 px-4 text-left text-gray-700">Creado</th>
+                  <th className="py-3 px-4 text-left text-gray-700">Actualizado</th>
+                  <th className="py-3 px-4 text-left text-gray-700">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {usuariosFiltrados.map((usuario) => (
+                  <tr key={usuario.uid} className="hover:bg-gray-50">
+                    <td className="py-3 px-4">{usuario.email.split('@')[0]}</td>
+                    <td className="py-3 px-4">{usuario.email}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs text-white ${
+                        usuario.role === "admin" ? "bg-purple-500" : 
+                        usuario.role === "auditor" ? "bg-green-500" : "bg-blue-500"
+                      }`}>
+                        {usuario.role}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-sm">{formatDate(usuario.createdAt)}</td>
+                    <td className="py-3 px-4 text-sm">{formatDate(usuario.updatedAt)}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex space-x-2">
+                        <button 
+                          className="text-yellow-500 hover:text-yellow-700 transition-colors"
+                          aria-label="Editar usuario"
+                          onClick={() => iniciarEdicionUsuario(usuario)}
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
+                        <button 
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          onClick={() => iniciarEliminacionUsuario(usuario)}
+                          aria-label="Eliminar usuario"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        
+        {!loading && usuariosFiltrados.length === 0 && (
           <div className="text-center py-10">
             <p className="text-gray-500">No se encontraron usuarios con ese filtro</p>
           </div>
@@ -156,6 +313,79 @@ export default function UserManagement() {
           </Link>
         </div>
       </div>
+      
+      {/* Modal de edición usando componente reutilizable */}
+      <EditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={guardarCambiosUsuario}
+        title="Editar Usuario"
+      >
+        {editingUser && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={editingUser.email}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rol
+              </label>
+              <select
+                name="role"
+                value={editingUser.role}
+                onChange={handleEditChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              >
+                <option value="admin">Administrador</option>
+                <option value="auditor">Auditor</option>
+                <option value="gestor">Gestor</option>
+              </select>
+            </div>
+            
+            {/* Campo para cambiar contraseña */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nueva Contraseña
+              </label>
+              <input
+                type="password"
+                name="newPassword"
+                value={editingUser.newPassword || ''}
+                onChange={handleEditChange}
+                placeholder="Dejar vacío para mantener la actual"
+                className="w-full p-2 border border-gray-300 rounded-md"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Sólo introduce una nueva contraseña si deseas cambiarla.
+              </p>
+            </div>
+          </>
+        )}
+      </EditModal>
+      
+      {/* Modal de confirmación para eliminar */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeletingUser(null);
+        }}
+        onConfirm={confirmarEliminarUsuario}
+        title="Eliminar Usuario"
+        message={`¿Está seguro que desea eliminar a ${deletingUser?.email}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+      />
     </div>
   );
 }

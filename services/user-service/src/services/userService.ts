@@ -6,7 +6,7 @@ import {
 	UserCredential,
 	User,
 } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, getDoc } from 'firebase/firestore';
 import { logFirebaseError } from '../utils/firebaseErrors';
 import { VALID_ROLES, Role } from '../constants/roles';
 import { UserData } from '../schemas/userSchema';
@@ -36,6 +36,34 @@ export class UserService {
 		return VALID_ROLES.includes(role as Role);
 	}
 
+	static async getUserData(uid: string): Promise<UserData> {
+		try {
+			const userRef = doc(db, 'users', uid);
+			const userDoc = await getDoc(userRef);
+			
+			if (!userDoc.exists()) {
+			throw new Error(`No se encontró ningún usuario con el ID: ${uid}`);
+			}
+			
+			const data = userDoc.data();
+			
+			
+			// Extraer el rol explícitamente, asegurándonos de que exista
+			const userRole = data.role ;
+						
+			return {
+			id: uid,
+			email: data.email || '',
+			role: userRole,
+			createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date(),
+			updatedAt: data.updatedAt ? new Date(data.updatedAt.seconds * 1000) : new Date()
+			};
+		} catch (error: any) {
+			console.error('Error en getUserData:', error);
+			logFirebaseError('getUserData', error);
+			throw error;
+		}
+		}
 	/**
 	 * Crea un nuevo usuario con el correo electrónico, la contraseña y el rol
 	 * @param {string} email - Correo electrónico del nuevo usuario

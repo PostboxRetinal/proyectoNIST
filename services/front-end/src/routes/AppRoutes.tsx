@@ -8,7 +8,7 @@ import Mainauditory from '../pages/ManagerAuditory';
 import CreateAuditory from '../pages/CreateAuditory';
 import ReportDashboard from '../pages/ReportDashboard';
 import UserManagement from '@/components/crudUsuario/UserManagement';
-
+import AdminRoute from './AdminRoute';
 
 const AppRoutes = () => {
     let routes = useRoutes([
@@ -20,8 +20,17 @@ const AppRoutes = () => {
         { path: '/mainauditory', element: <Mainauditory /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
-        { path: '/api/user', element: <UserManagement /> } 
-        //{ path: '/*', element: <NotFound /> }
+        { path: '/api/user', element: <UserManagement /> }, 
+        // Rutas protegidas para administradores
+        { 
+          path: '/user-management', 
+          element: (
+            <AdminRoute>
+              <UserManagement />
+            </AdminRoute>
+          ) 
+        },
+        // Otras rutas protegidas...
       
 
     ])
