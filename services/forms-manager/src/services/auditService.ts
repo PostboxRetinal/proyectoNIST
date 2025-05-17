@@ -271,4 +271,67 @@ export class AuditService {
 			);
 		}
 	}
+
+	// Actualizar un resultado de auditoría existente
+	static async updateAuditResult(id: string, auditResult: Partial<AuditResult>): Promise<string> {
+		console.log(`Actualizando resultado de auditoría con ID: ${id}`);
+		try {
+			// Verificar que el ID existe
+			const docRef = doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id);
+			const docSnap = await getDoc(docRef);
+
+			if (!docSnap.exists()) {
+				console.warn(`Resultado de auditoría con ID ${id} no encontrado`);
+				throw new AuditResultNotFoundError(id);
+			}
+
+			// Obtener los datos actuales
+			const currentData = docSnap.data() as AuditResult;
+
+			// Preparar los datos actualizados
+			const updatedData = {
+				...currentData,
+				...auditResult,
+				updatedAt: Date.now(),
+			};
+
+			// Validar datos
+			if (!updatedData.sections || !updatedData.completionPercentage) {
+				throw new InvalidAuditDataError('Datos de auditoría incompletos');
+			}
+
+			// Guardar los cambios
+			await setDoc(docRef, updatedData);
+			return `Resultado de auditoría actualizado con ID: ${id}`;
+		} catch (error) {
+			logAuditError('updateAuditResult', error);
+			if (error instanceof AuditResultNotFoundError || error instanceof InvalidAuditDataError) {
+				throw error;
+			}
+			throw new FirebaseOperationError('actualizar resultado de auditoría');
+		}
+	}
+
+	// Obtener todos los formularios de auditoría
+	static async getForms(): Promise<NistAudit[]> {
+		console.log('Obteniendo todos los formularios de auditoría');
+		try {
+			const formsCollection = collection(
+				db,
+				FIRESTORE_COLLECTIONS.AUDIT_TEMPLATES
+			);
+			const querySnapshot = await getDocs(formsCollection);
+
+			const forms: NistAudit[] = [];
+			querySnapshot.forEach((doc) => {
+				forms.push(doc.data() as NistAudit);
+			});
+
+			console.log(`Se encontraron ${forms.length} formularios de auditoría`);
+			return forms;
+		} catch (error) {
+			logAuditError('getForms', error);
+			throw new FirebaseOperationError('obtener formularios de auditoría');
+		}
+	}
 }

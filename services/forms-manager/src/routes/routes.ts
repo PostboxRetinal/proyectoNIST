@@ -228,6 +228,126 @@ export function registerAuditRoutes(app: Elysia<any>) {
 					tags: ['Auditorías'],
 				},
 			}
+		)
+
+		 // Obtener todos los formularios
+		.get(
+			'/getForms',
+			async ({ error }) => {
+				try {
+					const forms = await AuditService.getForms();
+					return {
+						success: true,
+						forms,
+					};
+				} catch (err: any) {
+					const errorResponse = createAuditErrorResponse(
+						err,
+						'Error al obtener los formularios'
+					);
+
+					return error(500, {
+						success: false,
+						message: errorResponse.message,
+						errorCode: errorResponse.errorCode,
+					});
+				}
+			},
+			{
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						forms: t.Array(t.Any()),
+					}),
+					500: errorResponseValidator,
+				},
+				detail: {
+					summary: 'Obtener formularios',
+					description: 'Retorna todos los formularios disponibles',
+					tags: ['Formularios'],
+				},
+			}
+		)
+
+		// Actualizar una auditoría existente
+		.put(
+			'/update/:id',
+			async ({ params, body, error }) => {
+				try {
+					const { id } = params;
+					const auditData = body as NistAudit;
+					
+					// Preparar el resultado de auditoría actualizado
+					const auditResult = AuditService.prepareAuditResultObject(auditData);
+					
+					// Actualizar en Firestore
+					const result = await AuditService.updateAuditResult(id, auditResult);
+					
+					return {
+						success: true,
+						message: 'Auditoría actualizada exitosamente',
+						auditId: id,
+						result: {
+							id: auditResult.id,
+							program: auditResult.program,
+							auditDate: auditResult.auditDate,
+							completionPercentage: auditResult.completionPercentage,
+							riskLevel: auditResult.riskLevel,
+						}
+					};
+				} catch (err: any) {
+					const errorResponse = createAuditErrorResponse(
+						err,
+						'Error al actualizar la auditoría'
+					);
+					
+					if (errorResponse.status === 404) {
+						return error(404, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					} else if (errorResponse.status === 400) {
+						return error(400, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					} else {
+						return error(500, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					}
+				}
+			},
+			{
+				params: auditIdValidator,
+				body: auditValidator,
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						auditId: t.String(),
+						result: t.Object({
+							id: t.String(),
+							program: t.String(),
+							auditDate: t.String(),
+							completionPercentage: t.Number(),
+							riskLevel: t.String(),
+						}),
+					}),
+					400: errorResponseValidator,
+					404: errorResponseValidator,
+					500: errorResponseValidator,
+				},
+				detail: {
+					summary: 'Actualizar auditoría',
+					description: 'Actualiza una auditoría existente por su ID',
+					tags: ['Auditorías'],
+				},
+			}
 		);
 
 	return app;
