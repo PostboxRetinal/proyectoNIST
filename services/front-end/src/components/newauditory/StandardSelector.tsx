@@ -3,6 +3,7 @@ import { useState } from "react";
 interface StandardSelectorProps {
   onSelect: (id: string, name: string) => void;
   error?: string;
+  showAlerts?: boolean;
 }
 
 interface Standard {

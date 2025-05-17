@@ -22,7 +22,7 @@ interface User {
   newPassword?: string;
 }
 
-export default function UserManagement() {
+export default function UserManagementComponent() {
   // Obtenemos la función para mostrar alertas
   const { addAlert } = useAlerts();
   
@@ -181,7 +181,7 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="flex justify-center items-start w-full min-h-screen pt-24 font-sans">
+    <div className="flex justify-center items-start w-full min-h-screen pt-10 font-sans">
       <div className="w-full max-w-6xl bg-white p-8 rounded-xl shadow-lg">
         
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
@@ -381,4 +381,4 @@ export default function UserManagement() {
   );
 }
 
-export { UserManagement }
+export { UserManagementComponent }

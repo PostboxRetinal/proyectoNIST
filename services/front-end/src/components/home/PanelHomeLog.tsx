@@ -33,7 +33,7 @@ export const Content = () => {
 
         {/* Botones de acción rápida */}
         <div className="flex gap-8 mb-8">
-        <Link to="/newauditory" className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg text-xl ">
+        <Link to="/newAuditory" className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg text-xl ">
             Nueva Auditoría
           </Link>
           <Link to="/auditory" className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-xl hover:bg-gray-300">

@@ -5,14 +5,16 @@ import { Link } from "react-router-dom";
 import axios from 'axios';
 
 // Definición de interfaces
+// Primero, actualiza la interfaz Pregunta para incluir descripciones para cada opción
+
 interface Pregunta {
   id: string;
   texto: string;
   tipo: "si_no" | "numerica";
   opciones: string[];
+  descripciones: string[]; // Nueva propiedad para almacenar descripciones
   esObligatoria: boolean;
 }
-
 interface SubSeccion {
   id: string;
   titulo: string;
@@ -70,11 +72,18 @@ const CreateAuditForm: React.FC = () => {
   });
   
   // Estado para la pregunta actualmente en creación
+    // Actualiza la inicialización del estado currentPregunta para incluir descripciones
   const [currentPregunta, setCurrentPregunta] = useState<Pregunta>({
     id: "",
     texto: "",
     tipo: "si_no",
     opciones: ["Sí", "No", "Parcialmente", "No aplica"],
+    descripciones: [
+      "Cumplimiento completo", 
+      "Sin cumplimiento", 
+      "Cumplimiento parcial", 
+      "No aplicable a este contexto"
+    ],
     esObligatoria: true,
   });
   
@@ -120,16 +129,37 @@ const CreateAuditForm: React.FC = () => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
+        // Modifica la parte donde se manejan los cambios en el tipo de pregunta (línea 78 aproximadamente)
+    
+        // Actualización del handlePreguntaChange
     if (name === "tipo") {
-      // Si cambia el tipo, actualizamos las opciones automáticamente
-      const opciones = value === "numerica" 
-        ? ["1", "2", "3", "4", "5"] 
-        : ["Sí", "No", "Parcialmente", "No aplica"];
+      // Si cambia el tipo, actualizamos las opciones y descripciones automáticamente
+      let opciones = [];
+      let descripciones = [];
+      
+      if (value === "numerica") {
+        opciones = ["Sí", "Parcialmente", "No", "No aplica"];
+        descripciones = [
+          "Cumplimiento completo", 
+          "Cumplimiento parcial", 
+          "Sin cumplimiento", 
+          "No aplicable a este contexto"
+        ];
+      } else {
+        opciones = ["Sí", "No", "Parcialmente", "No aplica"];
+        descripciones = [
+          "Cumplimiento completo", 
+          "Sin cumplimiento", 
+          "Cumplimiento parcial", 
+          "No aplicable a este contexto"
+        ];
+      }
       
       setCurrentPregunta({
         ...currentPregunta,
         tipo: value as "si_no" | "numerica", 
-        opciones
+        opciones,
+        descripciones
       });
     } else {
       // Para otros cambios
@@ -167,15 +197,33 @@ const CreateAuditForm: React.FC = () => {
     
     if (!preguntaEnEdicion) return;
     
-    if (name === "tipo") {
-      const opciones = value === "numerica" 
-        ? ["1", "2", "3", "4", "5"] 
-        : ["Sí", "No", "Parcialmente", "No aplica"];
+        if (name === "tipo") {
+      let opciones = [];
+      let descripciones = [];
+      
+      if (value === "numerica") {
+        opciones = ["Sí", "Parcialmente", "No", "No aplica"];
+        descripciones = [
+          "Cumplimiento completo", 
+          "Cumplimiento parcial", 
+          "Sin cumplimiento", 
+          "No aplicable a este contexto"
+        ];
+      } else {
+        opciones = ["Sí", "No", "Parcialmente", "No aplica"];
+        descripciones = [
+          "Cumplimiento completo", 
+          "Sin cumplimiento", 
+          "Cumplimiento parcial", 
+          "No aplicable a este contexto"
+        ];
+      }
       
       setPreguntaEnEdicion({
         ...preguntaEnEdicion,
         tipo: value as "si_no" | "numerica",
-        opciones
+        opciones,
+        descripciones
       });
     } else {
       setPreguntaEnEdicion({
@@ -209,12 +257,19 @@ const CreateAuditForm: React.FC = () => {
     });
 
     // Resetear la pregunta actual
+        // En el botón "Limpiar Formulario"
     setCurrentPregunta({
       id: "",
       texto: "",
       tipo: "si_no",
       opciones: ["Sí", "No", "Parcialmente", "No aplica"],
-      esObligatoria: true,
+      descripciones: [
+        "Cumplimiento completo", 
+        "Sin cumplimiento", 
+        "Cumplimiento parcial", 
+        "No aplicable a este contexto"
+      ],
+      esObligatoria: true
     });
     
     addAlert('success', "Pregunta añadida correctamente");
@@ -452,23 +507,49 @@ const CreateAuditForm: React.FC = () => {
             title: subSeccion.titulo,
             questions: subSeccion.preguntas.map(pregunta => {
               // Transformar las opciones al formato deseado
+                            // Reemplaza la sección de transformación de opciones en la función crearJSON (aproximadamente línea 453)
+              
+              // Transformar las opciones al formato deseado
               const formattedOptions = pregunta.opciones.map(opcion => {
                 let value: string | number = "";
                 let description = "";
                 
-                if (opcion === "Sí") value = "yes";
-                else if (opcion === "No") value = "no";
-                else if (opcion === "Parcialmente") value = "partial";
-                else if (opcion === "No aplica") value = "na";
-                else if (pregunta.tipo === "numerica") {
-                  // Mapear valores numéricos a los valores solicitados
+                if (pregunta.tipo === "numerica") {
+                  // Nuevo mapeo para preguntas numéricas según lo solicitado
                   switch (opcion) {
-                    case "1": value = 0.2; break;
-                    case "2": value = 0.4; break;
-                    case "3": value = 0.6; break;
-                    case "4": value = 0.8; break;
-                    case "5": value = 1; break;
-                    default: value = parseFloat(opcion) || 0;
+                    case "Sí": 
+                      value = 1;
+                      description = "Cumplimiento completo"; 
+                      break;
+                    case "Parcialmente": 
+                      value = 0.5;
+                      description = "Cumplimiento parcial"; 
+                      break;
+                    case "No": 
+                      value = 0;
+                      description = "Sin cumplimiento"; 
+                      break;
+                    case "No aplica": 
+                      value = "na";
+                      description = "No aplicable a este contexto"; 
+                      break;
+                    default: 
+                      value = parseFloat(opcion) || 0;
+                  }
+                } else {
+                  // Para preguntas si/no tradicionales mantenemos el comportamiento actual
+                  if (opcion === "Sí") {
+                    value = "yes";
+                    description = "Cumplimiento completo";
+                  } else if (opcion === "No") {
+                    value = "no";
+                    description = "Sin cumplimiento";
+                  } else if (opcion === "Parcialmente") {
+                    value = "partial";
+                    description = "Cumplimiento parcial";
+                  } else if (opcion === "No aplica") {
+                    value = "na";
+                    description = "No aplicable a este contexto";
                   }
                 }
                 
@@ -549,12 +630,19 @@ const CreateAuditForm: React.FC = () => {
         titulo: "",
         preguntas: []
       });
+            // En la función agregarPregunta, actualizar el reseteo
       setCurrentPregunta({
         id: "",
         texto: "",
         tipo: "si_no",
         opciones: ["Sí", "No", "Parcialmente", "No aplica"],
-        esObligatoria: true
+        descripciones: [
+          "Cumplimiento completo", 
+          "Sin cumplimiento", 
+          "Cumplimiento parcial", 
+          "No aplicable a este contexto"
+        ],
+        esObligatoria: true,
       });
       
       // Limpiar también los estados de edición por si acaso
@@ -585,397 +673,119 @@ const CreateAuditForm: React.FC = () => {
   };
 
   // Renderizar el formulario
-  return (
-    <div className="p-6 max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
-      <h1 className="text-2xl font-bold mb-6">Crear Formulario de Auditoría</h1>
-      
-      {/* Sección de datos generales */}
-      <div className="mb-8 p-4 border border-gray-200 rounded-md">
-        <h2 className="text-xl font-semibold mb-4">Datos Generales</h2>
+    return (
+      <div className="p-6 max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
+        <h1 className="text-2xl font-bold mb-6">Crear Formulario de Auditoría</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre de la Normativa*
-            </label>
-            <input
-              type="text"
-              name="program"
-              value={formData.program}
-              onChange={handleFormDataChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Ej: ISO 9001"
-              required
-            />
+        {/* Sección de datos generales */}
+        <div className="mb-8 p-4 border border-gray-200 rounded-md">
+          <h2 className="text-xl font-semibold mb-4">Datos Generales</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre de la Normativa*
+              </label>
+              <input
+                type="text"
+                name="program"
+                value={formData.program}
+                onChange={handleFormDataChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Ej: ISO 9001"
+                required
+              />
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="mt-4 border-t pt-4 border-gray-200">
-        <h3 className="text-md font-semibold mb-2">Umbrales de Riesgo</h3>
-        <p className="text-sm text-gray-600 mb-3">
-          Los umbrales determinan cómo se clasifican los resultados de la evaluación:
-          <ul className="list-disc ml-5 mt-1">
+        
+        <div className="mt-4 border-t pt-4 border-gray-200">
+          <h3 className="text-md font-semibold mb-2">Umbrales de Riesgo</h3>
+          <div className="text-sm text-gray-600 mb-3">
+            Los umbrales determinan cómo se clasifican los resultados de la evaluación:
+          </div>
+          <ul className="list-disc ml-5 mb-3 text-sm text-gray-600">
             <li>Por encima del umbral de <strong>Riesgo Bajo</strong>: Se considera bajo riesgo (color verde)</li>
             <li>Entre ambos umbrales: Se considera riesgo medio (color amarillo)</li>
             <li>Por debajo del umbral de <strong>Riesgo Medio</strong>: Se considera alto riesgo (color rojo)</li>
           </ul>
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Umbral de Riesgo Bajo (%)
-            </label>
-            <input
-              type="number"
-              value={formData.config.nistThresholds.lowRisk}
-              onChange={(e) => setFormData({
-                ...formData,
-                config: {
-                  ...formData.config,
-                  nistThresholds: {
-                    ...formData.config.nistThresholds,
-                    lowRisk: parseInt(e.target.value) || 80
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Umbral de Riesgo Bajo (%)
+              </label>
+              <input
+                type="number"
+                value={formData.config.nistThresholds.lowRisk}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  config: {
+                    ...formData.config,
+                    nistThresholds: {
+                      ...formData.config.nistThresholds,
+                      lowRisk: parseInt(e.target.value) || 80
+                    }
                   }
-                }
-              })}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              max="100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Umbral de Riesgo Medio (%)
-            </label>
-            <input
-              type="number"
-              value={formData.config.nistThresholds.mediumRisk}
-              onChange={(e) => setFormData({
-                ...formData,
-                config: {
-                  ...formData.config,
-                  nistThresholds: {
-                    ...formData.config.nistThresholds,
-                    mediumRisk: parseInt(e.target.value) || 50
-                  }
-                }
-              })}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              max="100"
-            />
-          </div>
-        </div>
-        
-        <div className="mt-2 flex items-center">
-          <div className="w-4 h-4 bg-green-500 rounded-full mr-1"></div>
-          <span className="text-xs text-gray-600 mr-3">≥ {formData.config.nistThresholds.lowRisk}%</span>
-          
-          <div className="w-4 h-4 bg-yellow-500 rounded-full mr-1"></div>
-          <span className="text-xs text-gray-600 mr-3">{formData.config.nistThresholds.mediumRisk}% - {formData.config.nistThresholds.lowRisk - 1}%</span>
-          
-          <div className="w-4 h-4 bg-red-500 rounded-full mr-1"></div>
-          <span className="text-xs text-gray-600"> {formData.config.nistThresholds.mediumRisk}%</span>
-        </div>
-      </div>
-
-      {/* Secciones existentes */}
-      {secciones.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Secciones del formulario</h2>
-          
-          {secciones.map((seccion, sIndex) => (
-            <div key={seccion.id} className="mb-4 p-4 border border-gray-200 rounded-md">
-              {editandoSeccionId === seccion.id && seccionEnEdicion ? (
-                <div className="mb-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                      <input
-                        type="text"
-                        name="id"
-                        value={seccionEnEdicion.id}
-                        onChange={handleSeccionEnEdicionChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                      <input
-                        type="text"
-                        name="titulo"
-                        value={seccionEnEdicion.titulo}
-                        onChange={handleSeccionEnEdicionChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-2">
-                    <button
-                      type="button"
-                      onClick={() => guardarEdicionSeccion(sIndex)}
-                      className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
-                    >
-                      Guardar Cambios
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium">
-                    <span className="text-gray-600 mr-2">{seccion.id}:</span>
-                    {seccion.titulo}
-                  </h3>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => editarSeccion(seccion, sIndex)}
-                      className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminarSeccion(sIndex)}
-                      className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Subsecciones de la sección */}
-              {seccion.subSecciones.length > 0 && (
-                <div className="ml-4 mt-4">
-                  <h4 className="text-md font-medium mb-2">Subsecciones:</h4>
-                  {seccion.subSecciones.map((subSeccion, subIndex) => (
-                    <div key={subSeccion.id} className="mb-3 p-3 bg-gray-50 rounded-md">
-                      {editandoSubSeccionId === subSeccion.id && subSeccionEnEdicion ? (
-                        <div className="mb-3">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                              <input
-                                type="text"
-                                name="id"
-                                value={subSeccionEnEdicion.id}
-                                onChange={handleSubSeccionEnEdicionChange}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                              <input
-                                type="text"
-                                name="titulo"
-                                value={subSeccionEnEdicion.titulo}
-                                onChange={handleSubSeccionEnEdicionChange}
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-2">
-                            <button
-                              type="button"
-                              onClick={() => guardarEdicionSubSeccion(sIndex, subIndex)}
-                              className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
-                            >
-                              Guardar Cambios
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center mb-2">
-                          <h5 className="text-md font-medium">
-                            <span className="text-gray-600 mr-2">{subSeccion.id}:</span>
-                            {subSeccion.titulo}
-                          </h5>
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => editarSubSeccion(sIndex, subSeccion, subIndex)}
-                              className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
-                            >
-                              Editar
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Preguntas de la subsección */}
-                      {subSeccion.preguntas.length > 0 && (
-                        <div className="ml-4">
-                          <h6 className="text-sm font-medium mb-1">Preguntas:</h6>
-                          <ul className="list-disc ml-5">
-                            {subSeccion.preguntas.map((pregunta, pregIndex) => (
-                              <li key={pregunta.id} className="mb-1">
-                                {editandoPreguntaId === pregunta.id && preguntaEnEdicion ? (
-                                  <div className="mb-3 bg-white p-2 rounded border">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                                      <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                                        <input
-                                          type="text"
-                                          name="id"
-                                          value={preguntaEnEdicion.id}
-                                          onChange={handlePreguntaEnEdicionChange}
-                                          className="w-full p-2 border border-gray-300 rounded-md"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
-                                        <input
-                                          type="text"
-                                          name="texto"
-                                          value={preguntaEnEdicion.texto}
-                                          onChange={handlePreguntaEnEdicionChange}
-                                          className="w-full p-2 border border-gray-300 rounded-md"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="mb-2">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                                      <select
-                                        name="tipo"
-                                        value={preguntaEnEdicion.tipo}
-                                        onChange={handlePreguntaEnEdicionChange}
-                                        className="w-full p-2 border border-gray-300 rounded-md"
-                                      >
-                                        <option value="si_no">Sí/No</option>
-                                        <option value="numerica">Numérica (1-5)</option>
-                                      </select>
-                                    </div>
-                                    <div className="flex items-center mb-2">
-                                      <input
-                                        type="checkbox"
-                                        name="esObligatoria"
-                                        checked={preguntaEnEdicion.esObligatoria}
-                                        onChange={handlePreguntaEnEdicionChange}
-                                        className="mr-2"
-                                      />
-                                      <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
-                                    </div>
-                                    <div className="flex justify-end mt-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => guardarEdicionPregunta(sIndex, subIndex, pregIndex)}
-                                        className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
-                                      >
-                                        Guardar Cambios
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-between items-center">
-                                    <div>
-                                      <span className="text-gray-600 mr-2">{pregunta.id}:</span>
-                                      {pregunta.texto} 
-                                      <span className="ml-2 text-sm text-gray-500">
-                                        ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
-                                      </span>
-                                      {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => editarPregunta(sIndex, subIndex, pregunta, pregIndex)}
-                                      className="p-1 text-xs bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
-                                    >
-                                      Editar
-                                    </button>
-                                  </div>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                })}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                min="0"
+                max="100"
+              />
             </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Agregar nueva sección */}
-      <div className="mb-8 p-4 border border-gray-200 rounded-md">
-        <h2 className="text-xl font-semibold mb-4">Agregar nueva sección</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              ID de la sección*
-            </label>
-            <input
-              type="text"
-              name="id"
-              value={currentSeccion.id}
-              onChange={handleSeccionChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Ej: 1"
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Umbral de Riesgo Medio (%)
+              </label>
+              <input
+                type="number"
+                value={formData.config.nistThresholds.mediumRisk}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  config: {
+                    ...formData.config,
+                    nistThresholds: {
+                      ...formData.config.nistThresholds,
+                      mediumRisk: parseInt(e.target.value) || 50
+                    }
+                  }
+                })}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                min="0"
+                max="100"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Título de la sección*
-            </label>
-            <input
-              type="text"
-              name="titulo"
-              value={currentSeccion.titulo}
-              onChange={handleSeccionChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Ej: PLANIFICAR (PLAN)"
-              required
-            />
-          </div>
-        </div>
-        
-        {/* Subsecciones existentes en la sección actual */}
-        {currentSeccion.subSecciones.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2">Subsecciones de la sección</h3>
+          
+          <div className="mt-2 flex items-center">
+            <div className="w-4 h-4 bg-green-500 rounded-full mr-1"></div>
+            <span className="text-xs text-gray-600 mr-3">≥ {formData.config.nistThresholds.lowRisk}%</span>
             
-            {currentSeccion.subSecciones.map((subSeccion, subIndex) => (
-              <div key={subSeccion.id} className="mb-2 p-2 bg-gray-50 rounded-md">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">{subSeccion.id}: {subSeccion.titulo}</span>
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => editarSubSeccionCreacion(subSeccion, subIndex)}
-                      className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminarSubSeccion(subIndex)}
-                      className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Mostrar editor de subsección si está en modo edición */}
-                {editandoSubSeccionId === subSeccion.id && subSeccionEnEdicion && (
-                  <div className="mt-3 p-3 bg-gray-100 rounded-md">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div className="w-4 h-4 bg-yellow-500 rounded-full mr-1"></div>
+            <span className="text-xs text-gray-600 mr-3">{formData.config.nistThresholds.mediumRisk}% - {formData.config.nistThresholds.lowRisk - 1}%</span>
+            
+            <div className="w-4 h-4 bg-red-500 rounded-full mr-1"></div>
+            <span className="text-xs text-gray-600"> {formData.config.nistThresholds.mediumRisk}%</span>
+          </div>
+        </div>
+  
+        {/* Secciones existentes */}
+        {secciones.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Secciones del formulario</h2>
+            
+            {secciones.map((seccion, sIndex) => (
+              <div key={seccion.id} className="mb-4 p-4 border border-gray-200 rounded-md">
+                {editandoSeccionId === seccion.id && seccionEnEdicion ? (
+                  <div className="mb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
                         <input
                           type="text"
                           name="id"
-                          value={subSeccionEnEdicion.id}
-                          onChange={handleSubSeccionEnEdicionChange}
+                          value={seccionEnEdicion.id}
+                          onChange={handleSeccionEnEdicionChange}
                           className="w-full p-2 border border-gray-300 rounded-md"
                         />
                       </div>
@@ -984,253 +794,324 @@ const CreateAuditForm: React.FC = () => {
                         <input
                           type="text"
                           name="titulo"
-                          value={subSeccionEnEdicion.titulo}
-                          onChange={handleSubSeccionEnEdicionChange}
+                          value={seccionEnEdicion.titulo}
+                          onChange={handleSeccionEnEdicionChange}
                           className="w-full p-2 border border-gray-300 rounded-md"
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end mt-2">
                       <button
                         type="button"
-                        onClick={() => guardarEdicionSubSeccionCreacion(subIndex)}
+                        onClick={() => guardarEdicionSeccion(sIndex)}
                         className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                       >
                         Guardar Cambios
                       </button>
                     </div>
                   </div>
-                )}
-                
-                <div className="mt-1 ml-4">
-                  <span className="text-sm text-gray-500">Preguntas: </span>
-                  {subSeccion.preguntas.length} preguntas
-                  
-                  {/* Mostrar lista de preguntas con botón de editar */}
-                  {subSeccion.preguntas.length > 0 && (
-                    <ul className="mt-2 ml-2">
-                      {subSeccion.preguntas.map((pregunta, pregIndex) => (
-                        <li key={pregunta.id} className="mb-2 p-2 bg-gray-100 rounded-md">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <span className="font-medium">{pregunta.id}: {pregunta.texto}</span>
-                              <span className="ml-2 text-sm text-gray-500">
-                                ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
-                              </span>
-                              {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
-                            </div>
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() => editarPreguntaCreacion(pregunta, pregIndex)}
-                                className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs"
-                              >
-                                Editar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => eliminarPreguntaSubSeccion(pregIndex)}
-                                className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
-                              >
-                                Eliminar
-                              </button>
-                            </div>
-                          </div>
-                          
-                          {/* Mostrar editor de pregunta si está en modo edición */}
-                          {editandoPreguntaId === pregunta.id && preguntaEnEdicion && (
-                            <div className="mt-3 p-3 bg-white rounded-md border">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                                  <input
-                                    type="text"
-                                    name="id"
-                                    value={preguntaEnEdicion.id}
-                                    onChange={handlePreguntaEnEdicionChange}
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
-                                  <input
-                                    type="text"
-                                    name="texto"
-                                    value={preguntaEnEdicion.texto}
-                                    onChange={handlePreguntaEnEdicionChange}
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                  />
-                                </div>
-                              </div>
-                              <div className="mb-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                                <select
-                                  name="tipo"
-                                  value={preguntaEnEdicion.tipo}
-                                  onChange={handlePreguntaEnEdicionChange}
-                                  className="w-full p-2 border border-gray-300 rounded-md"
-                                >
-                                  <option value="si_no">Sí/No</option>
-                                  <option value="numerica">Numérica (1-5)</option>
-                                </select>
-                              </div>
-                              <div className="flex items-center mb-2">
-                                <input
-                                  type="checkbox"
-                                  name="esObligatoria"
-                                  checked={preguntaEnEdicion.esObligatoria}
-                                  onChange={handlePreguntaEnEdicionChange}
-                                  className="mr-2"
-                                />
-                                <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
-                              </div>
-                              <div className="flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() => guardarEdicionPreguntaCreacion(pregIndex)}
-                                  className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
-                                >
-                                  Guardar Cambios
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {pregunta.opciones.length > 0 && !editandoPreguntaId && (
-                            <div className="mt-1 ml-4">
-                              <span className="text-sm text-gray-500">Opciones: </span>
-                              {pregunta.opciones.join(", ")}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* Agregar nueva subsección */}
-        <div className="mb-4 p-3 bg-gray-50 rounded-md">
-          <h3 className="text-lg font-medium mb-2">Agregar nueva subsección</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID de la subsección*
-              </label>
-              <input
-                type="text"
-                name="id"
-                value={currentSubSeccion.id}
-                onChange={handleSubSeccionChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Ej: 1.1"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Título de la subsección*
-              </label>
-              <input
-                type="text"
-                name="titulo"
-                value={currentSubSeccion.titulo}
-                onChange={handleSubSeccionChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Ej: Risk Framing"
-                required
-              />
-            </div>
-          </div>
-          
-          {/* Preguntas existentes en la subsección actual */}
-          {currentSubSeccion.preguntas.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-md font-medium mb-2">Preguntas de la subsección</h4>
-              
-              {currentSubSeccion.preguntas.map((pregunta, pIndex) => (
-                <div key={pregunta.id} className="mb-2 p-2 bg-gray-100 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-medium">{pregunta.id}: {pregunta.texto}</span>
-                      <span className="ml-2 text-sm text-gray-500">
-                        ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
-                      </span>
-                      {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
-                    </div>
+                ) : (
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-medium">
+                      <span className="text-gray-600 mr-2">{seccion.id}:</span>
+                      {seccion.titulo}
+                    </h3>
                     <div>
                       <button
                         type="button"
-                        onClick={() => editarPreguntaCreacion(pregunta, pIndex)}
-                        className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs"
+                        onClick={() => editarSeccion(seccion, sIndex)}
+                        className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
-                        onClick={() => eliminarPreguntaSubSeccion(pIndex)}
-                        className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
+                        onClick={() => eliminarSeccion(sIndex)}
+                        className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Subsecciones de la sección */}
+                {seccion.subSecciones.length > 0 && (
+                  <div className="ml-4 mt-4">
+                    <h4 className="text-md font-medium mb-2">Subsecciones:</h4>
+                    {seccion.subSecciones.map((subSeccion, subIndex) => (
+                      <div key={subSeccion.id} className="mb-3 p-3 bg-gray-50 rounded-md">
+                        {editandoSubSeccionId === subSeccion.id && subSeccionEnEdicion ? (
+                          <div className="mb-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                                <input
+                                  type="text"
+                                  name="id"
+                                  value={subSeccionEnEdicion.id}
+                                  onChange={handleSubSeccionEnEdicionChange}
+                                  className="w-full p-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                                <input
+                                  type="text"
+                                  name="titulo"
+                                  value={subSeccionEnEdicion.titulo}
+                                  onChange={handleSubSeccionEnEdicionChange}
+                                  className="w-full p-2 border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex justify-end mt-2">
+                              <button
+                                type="button"
+                                onClick={() => guardarEdicionSubSeccion(sIndex, subIndex)}
+                                className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                              >
+                                Guardar Cambios
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-center mb-2">
+                            <h5 className="text-md font-medium">
+                              <span className="text-gray-600 mr-2">{subSeccion.id}:</span>
+                              {subSeccion.titulo}
+                            </h5>
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => editarSubSeccion(sIndex, subSeccion, subIndex)}
+                                className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
+                              >
+                                Editar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Preguntas de la subsección */}
+                        {subSeccion.preguntas.length > 0 && (
+                          <div className="ml-4">
+                            <h6 className="text-sm font-medium mb-1">Preguntas:</h6>
+                            <ul className="list-disc ml-5">
+                              {subSeccion.preguntas.map((pregunta, pregIndex) => (
+                                <li key={pregunta.id} className="mb-1">
+                                  {editandoPreguntaId === pregunta.id && preguntaEnEdicion ? (
+                                    <div className="mb-3 bg-white p-2 rounded border">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                                          <input
+                                            type="text"
+                                            name="id"
+                                            value={preguntaEnEdicion.id}
+                                            onChange={handlePreguntaEnEdicionChange}
+                                            className="w-full p-2 border border-gray-300 rounded-md"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
+                                          <input
+                                            type="text"
+                                            name="texto"
+                                            value={preguntaEnEdicion.texto}
+                                            onChange={handlePreguntaEnEdicionChange}
+                                            className="w-full p-2 border border-gray-300 rounded-md"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                        <select
+                                          name="tipo"
+                                          value={preguntaEnEdicion.tipo}
+                                          onChange={handlePreguntaEnEdicionChange}
+                                          className="w-full p-2 border border-gray-300 rounded-md"
+                                        >
+                                          <option value="si_no">Sí/No</option>
+                                          <option value="numerica">Numérica (1-5)</option>
+                                        </select>
+                                      </div>
+                                      
+                                      {/* Agregar descripciones para cada opción */}
+                                      <div className="mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción para cada opción</label>
+                                        <div className="space-y-2">
+                                          {preguntaEnEdicion.opciones.map((opcion, index) => (
+                                            <div key={index} className="flex items-center">
+                                              <span className="inline-block w-24 font-medium">{opcion}:</span>
+                                              <input
+                                                type="text"
+                                                value={preguntaEnEdicion.descripciones?.[index] || ""}
+                                                onChange={(e) => {
+                                                  const newDescripciones = [...(preguntaEnEdicion.descripciones || [])];
+                                                  while (newDescripciones.length < preguntaEnEdicion.opciones.length) {
+                                                    newDescripciones.push("");
+                                                  }
+                                                  newDescripciones[index] = e.target.value;
+                                                  setPreguntaEnEdicion({
+                                                    ...preguntaEnEdicion,
+                                                    descripciones: newDescripciones
+                                                  });
+                                                }}
+                                                className="flex-1 p-2 border border-gray-300 rounded-md"
+                                                placeholder={`Descripción para "${opcion}"`}
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex items-center mb-2">
+                                        <input
+                                          type="checkbox"
+                                          name="esObligatoria"
+                                          checked={preguntaEnEdicion.esObligatoria}
+                                          onChange={handlePreguntaEnEdicionChange}
+                                          className="mr-2"
+                                        />
+                                        <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
+                                      </div>
+                                      <div className="flex justify-end mt-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => guardarEdicionPregunta(sIndex, subIndex, pregIndex)}
+                                          className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                                        >
+                                          Guardar Cambios
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-between items-center">
+                                      <div>
+                                        <span className="text-gray-600 mr-2">{pregunta.id}:</span>
+                                        {pregunta.texto} 
+                                        <span className="ml-2 text-sm text-gray-500">
+                                          ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
+                                        </span>
+                                        {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => editarPregunta(sIndex, subIndex, pregunta, pregIndex)}
+                                        className="p-1 text-xs bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
+                                      >
+                                        Editar
+                                      </button>
+                                    </div>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Agregar nueva sección */}
+        <div className="mb-8 p-4 border border-gray-200 rounded-md">
+          <h2 className="text-xl font-semibold mb-4">Agregar nueva sección</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                ID de la sección*
+              </label>
+              <input
+                type="text"
+                name="id"
+                value={currentSeccion.id}
+                onChange={handleSeccionChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Ej: 1"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Título de la sección*
+              </label>
+              <input
+                type="text"
+                name="titulo"
+                value={currentSeccion.titulo}
+                onChange={handleSeccionChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Ej: PLANIFICAR (PLAN)"
+                required
+              />
+            </div>
+          </div>
+          
+          {/* Subsecciones existentes en la sección actual */}
+          {currentSeccion.subSecciones.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-lg font-medium mb-2">Subsecciones de la sección</h3>
+              
+              {currentSeccion.subSecciones.map((subSeccion, subIndex) => (
+                <div key={subSeccion.id} className="mb-2 p-2 bg-gray-50 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-medium">{subSeccion.id}: {subSeccion.titulo}</span>
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => editarSubSeccionCreacion(subSeccion, subIndex)}
+                        className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => eliminarSubSeccion(subIndex)}
+                        className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
                       >
                         Eliminar
                       </button>
                     </div>
                   </div>
                   
-                  {/* Mostrar editor de pregunta si está en modo edición */}
-                  {editandoPreguntaId === pregunta.id && preguntaEnEdicion && (
-                    <div className="mt-3 p-3 bg-white rounded-md border">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                  {/* Mostrar editor de subsección si está en modo edición */}
+                  {editandoSubSeccionId === subSeccion.id && subSeccionEnEdicion && (
+                    <div className="mt-3 p-3 bg-gray-100 rounded-md">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
                           <input
                             type="text"
                             name="id"
-                            value={preguntaEnEdicion.id}
-                            onChange={handlePreguntaEnEdicionChange}
+                            value={subSeccionEnEdicion.id}
+                            onChange={handleSubSeccionEnEdicionChange}
                             className="w-full p-2 border border-gray-300 rounded-md"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
                           <input
                             type="text"
-                            name="texto"
-                            value={preguntaEnEdicion.texto}
-                            onChange={handlePreguntaEnEdicionChange}
+                            name="titulo"
+                            value={subSeccionEnEdicion.titulo}
+                            onChange={handleSubSeccionEnEdicionChange}
                             className="w-full p-2 border border-gray-300 rounded-md"
                           />
                         </div>
                       </div>
-                      <div className="mb-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                        <select
-                          name="tipo"
-                          value={preguntaEnEdicion.tipo}
-                          onChange={handlePreguntaEnEdicionChange}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        >
-                          <option value="si_no">Sí/No</option>
-                          <option value="numerica">Numérica (1-5)</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center mb-2">
-                        <input
-                          type="checkbox"
-                          name="esObligatoria"
-                          checked={preguntaEnEdicion.esObligatoria}
-                          onChange={handlePreguntaEnEdicionChange}
-                          className="mr-2"
-                        />
-                        <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
-                      </div>
                       <div className="flex justify-end">
                         <button
                           type="button"
-                          onClick={() => guardarEdicionPreguntaCreacion(pIndex)}
+                          onClick={() => guardarEdicionSubSeccionCreacion(subIndex)}
                           className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                         >
                           Guardar Cambios
@@ -1239,174 +1120,533 @@ const CreateAuditForm: React.FC = () => {
                     </div>
                   )}
                   
-                  {pregunta.opciones.length > 0 && !editandoPreguntaId && (
-                    <div className="mt-1 ml-4">
-                      <span className="text-sm text-gray-500">Opciones: </span>
-                      {pregunta.opciones.join(", ")}
-                    </div>
-                  )}
+                  <div className="mt-1 ml-4">
+                    <span className="text-sm text-gray-500">Preguntas: </span>
+                    {subSeccion.preguntas.length} preguntas
+                    
+                    {/* Mostrar lista de preguntas con botón de editar */}
+                    {subSeccion.preguntas.length > 0 && (
+                      <ul className="mt-2 ml-2">
+                        {subSeccion.preguntas.map((pregunta, pregIndex) => (
+                          <li key={pregunta.id} className="mb-2 p-2 bg-gray-100 rounded-md">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-medium">{pregunta.id}: {pregunta.texto}</span>
+                                <span className="ml-2 text-sm text-gray-500">
+                                  ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
+                                </span>
+                                {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
+                              </div>
+                              <div>
+                                <button
+                                  type="button"
+                                  onClick={() => editarPreguntaCreacion(pregunta, pregIndex)}
+                                  className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs"
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarPreguntaSubSeccion(pregIndex)}
+                                  className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
+                                >
+                                  Eliminar
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Mostrar editor de pregunta si está en modo edición */}
+                            {editandoPreguntaId === pregunta.id && preguntaEnEdicion && (
+                              <div className="mt-3 p-3 bg-white rounded-md border">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                                    <input
+                                      type="text"
+                                      name="id"
+                                      value={preguntaEnEdicion.id}
+                                      onChange={handlePreguntaEnEdicionChange}
+                                      className="w-full p-2 border border-gray-300 rounded-md"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
+                                    <input
+                                      type="text"
+                                      name="texto"
+                                      value={preguntaEnEdicion.texto}
+                                      onChange={handlePreguntaEnEdicionChange}
+                                      className="w-full p-2 border border-gray-300 rounded-md"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="mb-2">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                  <select
+                                    name="tipo"
+                                    value={preguntaEnEdicion.tipo}
+                                    onChange={handlePreguntaEnEdicionChange}
+                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                  >
+                                    <option value="si_no">Sí/No</option>
+                                    <option value="numerica">Numérica (1-5)</option>
+                                  </select>
+                                </div>
+                                
+                                {/* Agregar descripciones para cada opción */}
+                                <div className="mb-2">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción para cada opción</label>
+                                  <div className="space-y-2">
+                                    {preguntaEnEdicion.opciones.map((opcion, index) => (
+                                      <div key={index} className="flex items-center">
+                                        <span className="inline-block w-24 font-medium">{opcion}:</span>
+                                        <input
+                                          type="text"
+                                          value={preguntaEnEdicion.descripciones?.[index] || ""}
+                                          onChange={(e) => {
+                                            const newDescripciones = [...(preguntaEnEdicion.descripciones || [])];
+                                            while (newDescripciones.length < preguntaEnEdicion.opciones.length) {
+                                              newDescripciones.push("");
+                                            }
+                                            newDescripciones[index] = e.target.value;
+                                            setPreguntaEnEdicion({
+                                              ...preguntaEnEdicion,
+                                              descripciones: newDescripciones
+                                            });
+                                          }}
+                                          className="flex-1 p-2 border border-gray-300 rounded-md"
+                                          placeholder={`Descripción para "${opcion}"`}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center mb-2">
+                                  <input
+                                    type="checkbox"
+                                    name="esObligatoria"
+                                    checked={preguntaEnEdicion.esObligatoria}
+                                    onChange={handlePreguntaEnEdicionChange}
+                                    className="mr-2"
+                                  />
+                                  <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
+                                </div>
+                                <div className="flex justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => guardarEdicionPreguntaCreacion(pregIndex)}
+                                    className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                                  >
+                                    Guardar Cambios
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {pregunta.opciones.length > 0 && !editandoPreguntaId && (
+                              <div className="mt-1 ml-4">
+                                <span className="text-sm text-gray-500">Opciones: </span>
+                                {pregunta.opciones.join(", ")}
+                                
+                                {/* Mostrar descripciones si existen */}
+                                {pregunta.descripciones && pregunta.descripciones.length > 0 && (
+                                  <div className="mt-1">
+                                    <span className="text-sm text-gray-500">Descripciones: </span>
+                                    <ul className="ml-2 text-xs text-gray-600">
+                                      {pregunta.opciones.map((opcion, idx) => (
+                                        <li key={idx}>
+                                          <strong>{opcion}:</strong> {pregunta.descripciones[idx] || 'Sin descripción'}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
           
-          {/* Agregar nueva pregunta a la subsección */}
-          <div className="mb-4 p-3 bg-gray-100 rounded-md">
-            <h4 className="text-md font-medium mb-2">Agregar nueva pregunta a la subsección</h4>
-            
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID de la pregunta*
-              </label>
-              <input
-                type="text"
-                name="id"
-                value={currentPregunta.id}
-                onChange={handlePreguntaChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Ej: 1.1.1"
-                required
-              />
-            </div>
-            
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Texto de la pregunta*
-              </label>
-              <input
-                type="text"
-                name="texto"
-                value={currentPregunta.texto}
-                onChange={handlePreguntaChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
-            </div>
+          {/* Agregar nueva subsección */}
+          <div className="mb-4 p-3 bg-gray-50 rounded-md">
+            <h3 className="text-lg font-medium mb-2">Agregar nueva subsección</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de pregunta
+                  ID de la subsección*
                 </label>
-                <select
-                  name="tipo"
-                  value={currentPregunta.tipo}
-                  onChange={handlePreguntaChange}
+                <input
+                  type="text"
+                  name="id"
+                  value={currentSubSeccion.id}
+                  onChange={handleSubSeccionChange}
                   className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="si_no">Sí/No</option>
-                  <option value="numerica">Numérica (1-5)</option>
-                </select>
+                  placeholder="Ej: 1.1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Título de la subsección*
+                </label>
+                <input
+                  type="text"
+                  name="titulo"
+                  value={currentSubSeccion.titulo}
+                  onChange={handleSubSeccionChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Risk Framing"
+                  required
+                />
               </div>
             </div>
             
-            <div className="mb-3">
-              <label className="flex items-center">
+            {/* Preguntas existentes en la subsección actual */}
+            {currentSubSeccion.preguntas.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-md font-medium mb-2">Preguntas de la subsección</h4>
+                
+                {currentSubSeccion.preguntas.map((pregunta, pIndex) => (
+                  <div key={pregunta.id} className="mb-2 p-2 bg-gray-100 rounded-md">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">{pregunta.id}: {pregunta.texto}</span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          ({pregunta.tipo === "si_no" ? "Sí/No" : "Numérica (1-5)"})
+                        </span>
+                        {pregunta.esObligatoria && <span className="ml-2 text-red-500">*</span>}
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => editarPreguntaCreacion(pregunta, pIndex)}
+                          className="p-1 mr-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 text-xs"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => eliminarPreguntaSubSeccion(pIndex)}
+                          className="p-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Mostrar editor de pregunta si está en modo edición */}
+                    {editandoPreguntaId === pregunta.id && preguntaEnEdicion && (
+                      <div className="mt-3 p-3 bg-white rounded-md border">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                            <input
+                              type="text"
+                              name="id"
+                              value={preguntaEnEdicion.id}
+                              onChange={handlePreguntaEnEdicionChange}
+                              className="w-full p-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Texto</label>
+                            <input
+                              type="text"
+                              name="texto"
+                              value={preguntaEnEdicion.texto}
+                              onChange={handlePreguntaEnEdicionChange}
+                              className="w-full p-2 border border-gray-300 rounded-md"
+                            />
+                          </div>
+                        </div>
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                          <select
+                            name="tipo"
+                            value={preguntaEnEdicion.tipo}
+                            onChange={handlePreguntaEnEdicionChange}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                          >
+                            <option value="si_no">Sí/No</option>
+                            <option value="numerica">Numérica (1-5)</option>
+                          </select>
+                        </div>
+                        
+                        {/* Agregar descripciones para cada opción */}
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Descripción para cada opción</label>
+                          <div className="space-y-2">
+                            {preguntaEnEdicion.opciones.map((opcion, index) => (
+                              <div key={index} className="flex items-center">
+                                <span className="inline-block w-24 font-medium">{opcion}:</span>
+                                <input
+                                  type="text"
+                                  value={preguntaEnEdicion.descripciones?.[index] || ""}
+                                  onChange={(e) => {
+                                    const newDescripciones = [...(preguntaEnEdicion.descripciones || [])];
+                                    while (newDescripciones.length < preguntaEnEdicion.opciones.length) {
+                                      newDescripciones.push("");
+                                    }
+                                    newDescripciones[index] = e.target.value;
+                                    setPreguntaEnEdicion({
+                                      ...preguntaEnEdicion,
+                                      descripciones: newDescripciones
+                                    });
+                                  }}
+                                  className="flex-1 p-2 border border-gray-300 rounded-md"
+                                  placeholder={`Descripción para "${opcion}"`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            name="esObligatoria"
+                            checked={preguntaEnEdicion.esObligatoria}
+                            onChange={handlePreguntaEnEdicionChange}
+                            className="mr-2"
+                          />
+                          <label className="text-sm font-medium text-gray-700">Es obligatoria</label>
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => guardarEdicionPreguntaCreacion(pIndex)}
+                            className="px-4 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                          >
+                            Guardar Cambios
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {pregunta.opciones.length > 0 && !editandoPreguntaId && (
+                      <div className="mt-1 ml-4">
+                        <span className="text-sm text-gray-500">Opciones: </span>
+                        {pregunta.opciones.join(", ")}
+                        
+                        {/* Mostrar descripciones si existen */}
+                        {pregunta.descripciones && pregunta.descripciones.length > 0 && (
+                          <div className="mt-1">
+                            <span className="text-sm text-gray-500">Descripciones: </span>
+                            <ul className="ml-2 text-xs text-gray-600">
+                              {pregunta.opciones.map((opcion, idx) => (
+                                <li key={idx}>
+                                  <strong>{opcion}:</strong> {pregunta.descripciones[idx] || 'Sin descripción'}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Agregar nueva pregunta a la subsección */}
+            <div className="mb-4 p-3 bg-gray-100 rounded-md">
+              <h4 className="text-md font-medium mb-2">Agregar nueva pregunta a la subsección</h4>
+              
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ID de la pregunta*
+                </label>
                 <input
-                  type="checkbox"
-                  name="esObligatoria"
-                  checked={currentPregunta.esObligatoria}
+                  type="text"
+                  name="id"
+                  value={currentPregunta.id}
                   onChange={handlePreguntaChange}
-                  className="mr-2"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: 1.1.1"
+                  required
                 />
-                <span className="text-sm font-medium text-gray-700">
-                  Es pregunta obligatoria
-                </span>
-              </label>
+              </div>
+              
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Texto de la pregunta*
+                </label>
+                <input
+                  type="text"
+                  name="texto"
+                  value={currentPregunta.texto}
+                  onChange={handlePreguntaChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo de pregunta
+                  </label>
+                  <select
+                    name="tipo"
+                    value={currentPregunta.tipo}
+                    onChange={handlePreguntaChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="si_no">Sí/No</option>
+                    <option value="numerica">Numérica (1-5)</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Agregar descripciones para cada opción */}
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción para cada opción
+                </label>
+                <div className="space-y-2">
+                  {currentPregunta.opciones.map((opcion, index) => (
+                    <div key={index} className="flex items-center">
+                      <span className="inline-block w-24 font-medium">{opcion}:</span>
+                      <input
+                        type="text"
+                        value={currentPregunta.descripciones[index] || ""}
+                        onChange={(e) => {
+                          const newDescripciones = [...currentPregunta.descripciones];
+                          newDescripciones[index] = e.target.value;
+                          setCurrentPregunta({
+                            ...currentPregunta,
+                            descripciones: newDescripciones
+                          });
+                        }}
+                        className="flex-1 p-2 border border-gray-300 rounded-md"
+                        placeholder={`Descripción para "${opcion}"`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="esObligatoria"
+                    checked={currentPregunta.esObligatoria}
+                    onChange={handlePreguntaChange}
+                    className="mr-2"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Es pregunta obligatoria
+                  </span>
+                </label>
+              </div>
+              
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={agregarPregunta}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                >
+                  Agregar pregunta
+                </button>
+              </div>
             </div>
             
             <div className="mt-3">
               <button
                 type="button"
-                onClick={agregarPregunta}
+                onClick={agregarSubSeccion}
                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                disabled={currentSubSeccion.titulo === "" || currentSubSeccion.id === "" || currentSubSeccion.preguntas.length === 0}
               >
-                Agregar pregunta
+                Guardar subsección
               </button>
             </div>
           </div>
           
-          <div className="mt-3">
+          <div className="mt-4">
             <button
               type="button"
-              onClick={agregarSubSeccion}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-              disabled={currentSubSeccion.titulo === "" || currentSubSeccion.id === "" || currentSubSeccion.preguntas.length === 0}
+              onClick={agregarSeccion}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              disabled={currentSeccion.titulo === "" || currentSeccion.id === "" || currentSeccion.subSecciones.length === 0}
             >
-              Guardar subsección
+              Guardar sección
             </button>
           </div>
         </div>
         
-        <div className="mt-4">
+        {/* Botones de acción */}
+        <div className="flex justify-end mt-6 relative">
+          <div className="absolute left-2">
+            <Link to="/mainauditory" className="flex items-center px-2 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 hover:text-blue-600 transition-colors text-sm">
+              <ChevronLeft size={18} />
+              <span className="ml-1">Volver</span>
+            </Link>
+          </div>
           <button
             type="button"
-            onClick={agregarSeccion}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            disabled={currentSeccion.titulo === "" || currentSeccion.id === "" || currentSeccion.subSecciones.length === 0}
+            className="px-4 py-2 mr-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            onClick={() => {
+              // Reiniciar todos los estados a sus valores iniciales
+              setFormData({
+                fechaCreacion: new Date().toISOString(),
+                program: "",
+                config: {
+                  nistThresholds: {
+                    lowRisk: 80,
+                    mediumRisk: 50
+                  }
+                }
+              });
+              setSecciones([]);
+              setCurrentSeccion({
+                id: "",
+                titulo: "",
+                subSecciones: []
+              });
+              setCurrentSubSeccion({
+                id: "",
+                titulo: "",
+                preguntas: []
+              });
+              setCurrentPregunta({
+                id: "",
+                texto: "",
+                tipo: "si_no",
+                opciones: ["Sí", "No", "Parcialmente", "No aplica"],
+                descripciones: [
+                  "Cumplimiento completo", 
+                  "Sin cumplimiento", 
+                  "Cumplimiento parcial", 
+                  "No aplicable a este contexto"
+                ],
+                esObligatoria: true
+              });
+              addAlert('info', "Formulario Limpio");
+            }}
           >
-            Guardar sección
+            Limpiar Formulario
+          </button>
+          <button
+            type="button"
+            onClick={guardarFormulario}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            disabled={secciones.length === 0 || formData.program.trim() === ""}
+          >
+            Guardar formulario
           </button>
         </div>
       </div>
-      
-      {/* Botones de acción */}
-      <div className="flex justify-end mt-6 relative">
-        <div className="absolute left-2">
-          <Link to="/mainauditory" className="flex items-center px-2 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 hover:text-blue-600 transition-colors text-sm">
-            <ChevronLeft size={18} />
-            <span className="ml-1">Volver</span>
-          </Link>
-        </div>
-        <button
-          type="button"
-          className="px-4 py-2 mr-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-          onClick={() => {
-            // Reiniciar todos los estados a sus valores iniciales
-            setFormData({
-              fechaCreacion: new Date().toISOString(),
-              program: "",
-              config: {
-                nistThresholds: {
-                  lowRisk: 80,
-                  mediumRisk: 50
-                }
-              }
-            });
-            setSecciones([]);
-            setCurrentSeccion({
-              id: "",
-              titulo: "",
-              subSecciones: []
-            });
-            setCurrentSubSeccion({
-              id: "",
-              titulo: "",
-              preguntas: []
-            });
-            setCurrentPregunta({
-              id: "",
-              texto: "",
-              tipo: "si_no",
-              opciones: ["Sí", "No", "Parcialmente", "No aplica"],
-              esObligatoria: true
-            });
-            addAlert('info', "Formulario Limpio");
-          }}
-        >
-          Limpiar Formulario
-        </button>
-        <button
-          type="button"
-          onClick={guardarFormulario}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          disabled={secciones.length === 0 || formData.program.trim() === ""} // Cambiado de 'normativa' a 'program'
-        >
-          Guardar formulario
-        </button>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default CreateAuditForm;
