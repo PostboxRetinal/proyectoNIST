@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PlusCircle, MenuSquare, Eye, Edit, Trash2, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function AuditoryMain() {
+export default function AuditoryManagement() {
   // Estado para simular datos de auditorías
   const [auditorias, setAuditorias] = useState([
     {
@@ -48,7 +48,7 @@ export default function AuditoryMain() {
   };
 
   return (
-    <div className="flex justify-center items-start w-full min-h-screen pt-24 font-sans">
+    <div className="flex justify-center items-start w-full min-h-screen pt-10 font-sans">
       <div className="w-full max-w-6xl bg-white p-8 rounded-xl shadow-lg">
         
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
@@ -152,4 +152,4 @@ export default function AuditoryMain() {
   );
 }
 
-export {AuditoryMain}
+export {AuditoryManagement}
