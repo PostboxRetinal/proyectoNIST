@@ -15,95 +15,6 @@ import { createAuditErrorResponse } from '../utils/auditErrors';
  */
 export function registerAuditRoutes(app: Elysia<any>) {
 	app
-		// Obtener el template de auditoría
-		.get(
-			'/',
-			async ({ error }) => {
-				try {
-					const template = await AuditService.getAuditTemplate();
-					return {
-						success: true,
-						template,
-					};
-				} catch (err: any) {
-					const errorResponse = createAuditErrorResponse(
-						err,
-						'Error al obtener la plantilla de auditoría'
-					);
-
-					if (errorResponse.status === 404) {
-						return error(404, {
-							success: false,
-							message: errorResponse.message,
-							errorCode: errorResponse.errorCode,
-						});
-					} else {
-						return error(500, {
-							success: false,
-							message: errorResponse.message,
-							errorCode: errorResponse.errorCode,
-						});
-					}
-				}
-			},
-			{
-				response: {
-					200: t.Object({
-						success: t.Boolean(),
-						template: auditValidator,
-					}),
-					404: errorResponseValidator,
-					500: errorResponseValidator,
-				},
-				detail: {
-					summary: 'Obtener plantilla de auditoría',
-					description:
-						'Retorna la plantilla de auditoría NIST 800-30 para crear una nueva auditoría',
-					tags: ['Auditorías'],
-				},
-			}
-		)
-
-		// Listar todas las auditorías realizadas
-		.get(
-			'/results',
-			async ({ error }) => {
-				try {
-					const results = await AuditService.listAuditResults();
-					return {
-						success: true,
-						results,
-					};
-				} catch (err: any) {
-					const errorResponse = createAuditErrorResponse(
-						err,
-						'Error al listar los resultados de auditoría'
-					);
-
-					// Only use 500 status code as defined in the response schema
-					return error(500, {
-						success: false,
-						message: errorResponse.message,
-						errorCode: errorResponse.errorCode,
-					});
-				}
-			},
-			{
-				response: {
-					200: t.Object({
-						success: t.Boolean(),
-						results: t.Array(t.Any()),
-					}),
-					500: errorResponseValidator,
-				},
-				detail: {
-					summary: 'Listar resultados de auditorías',
-					description: 'Obtiene la lista de todas las auditorías realizadas',
-					tags: ['Auditorías'],
-				},
-			}
-		)
-
 		// Guardar resultado de auditoría
 		.post(
 			'/newForm',
@@ -126,7 +37,6 @@ export function registerAuditRoutes(app: Elysia<any>) {
 							program: auditResult.program,
 							auditDate: auditResult.auditDate,
 							completionPercentage: auditResult.completionPercentage,
-							riskLevel: auditResult.riskLevel,
 						},
 					};
 				} catch (err: any) {
@@ -230,7 +140,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 			}
 		)
 
-		 // Obtener todos los formularios
+		// Obtener todos los formularios
 		.get(
 			'/getForms',
 			async ({ error }) => {
@@ -276,13 +186,13 @@ export function registerAuditRoutes(app: Elysia<any>) {
 				try {
 					const { id } = params;
 					const auditData = body as NistAudit;
-					
+
 					// Preparar el resultado de auditoría actualizado
 					const auditResult = AuditService.prepareAuditResultObject(auditData);
-					
+
 					// Actualizar en Firestore
 					const result = await AuditService.updateAuditResult(id, auditResult);
-					
+
 					return {
 						success: true,
 						message: 'Auditoría actualizada exitosamente',
@@ -292,15 +202,14 @@ export function registerAuditRoutes(app: Elysia<any>) {
 							program: auditResult.program,
 							auditDate: auditResult.auditDate,
 							completionPercentage: auditResult.completionPercentage,
-							riskLevel: auditResult.riskLevel,
-						}
+						},
 					};
 				} catch (err: any) {
 					const errorResponse = createAuditErrorResponse(
 						err,
 						'Error al actualizar la auditoría'
 					);
-					
+
 					if (errorResponse.status === 404) {
 						return error(404, {
 							success: false,

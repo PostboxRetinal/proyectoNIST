@@ -114,41 +114,12 @@ export class AuditService {
 		}
 	}
 
-	// Listar todas las auditorías realizadas
-	static async listAuditResults(): Promise<AuditResult[]> {
-		try {
-			const auditCollection = collection(
-				db,
-				FIRESTORE_COLLECTIONS.AUDIT_RESULTS
-			);
-			const querySnapshot = await getDocs(auditCollection);
-
-			const results: AuditResult[] = [];
-			querySnapshot.forEach((doc) => {
-				results.push(doc.data() as AuditResult);
-			});
-
-			console.log(`Se encontraron ${results.length} resultados de auditoría`);
-			return results;
-		} catch (error) {
-			logAuditError('listAuditResults', error);
-			throw new FirebaseOperationError('listar resultados de auditoría');
-		}
-	}
-
 	// Calcular el porcentaje de cumplimiento y nivel de riesgo
 	static calculateComplianceAndRisk(audit: NistAudit): {
 		completionPercentage: number;
-		riskLevel: 'Alto' | 'Medio' | 'Bajo';
 		sectionResults: Record<string, number>;
 	} {
 		try {
-			if (!audit?.config?.nistThresholds) {
-				throw new InvalidAuditDataError(
-					'Configuración de umbrales de riesgo no encontrada'
-				);
-			}
-
 			let totalScore = 0;
 			let totalQuestions = 0;
 			const sectionResults: Record<string, number> = {};
@@ -180,24 +151,10 @@ export class AuditService {
 			const completionPercentage =
 				totalQuestions > 0 ? totalScore / totalQuestions : 0;
 
-			// Determinar nivel de riesgo basado en los umbrales configurados
-			let riskLevel: 'Alto' | 'Medio' | 'Bajo';
-			if (completionPercentage >= audit.config.nistThresholds.lowRisk) {
-				riskLevel = RISK_LEVELS.LOW;
-			} else if (
-				completionPercentage >= audit.config.nistThresholds.mediumRisk
-			) {
-				riskLevel = RISK_LEVELS.MEDIUM;
-			} else {
-				riskLevel = RISK_LEVELS.HIGH;
-			}
-
 			console.log(
-				`Cálculo completado: Cumplimiento ${completionPercentage.toFixed(
-					2
-				)}%, Riesgo ${riskLevel}`
+				`Cálculo completado: Cumplimiento ${completionPercentage.toFixed(2)}%`
 			);
-			return { completionPercentage, riskLevel, sectionResults };
+			return { completionPercentage, sectionResults };
 		} catch (error) {
 			logAuditError('calculateComplianceAndRisk', error);
 			if (error instanceof InvalidAuditDataError) {
@@ -218,7 +175,7 @@ export class AuditService {
 				);
 			}
 
-			const { completionPercentage, riskLevel, sectionResults } =
+			const { completionPercentage, sectionResults } =
 				AuditService.calculateComplianceAndRisk(audit);
 
 			const sections: AuditResult['sections'] = {};
@@ -255,7 +212,6 @@ export class AuditService {
 				program: audit.program,
 				auditDate: new Date().toISOString(),
 				completionPercentage,
-				riskLevel,
 				sections,
 			};
 
@@ -273,7 +229,10 @@ export class AuditService {
 	}
 
 	// Actualizar un resultado de auditoría existente
-	static async updateAuditResult(id: string, auditResult: Partial<AuditResult>): Promise<string> {
+	static async updateAuditResult(
+		id: string,
+		auditResult: Partial<AuditResult>
+	): Promise<string> {
 		console.log(`Actualizando resultado de auditoría con ID: ${id}`);
 		try {
 			// Verificar que el ID existe
@@ -305,7 +264,10 @@ export class AuditService {
 			return `Resultado de auditoría actualizado con ID: ${id}`;
 		} catch (error) {
 			logAuditError('updateAuditResult', error);
-			if (error instanceof AuditResultNotFoundError || error instanceof InvalidAuditDataError) {
+			if (
+				error instanceof AuditResultNotFoundError ||
+				error instanceof InvalidAuditDataError
+			) {
 				throw error;
 			}
 			throw new FirebaseOperationError('actualizar resultado de auditoría');
@@ -316,10 +278,7 @@ export class AuditService {
 	static async getForms(): Promise<NistAudit[]> {
 		console.log('Obteniendo todos los formularios de auditoría');
 		try {
-			const formsCollection = collection(
-				db,
-				FIRESTORE_COLLECTIONS.AUDIT_TEMPLATES
-			);
+			const formsCollection = collection(db, 'audit-results');
 			const querySnapshot = await getDocs(formsCollection);
 
 			const forms: NistAudit[] = [];

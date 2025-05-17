@@ -45,19 +45,12 @@ export interface Section {
 /**
  * Configuración de umbrales NIST
  */
-export interface NistConfig {
-	nistThresholds: {
-		lowRisk: number; // Umbral para riesgo bajo (valor mínimo de cumplimiento)
-		mediumRisk: number; // Umbral para riesgo medio (valor mínimo de cumplimiento)
-	};
-}
 
 /**
  * Estructura completa de una auditoría NIST
  */
 export interface NistAudit {
 	program: string;
-	config: NistConfig;
 	sections: Section[];
 }
 
@@ -69,7 +62,6 @@ export interface AuditResult {
 	program: string;
 	auditDate: string;
 	completionPercentage: number;
-	riskLevel: 'Alto' | 'Medio' | 'Bajo';
 	createdAt?: number;
 	sections: {
 		[sectionId: string]: {
