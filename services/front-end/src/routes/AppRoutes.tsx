@@ -10,6 +10,7 @@ import CreateAuditory from '../pages/CreateAuditory';
 import ReportDashboard from '../pages/ReportDashboard';
 import UserManagement from '@/components/crudUsuario/UserManagement';
 import AdminRoute from './AdminRoute';
+import ReportVisualizationTest from '../components/reportDashboard/ReportVisualizationTest';
 
 const AppRoutes = () => {
     let routes = useRoutes([
@@ -22,6 +23,7 @@ const AppRoutes = () => {
         { path: '/mainauditory', element: <Mainauditory /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
+        { path: "/test/reports", element: <ReportVisualizationTest /> },
         
         // Rutas protegidas para administradores
         { 
