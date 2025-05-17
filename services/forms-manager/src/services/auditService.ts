@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from "../firebase/firebase";
 import { collection, doc, setDoc, getDoc, getDocs, FirestoreError } from "firebase/firestore";
-import { NistAudit, AuditResult, OptionValue } from '../types/schemaValidator';
+import { NistAudit, AuditResult, OptionValue } from '../schemas/formSchema';
 import { 
 	AuditTemplateNotFoundError, 
 	AuditResultNotFoundError,
@@ -9,7 +9,6 @@ import {
 	InvalidAuditDataError,
 	logAuditError 
 } from '../utils/auditErrors';
-import { logger } from '@rasla/logify';
 import { RESPONSE_SCORES, RISK_LEVELS, FIRESTORE_COLLECTIONS, NIST_TEMPLATE_ID } from '../constants/auditConstants';
 
 export class AuditService {

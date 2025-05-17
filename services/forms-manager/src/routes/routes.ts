@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { AuditService } from '../services/auditService';
-import { NistAudit } from '../types/schemaValidator';
+import { NistAudit } from '../schemas/formSchema';
 import {
 	auditValidator,
 	auditIdValidator,
