@@ -1,15 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
-import { db } from "../firebase/firebase";
-import { collection, doc, setDoc, getDoc, getDocs, FirestoreError } from "firebase/firestore";
+import { db } from '../firebase/firebase';
+import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
 import { NistAudit, AuditResult, OptionValue } from '../schemas/formSchema';
-import { 
-	AuditTemplateNotFoundError, 
+import {
+	AuditTemplateNotFoundError,
 	AuditResultNotFoundError,
 	FirebaseOperationError,
 	InvalidAuditDataError,
-	logAuditError 
+	logAuditError,
 } from '../utils/auditErrors';
-import { RESPONSE_SCORES, RISK_LEVELS, FIRESTORE_COLLECTIONS, NIST_TEMPLATE_ID } from '../constants/auditConstants';
+import {
+	RESPONSE_SCORES,
+	RISK_LEVELS,
+	FIRESTORE_COLLECTIONS,
+	NIST_TEMPLATE_ID,
+} from '../constants/auditConstants';
 
 export class AuditService {
 	// Puntajes asignados a cada tipo de respuesta desde las constantes
@@ -17,16 +22,21 @@ export class AuditService {
 
 	// Cargar la plantilla de auditoría NIST desde Firestore o usar la predeterminada
 	static async getAuditTemplate(): Promise<NistAudit> {
-		
 		try {
-			const docRef = doc(db, FIRESTORE_COLLECTIONS.AUDIT_TEMPLATES, NIST_TEMPLATE_ID);
+			const docRef = doc(
+				db,
+				FIRESTORE_COLLECTIONS.AUDIT_TEMPLATES,
+				NIST_TEMPLATE_ID
+			);
 			const docSnap = await getDoc(docRef);
 
 			if (docSnap.exists()) {
 				console.log('Plantilla de auditoría encontrada en Firestore');
 				return docSnap.data() as NistAudit;
 			} else {
-				console.warn('Plantilla de auditoría no encontrada en Firestore, usando plantilla predeterminada');
+				console.warn(
+					'Plantilla de auditoría no encontrada en Firestore, usando plantilla predeterminada'
+				);
 			}
 		} catch (error) {
 			logAuditError('getAuditTemplate', error);
@@ -35,7 +45,9 @@ export class AuditService {
 
 		// Plantilla predeterminada como fallback
 		try {
-			const defaultTemplate = JSON.parse(process.env.DEFAULT_NIST_TEMPLATE || '{}') as NistAudit;
+			const defaultTemplate = JSON.parse(
+				process.env.DEFAULT_NIST_TEMPLATE || '{}'
+			) as NistAudit;
 			if (!defaultTemplate.program) {
 				throw new AuditTemplateNotFoundError();
 			}
@@ -50,19 +62,26 @@ export class AuditService {
 	static async saveAuditResult(auditResult: AuditResult): Promise<string> {
 		console.log('Guardando resultado de auditoría');
 		try {
-			if (!auditResult || !auditResult.sections || !auditResult.completionPercentage) {
+			if (
+				!auditResult ||
+				!auditResult.sections ||
+				!auditResult.completionPercentage
+			) {
 				throw new InvalidAuditDataError('Datos de auditoría incompletos');
 			}
-			
+
 			const id = auditResult.id || uuidv4();
-			const auditWithId = { 
-				...auditResult, 
+			const auditWithId = {
+				...auditResult,
 				id,
-				createdAt: Date.now() 
+				createdAt: Date.now(),
 			};
 
-			await setDoc(doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id), auditWithId);
-			return (`Resultado de auditoría guardado con ID: ${id}`);
+			await setDoc(
+				doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id),
+				auditWithId
+			);
+			return `Resultado de auditoría guardado con ID: ${id}`;
 		} catch (error) {
 			logAuditError('saveAuditResult', error);
 			if (error instanceof InvalidAuditDataError) {
@@ -83,7 +102,7 @@ export class AuditService {
 				console.log('Resultado de auditoría encontrado');
 				return docSnap.data() as AuditResult;
 			}
-			
+
 			console.warn(`Resultado de auditoría con ID ${id} no encontrado`);
 			throw new AuditResultNotFoundError(id);
 		} catch (error) {
@@ -98,7 +117,10 @@ export class AuditService {
 	// Listar todas las auditorías realizadas
 	static async listAuditResults(): Promise<AuditResult[]> {
 		try {
-			const auditCollection = collection(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS);
+			const auditCollection = collection(
+				db,
+				FIRESTORE_COLLECTIONS.AUDIT_RESULTS
+			);
 			const querySnapshot = await getDocs(auditCollection);
 
 			const results: AuditResult[] = [];
@@ -122,9 +144,11 @@ export class AuditService {
 	} {
 		try {
 			if (!audit?.config?.nistThresholds) {
-				throw new InvalidAuditDataError('Configuración de umbrales de riesgo no encontrada');
+				throw new InvalidAuditDataError(
+					'Configuración de umbrales de riesgo no encontrada'
+				);
 			}
-			
+
 			let totalScore = 0;
 			let totalQuestions = 0;
 			const sectionResults: Record<string, number> = {};
@@ -160,20 +184,28 @@ export class AuditService {
 			let riskLevel: 'Alto' | 'Medio' | 'Bajo';
 			if (completionPercentage >= audit.config.nistThresholds.lowRisk) {
 				riskLevel = RISK_LEVELS.LOW;
-			} else if (completionPercentage >= audit.config.nistThresholds.mediumRisk) {
+			} else if (
+				completionPercentage >= audit.config.nistThresholds.mediumRisk
+			) {
 				riskLevel = RISK_LEVELS.MEDIUM;
 			} else {
 				riskLevel = RISK_LEVELS.HIGH;
 			}
 
-			console.log(`Cálculo completado: Cumplimiento ${completionPercentage.toFixed(2)}%, Riesgo ${riskLevel}`);
+			console.log(
+				`Cálculo completado: Cumplimiento ${completionPercentage.toFixed(
+					2
+				)}%, Riesgo ${riskLevel}`
+			);
 			return { completionPercentage, riskLevel, sectionResults };
 		} catch (error) {
 			logAuditError('calculateComplianceAndRisk', error);
 			if (error instanceof InvalidAuditDataError) {
 				throw error;
 			}
-			throw new InvalidAuditDataError('Error al calcular el cumplimiento y nivel de riesgo');
+			throw new InvalidAuditDataError(
+				'Error al calcular el cumplimiento y nivel de riesgo'
+			);
 		}
 	}
 
@@ -181,7 +213,9 @@ export class AuditService {
 	static prepareAuditResultObject(audit: NistAudit): AuditResult {
 		try {
 			if (!audit || !audit.sections || !audit.program) {
-				throw new InvalidAuditDataError('Datos de auditoría incompletos o inválidos');
+				throw new InvalidAuditDataError(
+					'Datos de auditoría incompletos o inválidos'
+				);
 			}
 
 			const { completionPercentage, riskLevel, sectionResults } =
@@ -232,7 +266,9 @@ export class AuditService {
 			if (error instanceof InvalidAuditDataError) {
 				throw error;
 			}
-			throw new InvalidAuditDataError('Error al procesar los datos de auditoría');
+			throw new InvalidAuditDataError(
+				'Error al procesar los datos de auditoría'
+			);
 		}
 	}
 }
