@@ -4,6 +4,7 @@ import {
 	createUserValidator,
 	loginUserValidator,
 	resetPasswordValidator,
+	updateUserValidator
 } from '../utils/schemaValidator';
 import { createErrorResponse } from '../utils/firebaseErrors';
 import { VALID_ROLES } from '../constants/roles';
@@ -23,7 +24,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 						success: true,
 						message: 'Usuario creado exitosamente',
 						userId: user.uid,
-						role: role
+						role: role,
 					};
 				} catch (err: any) {
 					// Si es un error de rol inválido, devolvemos un error personalizado
@@ -100,12 +101,12 @@ export function registerUserRoutes(app: Elysia<any>) {
 					const { email, password } = body as any;
 					const user = await UserService.loginUser(email, password);
 					const userData = await UserService.getUserData(user.uid);
-      				
+
 					return {
 						success: true,
 						message: 'Inicio de sesión exitoso',
 						userId: user.uid,
-						role: userData.role
+						role: userData.role,
 					};
 					// Si el inicio de sesión es exitoso, devolvemos el ID del usuario
 				} catch (err: any) {
@@ -280,6 +281,112 @@ export function registerUserRoutes(app: Elysia<any>) {
 					summary: 'Recuperación de contraseña',
 					description:
 						'Envía un correo electrónico con un enlace para restablecer la contraseña',
+					tags: ['Usuarios'],
+				},
+			}
+		)
+		.put(
+			'update/:id',
+			async ({ params, body, error }) => {
+				try {
+					const { id } = params;
+					const updateData = body as { email?: string; role?: string };
+					
+					// Verificamos que haya al menos un campo para actualizar
+					if (!updateData.email && !updateData.role) {
+						return error(400, {
+							success: false,
+							message: 'Debe proporcionar al menos un campo para actualizar (email o role)',
+						});
+					}
+					
+					// Actualizamos el usuario
+					const updatedUser = await UserService.updateUser(id, updateData);
+					
+					return {
+						success: true,
+						message: 'Usuario actualizado exitosamente',
+						user: {
+							uid: updatedUser.id,
+							email: updatedUser.email,
+							role: updatedUser.role,
+							updatedAt: updatedUser.updatedAt.toISOString(),
+						},
+					};
+				} catch (err: any) {
+					// Si es un error de rol inválido, devolvemos un error personalizado
+					if (
+						err instanceof InvalidRoleError ||
+						err.code === 'auth/invalid-role'
+					) {
+						const invalidRole = body?.role;
+						return error(400, {
+							success: false,
+							message: `El rol '${invalidRole}' no es válido`,
+							details: {
+								role: `Debe ser uno de los siguientes: ${VALID_ROLES.join(
+									', '
+								)}`,
+							},
+							invalidValues: { role: invalidRole },
+						});
+					}
+					
+					// Para errores de usuario no encontrado
+					if (err.code === 'auth/user-not-found') {
+						return error(404, {
+							success: false,
+							message: 'Usuario no encontrado',
+							errorCode: err.code,
+						});
+					}
+					
+					// Para otros errores de Firebase, usamos el sistema existente
+					const errorResponse = createErrorResponse(
+						err,
+						'Error al actualizar el usuario'
+					);
+					
+					return error(400, {
+						success: false,
+						message: errorResponse.message,
+						errorCode: errorResponse.errorCode,
+					});
+				}
+			},
+			{
+				params: t.Object({
+					id: t.String(),
+				}),
+				body: updateUserValidator,
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						user: t.Object({
+							uid: t.String(),
+							email: t.String(),
+							role: t.String(),
+							updatedAt: t.String(),
+						}),
+					}),
+					400: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						details: t.Optional(t.Record(t.String(), t.String())),
+						invalidValues: t.Optional(t.Record(t.String(), t.Any())),
+						errorCode: t.Optional(t.String()),
+					}),
+					404: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+				},
+				detail: {
+					summary: 'Actualiza un usuario por ID',
+					description:
+						'Actualiza los datos de un usuario existente por su ID (email y/o rol)',
 					tags: ['Usuarios'],
 				},
 			}

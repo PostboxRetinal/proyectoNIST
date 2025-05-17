@@ -1,13 +1,14 @@
 /**
  * Valores posibles para las respuestas de auditoría
  */
-export type OptionValue = 'yes' | 'partial' | 'no' | 'na';
+export type CualitativeOption = 'yes' | 'partial' | 'no' | 'na';
+export type QuantitativeOption = number;
 
 /**
  * Opciones disponibles para las preguntas
  */
 export interface Option {
-	value: OptionValue;
+	value: CualitativeOption | QuantitativeOption;
 	label: string;
 	description: string;
 }
@@ -19,7 +20,7 @@ export interface Question {
 	id: string;
 	text: string;
 	options: Option[];
-	response: OptionValue | null;
+	response: CualitativeOption | QuantitativeOption | null;
 	observations: string;
 	evidence_url: string;
 }
@@ -76,7 +77,7 @@ export interface AuditResult {
 			completionPercentage: number;
 			questions: {
 				[questionId: string]: {
-					response: OptionValue | null;
+					response: CualitativeOption | QuantitativeOption | null;
 					observations: string;
 					evidence_url: string;
 				};

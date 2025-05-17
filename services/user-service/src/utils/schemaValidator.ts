@@ -40,3 +40,11 @@ export const resetPasswordValidator = t.Object({
 		error: 'Debe proporcionar un email válido',
 	}),
 });
+
+export const updateUserValidator = t.Object({
+	email: t.Optional(t.String({
+		format: 'email',
+		error: 'Debe proporcionar un email válido',
+	})),
+	role: t.Optional(t.String(RoleValidator)),
+});
