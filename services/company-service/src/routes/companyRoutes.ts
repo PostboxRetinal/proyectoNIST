@@ -382,6 +382,67 @@ export function registerCompanyRoutes(app: Elysia<any>) {
 					tags: ['Empresas'],
 				},
 			}
+		)
+		.delete(
+			'/delete/:nit',
+			async ({ params, error }) => {
+				try {
+					const { nit } = params;
+					
+					// Eliminar la empresa por su NIT
+					await CompanyService.deleteCompanyByNit(nit);
+					
+					return {
+						success: true,
+						message: `Empresa con NIT ${nit} eliminada exitosamente`,
+					};
+				} catch (err: any) {
+					const errorResponse = createCompanyErrorResponse(
+						err,
+						'Error al eliminar la empresa'
+					);
+					
+					if (errorResponse.status === 404) {
+						return error(404, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					} else {
+						return error(500, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					}
+				}
+			},
+			{
+				params: t.Object({
+					nit: t.String(),
+				}),
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+					}),
+					404: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+					500: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+				},
+				detail: {
+					summary: 'Eliminar empresa',
+					description: 'Elimina una empresa por su NIT',
+					tags: ['Empresas'],
+				},
+			}
 		);
 
 	return app;
