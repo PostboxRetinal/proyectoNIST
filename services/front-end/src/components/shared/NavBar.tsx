@@ -5,7 +5,7 @@ import NavigationMenu from "../auditory/NavigationMenu";
 import UserName from './UserName';
 import LogOutButton from './buttons/LogOutButton';
 import LoginButton from './buttons/LogInButton';
-import RegisterButton from './buttons/RegisterButton';
+import RegisterUserButton from './buttons/RegisterUserButton';
 
 interface NavBarProps {
   onSelectControl?: (id: string) => void;
@@ -62,7 +62,7 @@ const NavBar = ({
         ) : (
           <div className="flex gap-2">
             <LoginButton />
-            <RegisterButton />
+            <RegisterUserButton />
           </div>
         )}
       </div>

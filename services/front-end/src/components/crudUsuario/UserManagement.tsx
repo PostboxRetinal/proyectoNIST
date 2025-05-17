@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, Users, Edit, Trash2, Home, RefreshCw } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Home, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useAlerts } from "../alert/AlertContext";
@@ -191,20 +191,13 @@ export default function UserManagement() {
           
           <div className="flex flex-wrap gap-4">
             <Link 
-              to="/create-user"
+              to="/registerUser"
               className="bg-blue-600 text-white hover:bg-blue-700 px-5 py-2 rounded-lg flex items-center transition-colors"
             >
               <PlusCircle className="h-5 w-5 mr-2" />
               Crear Usuario
             </Link>
             
-            <Link 
-              to="/manage-roles"
-              className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-5 py-2 rounded-lg flex items-center transition-colors"
-            >
-              <Users className="h-5 w-5 mr-2" />
-              Gestionar Roles
-            </Link>
             <button
               onClick={() => {
                 fetchUsers();
@@ -248,7 +241,6 @@ export default function UserManagement() {
             <table className="min-w-full bg-white overflow-hidden">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="py-3 px-4 text-left text-gray-700">Nombre/Email</th>
                   <th className="py-3 px-4 text-left text-gray-700">Email</th>
                   <th className="py-3 px-4 text-left text-gray-700">Rol</th>
                   <th className="py-3 px-4 text-left text-gray-700">Creado</th>
@@ -259,7 +251,6 @@ export default function UserManagement() {
               <tbody className="divide-y divide-gray-200">
                 {usuariosFiltrados.map((usuario) => (
                   <tr key={usuario.uid} className="hover:bg-gray-50">
-                    <td className="py-3 px-4">{usuario.email.split('@')[0]}</td>
                     <td className="py-3 px-4">{usuario.email}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs text-white ${

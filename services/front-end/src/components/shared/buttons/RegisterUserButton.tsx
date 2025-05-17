@@ -5,18 +5,19 @@ interface RegisterButtonProps {
   className?: string;
 }
 
-const RegisterButton = ({ 
+const RegisterUserButton
+ = ({ 
   showText = true, 
   className = "px-3 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition" 
 }: RegisterButtonProps) => {
   return (
     <Link
-      to="/api/registerCompany"
+      to="/registerUser"
       className={className}
     >
-      {showText && "Crear Empresa"}
+      {showText && "Registrarse"}
     </Link>
   );
 };
 
-export default RegisterButton;
+export default RegisterUserButton;

@@ -125,7 +125,7 @@ export default function PanelLogin() {
 
           <p className="text-center text-sm text-gray-600">
             ¿No tienes cuenta?{' '}
-            <Link to="/api/registerCompany" className="text-blue-500 hover:underline">
+            <Link to="/registerUser" className="text-blue-500 hover:underline">
               Regístrate
             </Link>
           </p>

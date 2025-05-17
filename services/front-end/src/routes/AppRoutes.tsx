@@ -16,13 +16,13 @@ const AppRoutes = () => {
         { path: '/', element: <Home /> },
         { path: '/auditory', element: <Auditory /> },
         { path: '/newauditory', element: <NewAuditory /> },
-        { path: '/api/loginUser', element: <Login /> },
-        { path: '/api/registerCompany', element: <RegisterBussines /> },
-        { path: '/api/registerUser', element: <RegisterUser /> },
+        { path: '/loginUser', element: <Login /> },
+        { path: '/registerCompany', element: <RegisterBussines /> },
+        { path: '/registerUser', element: <RegisterUser /> },
         { path: '/mainauditory', element: <Mainauditory /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
-        { path: '/api/user', element: <UserManagement /> }, 
+        
         // Rutas protegidas para administradores
         { 
           path: '/user-management', 

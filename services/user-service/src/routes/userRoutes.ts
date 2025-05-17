@@ -23,6 +23,7 @@ export function registerUserRoutes(app: Elysia<any>) {
 						success: true,
 						message: 'Usuario creado exitosamente',
 						userId: user.uid,
+						role: role
 					};
 				} catch (err: any) {
 					// Si es un error de rol inválido, devolvemos un error personalizado

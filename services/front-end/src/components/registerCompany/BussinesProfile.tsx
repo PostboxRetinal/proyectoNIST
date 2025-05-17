@@ -186,12 +186,6 @@ export default function ProfileBusiness() {
             {loading ? 'Procesando...' : 'Crear Perfil'}
           </button>
         </form>
-        <p className="text-center text-sm text-gray-600">
-              ¿Tienes cuenta?{' '}
-              <Link to="/api/loginUser" className="text-blue-500 hover:underline">
-                Iniciar Sesion
-              </Link>
-        </p>
       </div>
     </div>
   );
