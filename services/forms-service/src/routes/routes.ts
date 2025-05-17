@@ -71,7 +71,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 						result: t.Object({
 							id: t.String(),
 							program: t.String(),
-							auditDate: t.String(),
+							auditDate: t.Date(),
 							completionPercentage: t.Number(),
 							riskLevel: t.String(),
 						}),
@@ -90,7 +90,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 
 		// Obtener resultado de auditoría específico
 		.get(
-			'/:id',
+			'/getForms/:id',
 			async ({ params, error }) => {
 				try {
 					const { id } = params;
@@ -242,7 +242,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 						result: t.Object({
 							id: t.String(),
 							program: t.String(),
-							auditDate: t.String(),
+							auditDate: t.Date(),
 							completionPercentage: t.Number(),
 							riskLevel: t.String(),
 						}),

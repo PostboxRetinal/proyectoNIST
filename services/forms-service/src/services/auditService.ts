@@ -3,7 +3,6 @@ import { db } from '../firebase/firebase';
 import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
 import { NistAudit, AuditResult, OptionValue } from '../schemas/formSchema';
 import {
-	AuditTemplateNotFoundError,
 	AuditResultNotFoundError,
 	FirebaseOperationError,
 	InvalidAuditDataError,
@@ -11,52 +10,11 @@ import {
 } from '../utils/auditErrors';
 import {
 	RESPONSE_SCORES,
-	RISK_LEVELS,
-	FIRESTORE_COLLECTIONS,
-	NIST_TEMPLATE_ID,
 } from '../constants/auditConstants';
 
 export class AuditService {
 	// Puntajes asignados a cada tipo de respuesta desde las constantes
 	private static RESPONSE_SCORES: Record<OptionValue, number> = RESPONSE_SCORES;
-
-	// Cargar la plantilla de auditoría NIST desde Firestore o usar la predeterminada
-	static async getAuditTemplate(): Promise<NistAudit> {
-		try {
-			const docRef = doc(
-				db,
-				FIRESTORE_COLLECTIONS.AUDIT_TEMPLATES,
-				NIST_TEMPLATE_ID
-			);
-			const docSnap = await getDoc(docRef);
-
-			if (docSnap.exists()) {
-				console.log('Plantilla de auditoría encontrada en Firestore');
-				return docSnap.data() as NistAudit;
-			} else {
-				console.warn(
-					'Plantilla de auditoría no encontrada en Firestore, usando plantilla predeterminada'
-				);
-			}
-		} catch (error) {
-			logAuditError('getAuditTemplate', error);
-			throw new FirebaseOperationError('obtener plantilla de auditoría');
-		}
-
-		// Plantilla predeterminada como fallback
-		try {
-			const defaultTemplate = JSON.parse(
-				process.env.DEFAULT_NIST_TEMPLATE || '{}'
-			) as NistAudit;
-			if (!defaultTemplate.program) {
-				throw new AuditTemplateNotFoundError();
-			}
-			return defaultTemplate;
-		} catch (error) {
-			logAuditError('getAuditTemplate (default template)', error);
-			throw new AuditTemplateNotFoundError();
-		}
-	}
 
 	// Guardar resultados de auditoría en Firestore
 	static async saveAuditResult(auditResult: AuditResult): Promise<string> {
@@ -78,7 +36,7 @@ export class AuditService {
 			};
 
 			await setDoc(
-				doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id),
+				doc(db, 'audit-results', id),
 				auditWithId
 			);
 			return `Resultado de auditoría guardado con ID: ${id}`;
@@ -95,7 +53,7 @@ export class AuditService {
 	static async getAuditResult(id: string): Promise<AuditResult> {
 		console.log(`Obteniendo resultado de auditoría con ID: ${id}`);
 		try {
-			const docRef = doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id);
+			const docRef = doc(db, 'audit-results', id);
 			const docSnap = await getDoc(docRef);
 
 			if (docSnap.exists()) {
@@ -210,7 +168,7 @@ export class AuditService {
 			const result = {
 				id: uuidv4(),
 				program: audit.program,
-				auditDate: new Date().toISOString(),
+				auditDate: new Date(),
 				completionPercentage,
 				sections,
 			};
@@ -236,7 +194,7 @@ export class AuditService {
 		console.log(`Actualizando resultado de auditoría con ID: ${id}`);
 		try {
 			// Verificar que el ID existe
-			const docRef = doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id);
+			const docRef = doc(db, 'audit-results', id);
 			const docSnap = await getDoc(docRef);
 
 			if (!docSnap.exists()) {
@@ -274,16 +232,20 @@ export class AuditService {
 		}
 	}
 
-	// Obtener todos los formularios de auditoría
-	static async getForms(): Promise<NistAudit[]> {
+	// Obtener todos los formularios de auditoría (solo ID y nombre)
+	static async getForms(): Promise<{id: string, name: string}[]> {
 		console.log('Obteniendo todos los formularios de auditoría');
 		try {
 			const formsCollection = collection(db, 'audit-results');
 			const querySnapshot = await getDocs(formsCollection);
 
-			const forms: NistAudit[] = [];
+			const forms: {id: string, name: string}[] = [];
 			querySnapshot.forEach((doc) => {
-				forms.push(doc.data() as NistAudit);
+				const data = doc.data() as AuditResult;
+				forms.push({
+					id: doc.id,
+					name: data.program
+				});
 			});
 
 			console.log(`Se encontraron ${forms.length} formularios de auditoría`);

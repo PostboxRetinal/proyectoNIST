@@ -10,7 +10,7 @@ services:
     depends_on:  
       - user-service  
       - company-service  
-      - forms-manager  
+      - forms-service
     develop:  
       watch:  
         - action: sync  
@@ -57,20 +57,20 @@ services:
         - action: rebuild  
           path: ./services/company-service/Dockerfile  
   
-  forms-manager:  
+  forms-service:  
     build:  
-      context: ./services/forms-manager  
+      context: ./services/forms-service
       dockerfile: Dockerfile  
     ports:  
       - '4003:4003'  
     env_file:  
-      - ./services/forms-manager/.env  
+      - ./services/forms-service/.env  
     develop:  
       watch:  
         - action: sync  
-          path: ./services/forms-manager  
+          path: ./services/forms-service
           target: /app  
           ignore:  
             - node_modules/  
         - action: rebuild  
-          path: ./services/forms-manager/Dockerfile  
+          path: ./services/forms-service/Dockerfile  

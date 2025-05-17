@@ -1,5 +1,11 @@
 /**
  * Valores posibles para las respuestas de auditoría
+ * Se reciben 4 constantes y un número
+ * - 'yes': Cumple con la pregunta
+ * - 'partial': Cumple parcialmente con la pregunta
+ * - 'no': No cumple con la pregunta
+ * - 'na': No aplica la pregunta
+ * - number: Porcentaje de cumplimiento
  */
 export type OptionValue = 'yes' | 'partial' | 'no' | 'na' | number;
 
@@ -43,10 +49,6 @@ export interface Section {
 }
 
 /**
- * Configuración de umbrales NIST
- */
-
-/**
  * Estructura completa de una auditoría NIST
  */
 export interface NistAudit {
@@ -60,9 +62,9 @@ export interface NistAudit {
 export interface AuditResult {
 	id: string;
 	program: string;
-	auditDate: string;
+	auditDate: Date;
 	completionPercentage: number;
-	createdAt?: number;
+	createdAt?: Date;
 	sections: {
 		[sectionId: string]: {
 			completionPercentage: number;
