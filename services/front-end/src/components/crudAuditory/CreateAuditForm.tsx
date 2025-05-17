@@ -701,14 +701,14 @@ const CreateAuditForm: React.FC = () => {
         
         <div className="mt-4 border-t pt-4 border-gray-200">
           <h3 className="text-md font-semibold mb-2">Umbrales de Riesgo</h3>
-          <p className="text-sm text-gray-600 mb-3">
+          <div className="text-sm text-gray-600 mb-3">
             Los umbrales determinan cómo se clasifican los resultados de la evaluación:
-            <ul className="list-disc ml-5 mt-1">
-              <li>Por encima del umbral de <strong>Riesgo Bajo</strong>: Se considera bajo riesgo (color verde)</li>
-              <li>Entre ambos umbrales: Se considera riesgo medio (color amarillo)</li>
-              <li>Por debajo del umbral de <strong>Riesgo Medio</strong>: Se considera alto riesgo (color rojo)</li>
-            </ul>
-          </p>
+          </div>
+          <ul className="list-disc ml-5 mb-3 text-sm text-gray-600">
+            <li>Por encima del umbral de <strong>Riesgo Bajo</strong>: Se considera bajo riesgo (color verde)</li>
+            <li>Entre ambos umbrales: Se considera riesgo medio (color amarillo)</li>
+            <li>Por debajo del umbral de <strong>Riesgo Medio</strong>: Se considera alto riesgo (color rojo)</li>
+          </ul>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
