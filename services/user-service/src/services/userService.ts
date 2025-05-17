@@ -6,7 +6,7 @@ import {
 	UserCredential,
 	User,
 } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs, getDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, getDoc, deleteDoc } from 'firebase/firestore';
 import { logFirebaseError } from '../utils/firebaseErrors';
 import { VALID_ROLES, Role } from '../constants/roles';
 import { UserData } from '../schemas/userSchema';
@@ -234,6 +234,34 @@ export class UserService {
 			return this.getUserData(userId);
 		} catch (error: any) {
 			logFirebaseError('updateUser', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Elimina un usuario existente por su ID
+	 * @param {string} userId - ID del usuario a eliminar
+	 * @returns {Promise<void>} - Promesa vacía que se resuelve cuando se completa la eliminación
+	 * @throws {Error} - Si la eliminación falla o el usuario no existe
+	 */
+	static async deleteUser(userId: string): Promise<void> {
+		try {
+			// Verificar si el usuario existe
+			const userRef = doc(db, 'users', userId);
+			const userDoc = await getDoc(userRef);
+			
+			if (!userDoc.exists()) {
+				const error = new Error(`No se encontró ningún usuario con el ID: ${userId}`);
+				(error as any).code = 'auth/user-not-found';
+				throw error;
+			}
+			
+			// Eliminar el documento del usuario de Firestore
+			await deleteDoc(userRef);
+			
+			console.log(`Usuario con ID: ${userId} eliminado correctamente`);
+		} catch (error: any) {
+			logFirebaseError('deleteUser', error);
 			throw error;
 		}
 	}

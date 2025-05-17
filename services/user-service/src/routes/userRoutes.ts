@@ -390,6 +390,70 @@ export function registerUserRoutes(app: Elysia<any>) {
 					tags: ['Usuarios'],
 				},
 			}
+		)
+		.delete(
+			'delete/:id',
+			async ({ params, error }) => {
+				try {
+					const { id } = params;
+					
+					// Eliminamos el usuario
+					await UserService.deleteUser(id);
+					
+					return {
+						success: true,
+						message: 'Usuario eliminado exitosamente',
+					};
+				} catch (err: any) {
+					// Para errores de usuario no encontrado
+					if (err.code === 'auth/user-not-found') {
+						return error(404, {
+							success: false,
+							message: 'Usuario no encontrado',
+							errorCode: err.code,
+						});
+					}
+					
+					// Para otros errores de Firebase, usamos el sistema existente
+					const errorResponse = createErrorResponse(
+						err,
+						'Error al eliminar el usuario'
+					);
+					
+					return error(500, {
+						success: false,
+						message: errorResponse.message,
+						errorCode: errorResponse.errorCode,
+					});
+				}
+			},
+			{
+				params: t.Object({
+					id: t.String(),
+				}),
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+					}),
+					404: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+					500: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						errorCode: t.Optional(t.String()),
+					}),
+				},
+				detail: {
+					summary: 'Elimina un usuario por ID',
+					description:
+						'Elimina permanentemente un usuario existente por su ID',
+					tags: ['Usuarios'],
+				},
+			}
 		);
 	return app;
 }
