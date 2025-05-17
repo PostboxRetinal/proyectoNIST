@@ -1,22 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
 import CompanySelector from './CompanySelector';
 import StandardSelector from './StandardSelector';
 import { useAlerts } from '../alert/AlertContext';
 
 interface AuditFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (formData: any) => void;
+  showValidationAlerts?: boolean;
 }
 
-const AuditForm = ({ onSubmit }: AuditFormProps) => {
+// Clave para almacenar el estado del formulario entre navegaciones
+const FORM_DATA_STORAGE_KEY = "audit-form-data";
+
+const AuditForm = ({ onSubmit, showValidationAlerts = false }: AuditFormProps) => {
   const { addAlert } = useAlerts();
   const navigate = useNavigate();
-  
-  // Estado del formulario y errores como ya los tenías
+
+  // Estado del formulario
   const [formData, setFormData] = useState({
-    profileId: '',
-    profileName: '',
     companyId: '',
     companyName: '',
     standardId: '',
@@ -29,6 +30,30 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Cargar datos guardados al montar el componente
+  useEffect(() => {
+    try {
+      const savedData = sessionStorage.getItem(FORM_DATA_STORAGE_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setFormData(prev => ({
+          ...prev,
+          ...parsedData
+        }));
+      }
+    } catch (error) {
+      console.error("Error al cargar datos guardados:", error);
+    }
+  }, []);
+
+  // Guardar datos cuando cambian
+  useEffect(() => {
+    // Solo guardar si hay al menos un campo con valor
+    if (Object.values(formData).some(value => value)) {
+      sessionStorage.setItem(FORM_DATA_STORAGE_KEY, JSON.stringify(formData));
+    }
+  }, [formData]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -52,6 +77,15 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
       companyId: id,
       companyName: name
     }));
+    
+    // Limpiar error de compañía si existe
+    if (errors.companyId) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.companyId;
+        return newErrors;
+      });
+    }
   };
 
   const handleStandardSelect = (id: string, name: string) => {
@@ -60,83 +94,74 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
       standardId: id,
       standardName: name
     }));
+    
+    // Limpiar error de estándar si existe
+    if (errors.standardId) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.standardId;
+        return newErrors;
+      });
+    }
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     let hasErrors = false;
     
-    if (!formData.profileId) {
-      newErrors.profileId = "Por favor selecciona un perfil";
-      hasErrors = true;
-    }
-    
-    if (!formData.companyId && !formData.companyName) {
-      newErrors.company = "Por favor selecciona o ingresa una empresa";
-      hasErrors = true;
-    }
-    
-    if (!formData.standardId) {
-      newErrors.standardId = "Por favor selecciona un estándar";
-      hasErrors = true;
-    }
-    
-    if (!formData.auditName.trim()) {
-      newErrors.auditName = "El nombre de la auditoría es requerido";
-      hasErrors = true;
-    }
-    
-    if (!formData.startDate) {
-      newErrors.startDate = "La fecha de inicio es requerida";
-      hasErrors = true;
-    }
-    
-    if (formData.startDate && formData.endDate && 
-        new Date(formData.startDate) > new Date(formData.endDate)) {
-      newErrors.endDate = "La fecha de finalización debe ser posterior a la fecha de inicio";
-      hasErrors = true;
-    }
+      // Validación de empresa
+      if (!formData.companyId && !formData.companyName) {
+        newErrors.companyId = "Por favor selecciona una empresa";
+        hasErrors = true;
+      }
+      
+      // Validación de estándar
+      if (!formData.standardId) {
+        newErrors.standardId = "Por favor selecciona un estándar";
+        hasErrors = true;
+      }
+      
+      // Validación de nombre de auditoría
+      if (!formData.auditName || formData.auditName.trim() === "") {
+        newErrors.auditName = "El nombre de la auditoría es requerido";
+        hasErrors = true;
+      }
+      
+      // Validación de fecha de inicio
+      if (!formData.startDate) {
+        newErrors.startDate = "La fecha de inicio es requerida";
+        hasErrors = true;
+      }
+      
+      // Validación de fecha de finalización (si está presente)
+      if (formData.startDate && formData.endDate && 
+          new Date(formData.startDate) > new Date(formData.endDate)) {
+        newErrors.endDate = "La fecha de finalización debe ser posterior a la fecha de inicio";
+        hasErrors = true;
+      }
 
     setErrors(newErrors);
-    return { isValid: !hasErrors, errors: newErrors };
-  };
-
-  // Función para determinar la ruta destino según el estándar
-  const getDestinationRoute = () => {
-    // Por ahora solo ISO27001 navega a /auditory
-    // En el futuro puedes agregar más rutas para otros estándares
-    switch (formData.standardId) {
-      case 'iso27001':
-        return '/auditory';
-      // Aquí puedes agregar más casos en el futuro:
-      // case 'iso9001':
-      //   return '/iso9001-audit';
-      default:
-        return '/'; // Ruta por defecto si no hay caso específico
-    }
+    return !hasErrors;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { isValid, errors } = validateForm();
-    
+    const isValid = validateForm();
     if (isValid) {
-      // Todo está correcto - mostrar confirmación y enviar datos
-      addAlert('success', 'Evaluación creada con éxito');
-      onSubmit(formData);
-      
-      // Navegar a la ruta correspondiente según el estándar seleccionado
-      const destinationRoute = getDestinationRoute();
-      navigate(destinationRoute);
-    } else {
-      // Mostrar los errores específicos
-      Object.values(errors).forEach(errorMsg => {
-        addAlert('warning', errorMsg);
-      });
+    onSubmit(formData);
+    
+    // Navegar a /auditory cuando el formulario es válido
+    navigate('/auditory', { 
+      state: { 
+        formData,
+        fromCreation: true  // Para saber que venimos de la creación
+      } 
+    });
+  }  else {
+      onSubmit({ ...formData, errors });
     }
   };
-
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 font-sans">
@@ -156,7 +181,8 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ej: Auditoría Anual de Seguridad 2025"
             />
-            {errors.auditName && <p className="text-red-500 text-sm mt-1">{errors.auditName}</p>}
+            {errors.auditName && showValidationAlerts && 
+              <p className="text-red-500 text-sm mt-1">{errors.auditName}</p>}
           </div>
         </div>
 
@@ -171,7 +197,8 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
               onChange={(e) => handleChange('startDate', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.startDate && <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>}
+            {errors.startDate && showValidationAlerts && 
+              <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>}
           </div>
           
           <div>
@@ -184,23 +211,26 @@ const AuditForm = ({ onSubmit }: AuditFormProps) => {
               onChange={(e) => handleChange('endDate', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>}
+            {errors.endDate && showValidationAlerts && 
+              <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>}
           </div>
         </div>
+
       </div>
       
-      {/* Sección del perfil, empresa y estándar */}
+      {/* Sección de empresa y estándar */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             
-        <CompanySelector 
-          onSelect={handleCompanySelect} 
-          onManualEntry={(name) => handleChange('companyName', name)}
-          error={errors.company}
+        <CompanySelector
+          onSelect={handleCompanySelect}
+          error={errors.companyId}
+          currentFormData={formData}
+          showAlerts={showValidationAlerts}
         />
         
         <StandardSelector 
           onSelect={handleStandardSelect} 
           error={errors.standardId}
+          showAlerts={showValidationAlerts}
         />
       </div>            
       {/* Botones de acción */}

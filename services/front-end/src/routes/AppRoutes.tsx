@@ -4,7 +4,7 @@ import Login from '../pages/Login';
 import Home from '../pages/Home';
 import RegisterBussines from '../pages/RegisterBussines';
 import RegisterUser from '../pages/RegisterUser';
-import NewAuditory from '../components/newauditory/NewAuditory';
+import NewAuditory from '../pages/NewAuditory';
 import AuditoryManagement from '../pages/AuditoryManagement';
 import CreateAuditory from '../pages/CreateAuditory';
 import ReportDashboard from '../pages/ReportDashboard';
@@ -15,7 +15,7 @@ const AppRoutes = () => {
     let routes = useRoutes([
         { path: '/', element: <Home /> },
         { path: '/auditory', element: <Auditory /> },
-        { path: '/newauditory', element: <NewAuditory /> },
+        { path: '/newAuditory', element: <NewAuditory /> },
         { path: '/loginUser', element: <Login /> },
         { path: '/registerCompany', element: <RegisterBussines /> },
         { path: '/registerUser', element: <RegisterUser /> },
