@@ -7,6 +7,7 @@ import {
 	collection,
 	where,
 	getDocs,
+	deleteDoc,
 } from 'firebase/firestore';
 import {
 	logCompanyError,
@@ -220,6 +221,32 @@ export class CompanyService {
 			return companies;
 		} catch (error) {
 			logCompanyError('getAllCompanies', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Elimina una empresa por su NIT
+	 * @param {string} nit - NIT de la empresa a eliminar
+	 * @returns {Promise<void>} - Promesa vacía que se resuelve cuando se completa la eliminación
+	 * @throws {CompanyNotFoundError} - Si la empresa no existe
+	 * @throws {Error} - Si ocurre un error durante la eliminación
+	 */
+	static async deleteCompanyByNit(nit: string): Promise<void> {
+		try {
+			// Buscar la empresa por NIT para obtener su ID
+			const company = await this.getCompanyByNit(nit);
+			const companyId = company.id;
+			
+			// Crear referencia al documento de la empresa
+			const companyRef = doc(db, 'companies', companyId);
+			
+			// Eliminar el documento de la empresa
+			await deleteDoc(companyRef);
+			
+			console.log(`Empresa con NIT ${nit} eliminada exitosamente`);
+		} catch (error) {
+			logCompanyError('deleteCompanyByNit', error);
 			throw error;
 		}
 	}

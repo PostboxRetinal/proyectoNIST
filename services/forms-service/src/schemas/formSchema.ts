@@ -1,7 +1,13 @@
 /**
  * Valores posibles para las respuestas de auditoría
+ * Se reciben 4 constantes y un número
+ * - 'yes': Cumple con la pregunta
+ * - 'partial': Cumple parcialmente con la pregunta
+ * - 'no': No cumple con la pregunta
+ * - 'na': No aplica la pregunta
+ * - number: Porcentaje de cumplimiento
  */
-export type OptionValue = 'yes' | 'partial' | 'no' | 'na';
+export type OptionValue = 'yes' | 'partial' | 'no' | 'na' | number;
 
 /**
  * Opciones disponibles para las preguntas
@@ -43,21 +49,10 @@ export interface Section {
 }
 
 /**
- * Configuración de umbrales NIST
- */
-export interface NistConfig {
-	nistThresholds: {
-		lowRisk: number; // Umbral para riesgo bajo (valor mínimo de cumplimiento)
-		mediumRisk: number; // Umbral para riesgo medio (valor mínimo de cumplimiento)
-	};
-}
-
-/**
  * Estructura completa de una auditoría NIST
  */
 export interface NistAudit {
 	program: string;
-	config: NistConfig;
 	sections: Section[];
 }
 
@@ -67,10 +62,9 @@ export interface NistAudit {
 export interface AuditResult {
 	id: string;
 	program: string;
-	auditDate: string;
+	auditDate: Date;
 	completionPercentage: number;
-	riskLevel: 'Alto' | 'Medio' | 'Bajo';
-	createdAt?: number;
+	createdAt?: Date;
 	sections: {
 		[sectionId: string]: {
 			completionPercentage: number;

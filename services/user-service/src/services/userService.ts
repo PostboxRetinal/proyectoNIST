@@ -6,7 +6,7 @@ import {
 	UserCredential,
 	User,
 } from 'firebase/auth';
-import { doc, setDoc, collection, getDocs, getDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, getDoc, deleteDoc } from 'firebase/firestore';
 import { logFirebaseError } from '../utils/firebaseErrors';
 import { VALID_ROLES, Role } from '../constants/roles';
 import { UserData } from '../schemas/userSchema';
@@ -186,6 +186,82 @@ export class UserService {
 			return users;
 		} catch (error: any) {
 			logFirebaseError('getAllUsers', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Actualiza un usuario existente por su ID
+	 * @param {string} userId - ID del usuario a actualizar
+	 * @param {object} updateData - Datos a actualizar (email y/o role)
+	 * @returns {Promise<UserData>} - Datos actualizados del usuario
+	 * @throws {Error} - Si la actualización falla o el usuario no existe
+	 */
+	static async updateUser(
+		userId: string,
+		updateData: { email?: string; role?: string }
+	): Promise<UserData> {
+		try {
+			// Verificar si el usuario existe
+			const userRef = doc(db, 'users', userId);
+			const userDoc = await getDoc(userRef);
+			
+			if (!userDoc.exists()) {
+				const error = new Error(`No se encontró ningún usuario con el ID: ${userId}`);
+				(error as any).code = 'auth/user-not-found';
+				throw error;
+			}
+			
+			// Si se está actualizando el rol, validarlo
+			if (updateData.role && !this.isValidRole(updateData.role)) {
+				throw new InvalidRoleError(updateData.role);
+			}
+			
+			const currentData = userDoc.data();
+			
+			// Preparar datos para actualización
+			const userData = {
+				...currentData,
+				...(updateData.email && { email: updateData.email }),
+				...(updateData.role && { role: updateData.role }),
+				updatedAt: new Date()
+			};
+			
+			// Actualizar en Firestore
+			await setDoc(userRef, userData, { merge: true });
+			
+			// Obtener y devolver los datos actualizados
+			return this.getUserData(userId);
+		} catch (error: any) {
+			logFirebaseError('updateUser', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Elimina un usuario existente por su ID
+	 * @param {string} userId - ID del usuario a eliminar
+	 * @returns {Promise<void>} - Promesa vacía que se resuelve cuando se completa la eliminación
+	 * @throws {Error} - Si la eliminación falla o el usuario no existe
+	 */
+	static async deleteUser(userId: string): Promise<void> {
+		try {
+			// Verificar si el usuario existe
+			const userRef = doc(db, 'users', userId);
+			const userDoc = await getDoc(userRef);
+			
+			if (!userDoc.exists()) {
+				const error = new Error(`No se encontró ningún usuario con el ID: ${userId}`);
+				(error as any).code = 'auth/user-not-found';
+				throw error;
+			}
+			
+			// Eliminar el documento del usuario de Firestore
+			await deleteDoc(userRef);
+			
+			console.log(`Usuario con ID: ${userId} eliminado correctamente`);
+		} catch (error: any) {
+			logFirebaseError('deleteUser', error);
 			throw error;
 		}
 	}

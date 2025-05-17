@@ -22,7 +22,7 @@ app
 		swagger({
 			documentation: {
 				info: {
-					title: 'proyectoNIST forms-manager service API',
+					title: 'proyectoNIST forms-service service API',
 					version: '1.0.0',
 					description: 'API para gestionar auditorías NIST 800-30',
 				},
@@ -50,5 +50,5 @@ app
 	.listen(Bun.env.PORT ?? 4003);
 
 console.log(
-	`[FORM_SVC] ejecutándose en ${app.server?.hostname}:${app.server?.port}`
+	`[FORM_SVC] ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
 );

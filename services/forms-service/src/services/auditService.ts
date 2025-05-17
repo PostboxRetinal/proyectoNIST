@@ -1,69 +1,45 @@
 import { v4 as uuidv4 } from 'uuid';
-import { db } from "../firebase/firebase";
-import { collection, doc, setDoc, getDoc, getDocs, FirestoreError } from "firebase/firestore";
-import { NistAudit, AuditResult, OptionValue } from '../types/schemaValidator';
-import { 
-	AuditTemplateNotFoundError, 
+import { db } from '../firebase/firebase';
+import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
+import { NistAudit, AuditResult, OptionValue } from '../schemas/formSchema';
+import {
 	AuditResultNotFoundError,
 	FirebaseOperationError,
 	InvalidAuditDataError,
-	logAuditError 
+	logAuditError,
 } from '../utils/auditErrors';
-import { logger } from '@rasla/logify';
-import { RESPONSE_SCORES, RISK_LEVELS, FIRESTORE_COLLECTIONS, NIST_TEMPLATE_ID } from '../constants/auditConstants';
+import {
+	RESPONSE_SCORES,
+} from '../constants/auditConstants';
 
 export class AuditService {
 	// Puntajes asignados a cada tipo de respuesta desde las constantes
 	private static RESPONSE_SCORES: Record<OptionValue, number> = RESPONSE_SCORES;
 
-	// Cargar la plantilla de auditoría NIST desde Firestore o usar la predeterminada
-	static async getAuditTemplate(): Promise<NistAudit> {
-		
-		try {
-			const docRef = doc(db, FIRESTORE_COLLECTIONS.AUDIT_TEMPLATES, NIST_TEMPLATE_ID);
-			const docSnap = await getDoc(docRef);
-
-			if (docSnap.exists()) {
-				console.log('Plantilla de auditoría encontrada en Firestore');
-				return docSnap.data() as NistAudit;
-			} else {
-				console.warn('Plantilla de auditoría no encontrada en Firestore, usando plantilla predeterminada');
-			}
-		} catch (error) {
-			logAuditError('getAuditTemplate', error);
-			throw new FirebaseOperationError('obtener plantilla de auditoría');
-		}
-
-		// Plantilla predeterminada como fallback
-		try {
-			const defaultTemplate = JSON.parse(process.env.DEFAULT_NIST_TEMPLATE || '{}') as NistAudit;
-			if (!defaultTemplate.program) {
-				throw new AuditTemplateNotFoundError();
-			}
-			return defaultTemplate;
-		} catch (error) {
-			logAuditError('getAuditTemplate (default template)', error);
-			throw new AuditTemplateNotFoundError();
-		}
-	}
-
 	// Guardar resultados de auditoría en Firestore
 	static async saveAuditResult(auditResult: AuditResult): Promise<string> {
 		console.log('Guardando resultado de auditoría');
 		try {
-			if (!auditResult || !auditResult.sections || !auditResult.completionPercentage) {
+			if (
+				!auditResult ||
+				!auditResult.sections ||
+				!auditResult.completionPercentage
+			) {
 				throw new InvalidAuditDataError('Datos de auditoría incompletos');
 			}
-			
+
 			const id = auditResult.id || uuidv4();
-			const auditWithId = { 
-				...auditResult, 
+			const auditWithId = {
+				...auditResult,
 				id,
-				createdAt: Date.now() 
+				createdAt: Date.now(),
 			};
 
-			await setDoc(doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id), auditWithId);
-			return (`Resultado de auditoría guardado con ID: ${id}`);
+			await setDoc(
+				doc(db, 'audit-results', id),
+				auditWithId
+			);
+			return `Resultado de auditoría guardado con ID: ${id}`;
 		} catch (error) {
 			logAuditError('saveAuditResult', error);
 			if (error instanceof InvalidAuditDataError) {
@@ -77,14 +53,14 @@ export class AuditService {
 	static async getAuditResult(id: string): Promise<AuditResult> {
 		console.log(`Obteniendo resultado de auditoría con ID: ${id}`);
 		try {
-			const docRef = doc(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS, id);
+			const docRef = doc(db, 'audit-results', id);
 			const docSnap = await getDoc(docRef);
 
 			if (docSnap.exists()) {
 				console.log('Resultado de auditoría encontrado');
 				return docSnap.data() as AuditResult;
 			}
-			
+
 			console.warn(`Resultado de auditoría con ID ${id} no encontrado`);
 			throw new AuditResultNotFoundError(id);
 		} catch (error) {
@@ -96,36 +72,12 @@ export class AuditService {
 		}
 	}
 
-	// Listar todas las auditorías realizadas
-	static async listAuditResults(): Promise<AuditResult[]> {
-		try {
-			const auditCollection = collection(db, FIRESTORE_COLLECTIONS.AUDIT_RESULTS);
-			const querySnapshot = await getDocs(auditCollection);
-
-			const results: AuditResult[] = [];
-			querySnapshot.forEach((doc) => {
-				results.push(doc.data() as AuditResult);
-			});
-
-			console.log(`Se encontraron ${results.length} resultados de auditoría`);
-			return results;
-		} catch (error) {
-			logAuditError('listAuditResults', error);
-			throw new FirebaseOperationError('listar resultados de auditoría');
-		}
-	}
-
 	// Calcular el porcentaje de cumplimiento y nivel de riesgo
 	static calculateComplianceAndRisk(audit: NistAudit): {
 		completionPercentage: number;
-		riskLevel: 'Alto' | 'Medio' | 'Bajo';
 		sectionResults: Record<string, number>;
 	} {
 		try {
-			if (!audit?.config?.nistThresholds) {
-				throw new InvalidAuditDataError('Configuración de umbrales de riesgo no encontrada');
-			}
-			
 			let totalScore = 0;
 			let totalQuestions = 0;
 			const sectionResults: Record<string, number> = {};
@@ -157,24 +109,18 @@ export class AuditService {
 			const completionPercentage =
 				totalQuestions > 0 ? totalScore / totalQuestions : 0;
 
-			// Determinar nivel de riesgo basado en los umbrales configurados
-			let riskLevel: 'Alto' | 'Medio' | 'Bajo';
-			if (completionPercentage >= audit.config.nistThresholds.lowRisk) {
-				riskLevel = RISK_LEVELS.LOW;
-			} else if (completionPercentage >= audit.config.nistThresholds.mediumRisk) {
-				riskLevel = RISK_LEVELS.MEDIUM;
-			} else {
-				riskLevel = RISK_LEVELS.HIGH;
-			}
-
-			console.log(`Cálculo completado: Cumplimiento ${completionPercentage.toFixed(2)}%, Riesgo ${riskLevel}`);
-			return { completionPercentage, riskLevel, sectionResults };
+			console.log(
+				`Cálculo completado: Cumplimiento ${completionPercentage.toFixed(2)}%`
+			);
+			return { completionPercentage, sectionResults };
 		} catch (error) {
 			logAuditError('calculateComplianceAndRisk', error);
 			if (error instanceof InvalidAuditDataError) {
 				throw error;
 			}
-			throw new InvalidAuditDataError('Error al calcular el cumplimiento y nivel de riesgo');
+			throw new InvalidAuditDataError(
+				'Error al calcular el cumplimiento y nivel de riesgo'
+			);
 		}
 	}
 
@@ -182,10 +128,12 @@ export class AuditService {
 	static prepareAuditResultObject(audit: NistAudit): AuditResult {
 		try {
 			if (!audit || !audit.sections || !audit.program) {
-				throw new InvalidAuditDataError('Datos de auditoría incompletos o inválidos');
+				throw new InvalidAuditDataError(
+					'Datos de auditoría incompletos o inválidos'
+				);
 			}
 
-			const { completionPercentage, riskLevel, sectionResults } =
+			const { completionPercentage, sectionResults } =
 				AuditService.calculateComplianceAndRisk(audit);
 
 			const sections: AuditResult['sections'] = {};
@@ -220,9 +168,8 @@ export class AuditService {
 			const result = {
 				id: uuidv4(),
 				program: audit.program,
-				auditDate: new Date().toISOString(),
+				auditDate: new Date(),
 				completionPercentage,
-				riskLevel,
 				sections,
 			};
 
@@ -233,7 +180,79 @@ export class AuditService {
 			if (error instanceof InvalidAuditDataError) {
 				throw error;
 			}
-			throw new InvalidAuditDataError('Error al procesar los datos de auditoría');
+			throw new InvalidAuditDataError(
+				'Error al procesar los datos de auditoría'
+			);
+		}
+	}
+
+	// Actualizar un resultado de auditoría existente
+	static async updateAuditResult(
+		id: string,
+		auditResult: Partial<AuditResult>
+	): Promise<string> {
+		console.log(`Actualizando resultado de auditoría con ID: ${id}`);
+		try {
+			// Verificar que el ID existe
+			const docRef = doc(db, 'audit-results', id);
+			const docSnap = await getDoc(docRef);
+
+			if (!docSnap.exists()) {
+				console.warn(`Resultado de auditoría con ID ${id} no encontrado`);
+				throw new AuditResultNotFoundError(id);
+			}
+
+			// Obtener los datos actuales
+			const currentData = docSnap.data() as AuditResult;
+
+			// Preparar los datos actualizados
+			const updatedData = {
+				...currentData,
+				...auditResult,
+				updatedAt: Date.now(),
+			};
+
+			// Validar datos
+			if (!updatedData.sections || !updatedData.completionPercentage) {
+				throw new InvalidAuditDataError('Datos de auditoría incompletos');
+			}
+
+			// Guardar los cambios
+			await setDoc(docRef, updatedData);
+			return `Resultado de auditoría actualizado con ID: ${id}`;
+		} catch (error) {
+			logAuditError('updateAuditResult', error);
+			if (
+				error instanceof AuditResultNotFoundError ||
+				error instanceof InvalidAuditDataError
+			) {
+				throw error;
+			}
+			throw new FirebaseOperationError('actualizar resultado de auditoría');
+		}
+	}
+
+	// Obtener todos los formularios de auditoría (solo ID y nombre)
+	static async getForms(): Promise<{id: string, name: string}[]> {
+		console.log('Obteniendo todos los formularios de auditoría');
+		try {
+			const formsCollection = collection(db, 'audit-results');
+			const querySnapshot = await getDocs(formsCollection);
+
+			const forms: {id: string, name: string}[] = [];
+			querySnapshot.forEach((doc) => {
+				const data = doc.data() as AuditResult;
+				forms.push({
+					id: doc.id,
+					name: data.program
+				});
+			});
+
+			console.log(`Se encontraron ${forms.length} formularios de auditoría`);
+			return forms;
+		} catch (error) {
+			logAuditError('getForms', error);
+			throw new FirebaseOperationError('obtener formularios de auditoría');
 		}
 	}
 }
