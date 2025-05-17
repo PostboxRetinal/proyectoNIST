@@ -6,21 +6,50 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend)
 interface BarChartProps {
   data: number[];
   labels: string[];
+  backgroundColor?: string | string[];
+  title?: string;
 }
 
-const BarReport: React.FC<BarChartProps> = ({ data, labels }) => {
+const BarReport: React.FC<BarChartProps> = ({ data, labels, backgroundColor = 'rgb(16, 185, 129)', title = 'Resultados por Sección' }) => {
   const chartData = {
     labels,
     datasets: [
       {
-        label: 'Datos de Barras',
+        label: title,
         data,
-        backgroundColor: 'rgb(16, 185, 129)', // Verde Tailwind
+        backgroundColor: backgroundColor,
+        borderWidth: 1,
+        borderColor: Array.isArray(backgroundColor) 
+          ? backgroundColor.map(color => color.replace(')', ', 0.8)').replace('rgb', 'rgba'))
+          : backgroundColor.replace(')', ', 0.8)').replace('rgb', 'rgba'),
       },
     ],
   };
 
-  return <Bar data={chartData} />;
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: (value: any) => value + '%'
+        }
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            return context.dataset.label + ': ' + context.raw + '%';
+          }
+        }
+      }
+    }
+  };
+
+  return <Bar data={chartData} options={options} />;
 };
 
 export default BarReport;
