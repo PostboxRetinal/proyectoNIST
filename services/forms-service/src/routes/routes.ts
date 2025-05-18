@@ -73,7 +73,6 @@ export function registerAuditRoutes(app: Elysia<any>) {
 							program: t.String(),
 							auditDate: t.Date(),
 							completionPercentage: t.Number(),
-							riskLevel: t.String(),
 						}),
 					}),
 					400: errorResponseValidator,
@@ -243,8 +242,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 							id: t.String(),
 							program: t.String(),
 							auditDate: t.Date(),
-							completionPercentage: t.Number(),
-							riskLevel: t.String(),
+							completionPercentage: t.Number()
 						}),
 					}),
 					400: errorResponseValidator,
