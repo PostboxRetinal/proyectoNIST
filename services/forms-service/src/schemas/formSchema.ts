@@ -70,6 +70,7 @@ export interface AuditResult {
 			completionPercentage: number;
 			questions: {
 				[questionId: string]: {
+					text: string;
 					response: OptionValue | null;
 					observations: string;
 					evidence_url: string;
