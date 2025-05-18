@@ -38,14 +38,6 @@ export const sectionValidator = t.Object({
 	subsections: t.Array(subsectionValidator),
 });
 
-// Esquema para la configuración NIST
-export const nistConfigValidator = t.Object({
-	nistThresholds: t.Object({
-		lowRisk: t.Number({ minimum: 0, maximum: 100 }),
-		mediumRisk: t.Number({ minimum: 0, maximum: 100 }),
-	}),
-});
-
 // Esquema para la auditoría NIST completa
 export const auditValidator = t.Object({
 	program: t.String({
@@ -53,7 +45,6 @@ export const auditValidator = t.Object({
 		maxLength: 100,
 		error: 'El nombre del programa es requerido',
 	}),
-	config: nistConfigValidator,
 	sections: t.Array(sectionValidator),
 });
 
@@ -70,7 +61,6 @@ export const auditResultValidator = t.Object({
 	id: t.Optional(t.String()),
 	auditDate: t.String(),
 	completionPercentage: t.Number({ minimum: 0, maximum: 100 }),
-	riskLevel: t.String({ enum: ['Alto', 'Medio', 'Bajo'] }),
 	sections: t.Record(
 		t.String(),
 		t.Object({
@@ -107,12 +97,6 @@ export const errorResponseValidator = t.Object({
  *   },
  *   body: JSON.stringify({
  *     program: "Programa de Auditoría para NIST 800-30 (Ciclo PDCA)",
- *     config: {
- *       nistThresholds: {
- *         lowRisk: 80,
- *         mediumRisk: 50
- *       }
- *     },
  *     sections: [
  *       {
  *         section: "1",

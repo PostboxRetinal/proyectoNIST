@@ -63,7 +63,7 @@ app
 			message: 'Error interno del servidor',
 		};
 	})
-	.listen(Bun.env.USER_SERVICE_PORT ?? 4001);
+	.listen(Bun.env.SERVICE_PORT ?? 4001);
 
 console.log(
 	`[USER_SVC] ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
