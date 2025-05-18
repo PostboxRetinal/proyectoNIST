@@ -14,8 +14,7 @@ app
 		cors({
 			origin: ['*'],
 			methods: ['GET', 'POST', 'PUT', 'DELETE'],
-			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
-			credentials: true,
+			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source']
 		})
 	)
 	.use(
@@ -29,20 +28,20 @@ app
 				tags: [
 					{
 						name: 'Auditorías',
-						description: 'Operaciones relacionadas con auditorías NIST 800-30',
+						description: 'Operaciones relacionadas con auditorías NIST 800-30'
 					},
+					{
+						name: 'Formularios',
+						description: 'Operaciones relacionadas con formularios de auditoría'
+					}
 				],
-				components: {
-					securitySchemes: {
-						apiKey: {
-							type: 'apiKey',
-							name: 'X-Gateway-Source',
-							in: 'header',
-							description: 'API key para validar el origen de la petición',
-						},
-					},
-				},
-			},
+				servers: [
+					{
+						url: 'http://localhost:3000',
+						description: 'Servidor de desarrollo local'
+					}
+				]
+			}
 		})
 	)
 	.use(logger({ includeIp: true }))
