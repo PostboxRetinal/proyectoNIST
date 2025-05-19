@@ -9,9 +9,16 @@ const app = new Elysia({ prefix: '/api/user' });
 app
 	.use(
 		cors({
-			origin: ['*'],
-			methods: ['GET', 'POST', 'PUT', 'DELETE'],
+			origin: [
+				'http://localhost:5173',
+				'http://localhost:3000',
+				'http://api-gateway:80',
+			],
+			methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
+			credentials: true,
+			exposeHeaders: ['Access-Control-Allow-Origin'],
+			preflight: true,
 		})
 	)
 
@@ -26,7 +33,6 @@ app
 		})
 	)
 	.use(logger({ includeIp: true }))
-	// Verificación de gateway antes de las rutas
 
 	// Registrar rutas después de la verificación del gateway
 	.use(registerUserRoutes)
