@@ -1,22 +1,11 @@
 import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { logger } from '@rasla/logify';
-import { cors } from '@elysiajs/cors';
 import { registerCompanyRoutes } from './routes/companyRoutes';
 
 const app = new Elysia({ prefix: '/api/company' });
 
 app
-	.use(
-		cors({
-			origin: ['*'],
-			methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
-			credentials: true,
-			exposeHeaders: ['Access-Control-Allow-Origin'],
-			preflight: true,
-		})
-	)
 	.use(
 		swagger({
 			documentation: {
