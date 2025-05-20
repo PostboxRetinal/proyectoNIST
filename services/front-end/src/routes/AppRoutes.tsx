@@ -11,18 +11,20 @@ import ReportDashboard from '../pages/ReportDashboard';
 import UserManagement from '../pages/UserManagement';
 import AdminRoute from './AdminRoute';
 import ReportVisualizationTest from '../components/reportDashboard/ReportVisualizationTest';
+import AuditoryPage from '../components/auditory/AuditoryPage';
 
 const AppRoutes = () => {
     let routes = useRoutes([
         { path: '/', element: <Home /> },
-        { path: '/auditory', element: <Auditory /> },
+        //{ path: '/auditory', element: <Auditory /> },
         { path: '/newAuditory', element: <NewAuditory /> },
         { path: '/loginUser', element: <Login /> },
         { path: '/registerCompany', element: <RegisterBussines /> },
         { path: '/registerUser', element: <RegisterUser /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
-        { path: "/test/reports", element: <ReportVisualizationTest /> },
+        { path: '/test/reports', element: <ReportVisualizationTest /> },
+        {path: '/auditory/:formId', element: <AuditoryPage />},
         
         // Rutas protegidas para administradores
         { path: '/userManagement', element: (

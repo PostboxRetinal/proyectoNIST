@@ -1,20 +1,17 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import AuditManager from '../components/auditory/AuditManager';
-import { AlertProvider } from '../components/alert/AlertContext';
+import NavBar from '@/components/shared/NavBar';
+import AuditoryPage from '@/components/auditory/AuditoryPage';
 
 const Auditory: React.FC = () => {
   const { auditId } = useParams<{ auditId?: string }>();
   
   return (
-    <AlertProvider>
-      <AuditManager 
-        auditId={auditId}
-        companyName="Empresa de Ejemplo"
-        auditName="Auditoría NIST 800-30"
-      />
-    </AlertProvider>
+    <>
+    <NavBar/>
+    <AuditoryPage/>
+    </>
   );
 };
 
-export default Auditory;;
+export default Auditory;

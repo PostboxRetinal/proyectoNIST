@@ -38,32 +38,74 @@ const NewAuditoryComponent = () => {
     sessionStorage.removeItem("validation-attempted");
   }, []);
   
-  const handleAuditCreation = (formData: any) => {
-    // Marcar que se ha intentado una validación
-    sessionStorage.setItem("validation-attempted", "true");
+  const handleAuditCreation = async (formData: any) => {
+  // Marcar que se ha intentado una validación
+  sessionStorage.setItem("validation-attempted", "true");
+  
+  // Activar alertas solo cuando se intenta enviar el formulario
+  setShowValidationAlerts(true);
+  
+  // Comprobar si hay errores en el formulario
+  const hasErrors = formData.errors && Object.keys(formData.errors).length > 0;
+  
+  // Solo mostrar mensaje de éxito y proceder si NO hay errores
+  if (!hasErrors) {
+    console.log("Nueva auditoría seleccionada:", formData);
     
-    // Activar alertas solo cuando se intenta enviar el formulario
-    setShowValidationAlerts(true);
-    
-    // Comprobar si hay errores en el formulario
-    const hasErrors = formData.errors && Object.keys(formData.errors).length > 0;
-    
-    // Solo mostrar mensaje de éxito si NO hay errores
-    if (!hasErrors) {
-      console.log("Nueva auditoría creada:", formData);
-      
-      // Verificar que los campos obligatorios estén realmente llenos
-      if (formData.companyId && formData.standardId && formData.auditName && formData.startDate) {
-        addAlert('success', 'Evaluación creada exitosamente');
-        // Aquí iría la lógica para enviar los datos al backend
-      } else {
-        // En caso de que la validación en AuditForm no haya capturado todos los errores
-        addAlert('error', 'Faltan campos obligatorios por completar');
+    // Verificar que los campos obligatorios estén realmente llenos
+    if (formData.companyId && formData.standardId && formData.auditName && formData.startDate) {
+      try {
+        // Hacer la petición a la API para obtener los detalles de la auditoría
+        const response = await fetch(`http://localhost:3000/api/forms/getForms/${formData.standardId}`);
+        
+        if (!response.ok) {
+          throw new Error('Error al obtener los detalles de la auditoría');
+        }
+        
+        const auditData = await response.json();
+        
+        // Si tenemos datos válidos, preparar los datos para la página de auditoría
+        if (auditData.success && auditData.audit) {
+          // Crear un objeto con la información de la auditoría y los metadatos
+          const auditoryData = {
+            auditData: auditData,
+            metadata: {
+              companyId: formData.companyId,
+              companyName: formData.companyName,
+              auditName: formData.auditName,
+              standardId: formData.standardId,
+              standardName: formData.standardName,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
+              objective: formData.objective,
+              scope: formData.scope
+            }
+          };
+          
+          // Guardar los datos en sessionStorage para acceder a ellos en la página de auditoría
+          sessionStorage.setItem('currentAudit', JSON.stringify(auditoryData));
+          
+          // Redirigir a la página de auditoría con el ID de la auditoría y los datos necesarios
+          navigate(`/auditory/${formData.standardId}`, { 
+            state: auditoryData
+          });
+          
+          addAlert('success', 'Evaluación cargada exitosamente');
+        } else {
+          addAlert('error', 'No se pudo cargar la evaluación seleccionada');
+        }
+      } catch (error) {
+        console.error("Error al cargar la evaluación:", error);
+        addAlert('error', 'Error al cargar la evaluación: ' + (error as Error).message);
       }
     } else {
-      addAlert('error', 'Por favor completa todos los campos requeridos');
+      // En caso de que la validación en AuditForm no haya capturado todos los errores
+      addAlert('error', 'Faltan campos obligatorios por completar');
     }
-  };
+  } else {
+    addAlert('error', 'Por favor completa todos los campos requeridos');
+  }
+};
 
   return (
     <div className="flex flex-col min-h-screen">

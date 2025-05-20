@@ -225,6 +225,7 @@ const AuditForm = ({ onSubmit, showValidationAlerts = false }: AuditFormProps) =
           error={errors.companyId}
           currentFormData={formData}
           showAlerts={showValidationAlerts}
+          
         />
         
         <StandardSelector 
