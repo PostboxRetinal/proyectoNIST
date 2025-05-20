@@ -12,11 +12,7 @@ const app = new Elysia({ prefix: '/api/forms' });
 app
 	.use(
 		cors({
-			origin: [
-				'http://localhost:5173',
-				'http://localhost:3000',
-				'http://api-gateway:80',
-			],
+			origin: ['*'],
 			methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
 			credentials: true,
