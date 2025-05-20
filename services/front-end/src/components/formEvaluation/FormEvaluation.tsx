@@ -5,47 +5,50 @@ import BarReport from '../reportDashboard/BarReport';
 ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
 // Actualizar interfaces para reflejar la estructura real de los datos
-interface Pregunta {
-  id: string | number;
-  texto: string;
-  tipo: "si_no" | "numerica";
-  opciones: string[];
-  descripciones?: string[];
-  respuesta?: string;
-  observaciones?: string;
-  evidencia_url?: string;
-  esObligatoria: boolean;
+interface Option {
+  value: string;
+  label: string;
+  description: string;
 }
 
-interface SubSeccion {
-  id: string | number;
-  titulo: string;
-  preguntas: Pregunta[];
+interface Question {
+  id: string;
+  text: string;
+  options: Option[];
+  response?: string;
+  observations?: string;
+  evidence_url?: string;
 }
 
-interface Seccion {
-  id: string | number;
-  titulo: string;
-  subSecciones: SubSeccion[];
+interface Subsection {
+  subsection: string;
+  title: string;
+  questions: Question[];
 }
 
-interface FormularioData {
+interface Section {
+  section: string;
+  title: string;
+  subsections: Subsection[];
+}
+
+interface FormData {
   program: string;
-  configuracion?: {
-    umbrales?: {
-      riesgoBajo: number;
-      riesgoMedio: number;
+  config: {
+    nistThresholds: {
+      lowRisk: number;
+      mediumRisk: number;
     }
   };
-  secciones: Seccion[];
+  sections: Section[];
 }
 
 interface FormEvaluationProps {
-  formData: FormularioData;
+  formData: FormData;
 }
 
 interface SectionResult {
-  sectionId: string | number;
+  sectionId: string;
   sectionTitle: string;
   score: number;
   interpretation: string;
@@ -66,40 +69,34 @@ interface ChartDataResult {
 
 const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
   const sectionResults = useMemo<SectionResult[]>(() => {
-    if (!formData || !formData.secciones) return [];
+    if (!formData || !formData.sections) return [];
 
-    return formData.secciones.map((seccion: Seccion) => {
+    return formData.sections.map((section: Section) => {
       // Acumular valores y contar preguntas respondidas
       let totalValue = 0;
       let totalQuestions = 0;
 
       // Recorrer todas las subsecciones de la sección
-      seccion.subSecciones.forEach((subseccion: SubSeccion) => {
+      section.subsections.forEach((subsection: Subsection) => {
         // Recorrer todas las preguntas de la subsección
-        subseccion.preguntas.forEach((pregunta: Pregunta) => {
+        subsection.questions.forEach((question: Question) => {
           // Solo procesar preguntas que han sido respondidas
-          if (pregunta.respuesta && pregunta.respuesta !== "No aplica") {
-            // Obtener valor numérico según el tipo de pregunta
+          if (question.response && question.response !== "na") {
+            // Obtener valor numérico según la respuesta
             let valorRespuesta = 0;
             
-            if (pregunta.tipo === "si_no") {
-              // Mapear respuestas de tipo sí/no a valores numéricos
-              switch (pregunta.respuesta) {
-                case "Sí":
-                  valorRespuesta = 5; // Valor máximo
-                  break;
-                case "Parcialmente":
-                  valorRespuesta = 3; // Valor medio
-                  break;
-                case "No":
-                  valorRespuesta = 1; // Valor bajo
-                  break;
-                default:
-                  valorRespuesta = 0; // No aplica o sin respuesta
-              }
-            } else if (pregunta.tipo === "numerica") {
-              // Convertir la respuesta a valor numérico
-              valorRespuesta = parseInt(pregunta.respuesta, 10);
+            switch (question.response) {
+              case "yes":
+                valorRespuesta = 5; // Valor máximo para "Sí"
+                break;
+              case "partial":
+                valorRespuesta = 3; // Valor medio para "Parcialmente"
+                break;
+              case "no":
+                valorRespuesta = 1; // Valor bajo para "No"
+                break;
+              default:
+                valorRespuesta = 0; // Valor por defecto
             }
             
             if (valorRespuesta > 0) {
@@ -113,9 +110,9 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
       // Calcular el puntaje según la fórmula (convertido a porcentaje en base 5)
       const score = totalQuestions > 0 ? (totalValue / (totalQuestions * 5)) * 100 : 0;
       
-      // Utilizar los umbrales de configuración del formulario si están disponibles
-      const lowRiskThreshold = formData.configuracion?.umbrales?.riesgoBajo || 80;
-      const mediumRiskThreshold = formData.configuracion?.umbrales?.riesgoMedio || 50;
+      // Utilizar los umbrales de configuración del formulario
+      const lowRiskThreshold = formData.config?.nistThresholds?.lowRisk || 80;
+      const mediumRiskThreshold = formData.config?.nistThresholds?.mediumRisk || 50;
       
       // Determinar interpretación y color basados en los rangos configurados
       let interpretation = '';
@@ -133,8 +130,8 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
       }
       
       return {
-        sectionId: seccion.id,
-        sectionTitle: seccion.titulo,
+        sectionId: section.section,
+        sectionTitle: section.title,
         score: parseFloat(score.toFixed(2)),
         interpretation,
         color
@@ -149,9 +146,9 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
     const totalScore = sectionResults.reduce((sum: number, section: SectionResult) => sum + section.score, 0);
     const averageScore = totalScore / sectionResults.length;
     
-    // Utilizar los umbrales de configuración del formulario si están disponibles
-    const lowRiskThreshold = formData.configuracion?.umbrales?.riesgoBajo || 80;
-    const mediumRiskThreshold = formData.configuracion?.umbrales?.riesgoMedio || 50;
+    // Utilizar los umbrales de configuración del formulario
+    const lowRiskThreshold = formData.config?.nistThresholds?.lowRisk || 80;
+    const mediumRiskThreshold = formData.config?.nistThresholds?.mediumRisk || 50;
     
     let interpretation = '';
     let color = '';
@@ -172,7 +169,7 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
       interpretation,
       color
     };
-  }, [sectionResults, formData.configuracion]);
+  }, [sectionResults, formData.config]);
 
   // Preparar datos para el gráfico de barras
   const chartData = useMemo<ChartDataResult>(() => {
@@ -253,18 +250,18 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
         <ul className="space-y-2">
           <li className="flex items-center">
             <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-            <span>≥ {formData.configuracion?.umbrales?.riesgoBajo || 80}%: <strong>Bueno</strong></span>
+            <span>≥ {formData.config?.nistThresholds?.lowRisk || 80}%: <strong>Bueno</strong></span>
           </li>
           <li className="flex items-center">
             <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
             <span>
-              {formData.configuracion?.umbrales?.riesgoMedio || 50}% - {(formData.configuracion?.umbrales?.riesgoBajo || 80) - 0.1}%: <strong>Regular</strong>
+              {formData.config?.nistThresholds?.mediumRisk || 50}% - {(formData.config?.nistThresholds?.lowRisk || 80) - 0.1}%: <strong>Regular</strong>
             </span>
           </li>
           <li className="flex items-center">
             <div className="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
             <span>
-              {`< ${formData.configuracion?.umbrales?.riesgoMedio || 50}%`}: <strong>Malo</strong>
+              {`< ${formData.config?.nistThresholds?.mediumRisk || 50}%`}: <strong>Malo</strong>
             </span>
           </li>
         </ul>
