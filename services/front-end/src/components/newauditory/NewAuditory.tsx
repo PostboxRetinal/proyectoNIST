@@ -76,9 +76,7 @@ const NewAuditoryComponent = () => {
               standardId: formData.standardId,
               standardName: formData.standardName,
               startDate: formData.startDate,
-              endDate: formData.endDate,
-              objective: formData.objective,
-              scope: formData.scope
+              endDate: formData.endDate
             }
           };
           

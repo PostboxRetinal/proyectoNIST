@@ -2,7 +2,21 @@ import { useState, useEffect } from 'react';
 import { AlignJustify } from 'lucide-react';
 import SideBar from './SideBar';
 
-const NavigationMenu = ({ onSelect }: { onSelect: (id: string) => void }) => {
+interface NavigationMenuProps {
+  onSelect: (id: string, subsectionId?: string) => void;
+  sections?: Record<string, any>;
+  currentSection?: string;
+  currentSubsection?: string;
+  metadata?: any;
+}
+
+const NavigationMenu = ({ 
+  onSelect, 
+  sections = {}, 
+  currentSection = '', 
+  currentSubsection,
+  metadata 
+}: NavigationMenuProps) => {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
   
   const toggleSidebar = () => {
@@ -60,9 +74,12 @@ const NavigationMenu = ({ onSelect }: { onSelect: (id: string) => void }) => {
       <SideBar 
         isOpen={isSidebarOpen} 
         onClose={closeSidebar} 
-        onSelect={onSelect}
+        onSectionChange={onSelect}
+        sections={sections}
+        currentSection={currentSection}
+        currentSubsection={currentSubsection}
+        metadata={metadata}
       />
-      
     </div>
   );
 };
