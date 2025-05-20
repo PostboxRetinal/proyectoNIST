@@ -90,7 +90,7 @@ export default function UserManagementComponent() {
     if (!deletingUser) return;
     
     try {
-      const response = await axios.delete(`http://localhost:3000/api/user/deleteUser/${deletingUser.uid}`);
+      const response = await axios.delete(`http://localhost:3000/api/user/delete/${deletingUser.uid}`);
       
       if (response.data.success) {
         // Actualizar la lista de usuarios eliminando el usuario borrado
