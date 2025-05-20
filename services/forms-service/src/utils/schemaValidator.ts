@@ -59,7 +59,7 @@ export const auditIdValidator = t.Object({
 // Esquema para la recepción de los resultados de auditoría
 export const auditResultValidator = t.Object({
 	id: t.Optional(t.String()),
-	auditDate: t.String(),
+	auditDate: t.Date(),
 	completionPercentage: t.Number({ minimum: 0, maximum: 100 }),
 	sections: t.Record(
 		t.String(),

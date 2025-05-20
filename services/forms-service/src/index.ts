@@ -12,10 +12,16 @@ const app = new Elysia({ prefix: '/api/forms' });
 app
 	.use(
 		cors({
-			origin: ['*'],
-			methods: ['GET', 'POST', 'PUT', 'DELETE'],
+			origin: [
+				'http://localhost:5173',
+				'http://localhost:3000',
+				'http://api-gateway:80',
+			],
+			methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
 			credentials: true,
+			exposeHeaders: ['Access-Control-Allow-Origin'],
+			preflight: true,
 		})
 	)
 	.use(
@@ -31,17 +37,18 @@ app
 						name: 'Auditorías',
 						description: 'Operaciones relacionadas con auditorías NIST 800-30',
 					},
-				],
-				components: {
-					securitySchemes: {
-						apiKey: {
-							type: 'apiKey',
-							name: 'X-Gateway-Source',
-							in: 'header',
-							description: 'API key para validar el origen de la petición',
-						},
+					{
+						name: 'Formularios',
+						description:
+							'Operaciones relacionadas con formularios de auditoría',
 					},
-				},
+				],
+				servers: [
+					{
+						url: 'http://localhost:3000',
+						description: 'Servidor de desarrollo local',
+					},
+				],
 			},
 		})
 	)

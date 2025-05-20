@@ -32,7 +32,7 @@ export class AuditService {
 			const auditWithId = {
 				...auditResult,
 				id,
-				createdAt: Date.now(),
+				createdAt: new Date(),
 			};
 
 			await setDoc(
@@ -143,6 +143,7 @@ export class AuditService {
 				const sectionQuestions: Record<
 					string,
 					{
+						text: string;
 						response: OptionValue | null;
 						observations: string;
 						evidence_url: string;
@@ -152,6 +153,7 @@ export class AuditService {
 				for (const subsection of section.subsections) {
 					for (const question of subsection.questions) {
 						sectionQuestions[question.id] = {
+							text: question.text,
 							response: question.response,
 							observations: question.observations,
 							evidence_url: question.evidence_url,
