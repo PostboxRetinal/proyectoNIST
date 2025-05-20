@@ -85,7 +85,7 @@ export const profileTexts = {
         {
           type: "select",
           label: "Rol",
-          options: ['Admin',
+          options: ['Administrador',
                     'Auditor'],
           required: true
         },
