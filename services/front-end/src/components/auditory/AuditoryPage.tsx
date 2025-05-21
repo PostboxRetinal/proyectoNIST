@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAlerts } from '../alert/AlertContext';
-import ControlRenderer from './Controlrenderer';
+import ControlRenderer from './ControlRenderer';
 import NavBar from '../shared/NavBar';
 
 // Define interfaces for the API data structure
@@ -30,6 +30,8 @@ interface Section {
   section: string;
   title: string;
   subsections: Subsection[];
+  questions?: Record<string, ControlQuestion>; // Add optional questions property
+  completionPercentage?: number; // Add optional completion percentage
 }
 
 interface AuditData {
@@ -181,12 +183,24 @@ const AuditoryPage: React.FC = () => {
     }
   };
   
-  // Convertir la sección para que sea compatible con ControlRenderer
-  const convertSectionForControlRenderer = (section: Section | undefined): ControlSection => {
+    // Convertir la sección para que sea compatible con ControlRenderer
+    const convertSectionForControlRenderer = (section: Section | undefined): ControlSection => {
     if (!section) {
       return { questions: {} };
     }
     
+      // Si la sección ya tiene el formato esperado por ControlRenderer, retornarla directamente
+    if (section.questions && !section.subsections) {
+      console.log("La sección ya tiene el formato esperado", section);
+      return section as ControlSection;
+    }
+    
+    // Verificar que section.subsections exista
+    if (!section.subsections || !Array.isArray(section.subsections)) {
+      console.error("La sección no tiene subsecciones o no es un array:", section);
+      return { questions: {} };
+    }
+
     // Encontrar la subsección actual
     const currentSubsectionData = section.subsections.find(sub => sub.subsection === currentSubsection);
     

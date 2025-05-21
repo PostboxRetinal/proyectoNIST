@@ -168,7 +168,7 @@ const AuditForm = ({ onSubmit, showValidationAlerts = false }: AuditFormProps) =
       onSubmit(formData);
       
       // Navegar a /auditory cuando el formulario es válido
-      navigate('/auditory', { 
+      navigate(`/auditory/${formData.standardId}`, { 
         state: { 
           formData,
           fromCreation: true  // Para saber que venimos de la creación
