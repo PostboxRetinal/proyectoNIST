@@ -3,7 +3,7 @@
  * Contains factory functions to create test data consistently
  */
 
-import { NistAudit, AuditResult, OptionValue } from '../../../src/schemas/formSchema';
+import { NistAudit, AuditResult } from '../../src/schemas/formSchema';
 
 /**
  * Creates a simple valid audit object for testing
@@ -12,35 +12,57 @@ import { NistAudit, AuditResult, OptionValue } from '../../../src/schemas/formSc
  */
 export function createTestAudit(overrides = {}): NistAudit {
   const defaultAudit: NistAudit = {
-    id: 'test-audit-id',
     program: 'Test Program',
-    companyId: 'test-company-id',
-    auditDate: '2025-05-21',
     sections: [
       {
-        id: 'section1',
-        title: 'Section 1',
+        section: '1',
+        title: 'PLANIFICAR (PLAN)',
         subsections: [
           {
-            id: 'subsection1',
-            title: 'Subsection 1',
-            questions: {
-              'q1': {
+            subsection: '1.1',
+            title: 'Risk Framing',
+            questions: [
+              {
+                id: 'q1',
                 text: 'Question 1',
+                options: [
+                  {
+                    value: 'yes',
+                    label: 'Sí',
+                    description: 'Descripción de sí'
+                  },
+                  {
+                    value: 'no',
+                    label: 'No',
+                    description: 'Descripción de no'
+                  }
+                ],
                 response: 'yes',
                 observations: 'Test observation',
                 evidence_url: ''
               },
-              'q2': {
+              {
+                id: 'q2',
                 text: 'Question 2',
+                options: [
+                  {
+                    value: 'yes',
+                    label: 'Sí',
+                    description: 'Descripción de sí'
+                  },
+                  {
+                    value: 'partial',
+                    label: 'Parcial',
+                    description: 'Descripción de parcial'
+                  }
+                ],
                 response: 'partial',
                 observations: 'Test observation 2',
                 evidence_url: ''
               }
-            }
+            ]
           }
-        ],
-        questions: {}
+        ]
       }
     ]
   };
@@ -57,30 +79,34 @@ export function createTestAuditResult(overrides = {}): AuditResult {
   const defaultResult: AuditResult = {
     id: 'test-result-id',
     program: 'Test Program',
-    companyId: 'test-company-id',
-    auditDate: '2025-05-21',
+    auditDate: new Date(),
     completionPercentage: 75,
-    sections: [
-      {
-        id: 'section1',
-        title: 'Section 1',
-        subsections: [
-          {
-            id: 'subsection1',
-            title: 'Subsection 1',
-            questions: {
-              'q1': {
-                text: 'Question 1',
-                response: 'yes',
-                observations: 'Test observation',
-                evidence_url: ''
-              }
-            }
+    sections: {
+      '1': {
+        title: 'PLANIFICAR (PLAN)',
+        completionPercentage: 80,
+        questions: {
+          'q1': {
+            text: 'Question 1',
+            response: 'yes',
+            observations: 'Test observation',
+            evidence_url: ''
+          },
+          'q2': {
+            text: 'Question 2',
+            response: 'partial',
+            observations: 'Test observation 2',
+            evidence_url: ''
           }
-        ],
-        questions: {}
+        }
       }
-    ]
+    },
+    sectionTitles: {
+      '1': 'PLANIFICAR (PLAN)'
+    },
+    subsectionTitles: {
+      '1.1': 'Risk Framing'
+    }
   };
   
   return { ...defaultResult, ...overrides };
