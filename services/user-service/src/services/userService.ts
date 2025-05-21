@@ -131,7 +131,7 @@ export class UserService {
 			);
 			const user: User = userCredential.user;
 
-			console.log('Usuario conectado:', user);
+			console.log('Usuario conectado:', user.uid);
 			return user;
 		} catch (error: any) {
 			logFirebaseError('loginUser', error);
