@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import logo from "../../assets/C&C logo2.png";
 import { profileTexts } from "../../data/profileTexts";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { ChevronLeft } from 'lucide-react';
 import { useAlerts } from "../alert/AlertContext";
 
@@ -10,6 +10,10 @@ interface RegisterResponse {
   success: boolean;
   message: string;
   userId?: string;
+}
+
+interface ErrorResponse {
+  message?: string;
 }
 
 function ProfileBusiness() {
@@ -108,11 +112,12 @@ function ProfileBusiness() {
       } else {
         addAlert('error', response.data.message || 'Error en el registro');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error de registro:', err);
       
-      if (err.response) {
-        const errorMessage = err.response.data.message || 'Error en el registro';
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError<ErrorResponse>;
+        const errorMessage = axiosError.response?.data?.message || 'Error en el registro';
         addAlert('error', errorMessage);
       } else {
         addAlert('error', 'Error en la conexión con el servidor. Intenta más tarde.');

@@ -8,20 +8,57 @@ import LoginButton from './buttons/LogInButton';
 import RegisterUserButton from './buttons/RegisterUserButton';
 import { ChevronDown, Settings, ClipboardCheck, Users } from 'lucide-react';
 
+interface Option {
+  value: string;
+  label: string;
+  description: string;
+}
+
+interface Question {
+  id: string;
+  text: string;
+  options: Option[];
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Subsections {
+  subsection: string;
+  title: string;
+  questions: Question[];
+}
+
+interface Section {
+  section: string;
+  title: string;
+  subsections: Subsections[];
+}
+
+interface Metadata {
+  standardName?: string;
+  title?: string;
+  companyName?: string;
+  auditName?: string;
+  startDate?: string;
+  endDate?: string;
+  auditor?: string;
+}
+
 interface NavBarProps {
   onSelectControl?: (id: string, subsectionId?: string) => void;
-  sections?: any;
+  sections?: Record<string, Section>;
   currentSection?: string;
   currentSubsection?: string;
-  metadata?: any;
+  metadata?: Metadata | null;
 }
 
 const NavBar = ({ 
   onSelectControl = () => {}, 
-  sections = {},
+  sections = {} as Record<string, Section>,
   currentSection = '',
   currentSubsection = '',
-  metadata = null
+  metadata = undefined
 }: NavBarProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -67,7 +104,7 @@ const NavBar = ({
               sections={sections}
               currentSection={currentSection}
               currentSubsection={currentSubsection}
-              metadata={metadata}
+              metadata={metadata || undefined}
             />
           )}
           <Link to="/" className="flex items-center gap-2">

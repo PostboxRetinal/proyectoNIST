@@ -2,10 +2,23 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+interface AuditFormData {
+  companyId: string;
+  companyName: string;
+  standardId: string;
+  standardName: string;
+  auditName: string;
+  startDate: string;
+  endDate: string;
+  objective: string;
+  scope: string;
+  errors?: Record<string, string>;
+}
+
 interface CompanySelectorProps {
   onSelect: (id: string, name: string) => void;
   error?: string;
-  currentFormData?: Record<string, any>;
+  currentFormData?: AuditFormData;
   showAlerts?: boolean;
   userRole?: string; // Prop para el rol del usuario
 }
@@ -83,7 +96,7 @@ const CompanySelector = ({
     } catch (error) {
       console.error("Error recuperando estado guardado:", error);
     }
-  }, [availableCompanies]);
+  }, [availableCompanies, onSelect]);
 
   // Guardar estado actual cuando cambia
   useEffect(() => {

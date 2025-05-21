@@ -1,5 +1,5 @@
 import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend, TooltipItem} from 'chart.js';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
@@ -34,14 +34,16 @@ const BarReport: React.FC<BarChartProps> = ({ data, labels, backgroundColor = 'r
         beginAtZero: true,
         max: 100,
         ticks: {
-          callback: (value: any) => value + '%'
+          callback: function(tickValue: number | string) {
+            return tickValue + '%';
+          }
         }
       }
     },
     plugins: {
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'bar'>) {
             return context.dataset.label + ': ' + context.raw + '%';
           }
         }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAlerts } from '../alert/AlertContext';
 
-// Define proper interfaces instead of using 'any'
 interface Question {
   id: string;
   text: string;
