@@ -4,7 +4,7 @@ import { useAlerts } from '../alert/AlertContext';
 import ControlRenderer from './ControlRenderer';
 import NavBar from '../shared/NavBar';
 
-
+// Define interfaces for the API data structure
 interface Option {
   value: string;
   label: string;
@@ -31,6 +31,7 @@ interface Section {
   title: string;
   subsections: Subsection[];
 }
+
 interface AuditData {
   success?: boolean;
   audit: {
@@ -47,6 +48,21 @@ interface Metadata {
   endDate?: string;
   auditor?: string;
 }
+
+// Define interfaces for the ControlRenderer compatible data structure
+interface ControlQuestion {
+  id: string;
+  text: string;
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface ControlSection {
+  questions: Record<string, ControlQuestion>;
+  completionPercentage?: number;
+}
+
 const AuditoryPage: React.FC = () => {
   const { formId } = useParams<{ formId: string }>();
   const location = useLocation();
@@ -165,27 +181,43 @@ const AuditoryPage: React.FC = () => {
     }
   };
   
-// Definir una interfaz para las respuestas
-  interface ResponseData {
-    [questionId: string]: {
-      response: string | null;
-      observations?: string;
-      evidence_url?: string;
+  // Convertir la sección para que sea compatible con ControlRenderer
+  const convertSectionForControlRenderer = (section: Section | undefined): ControlSection => {
+    if (!section) {
+      return { questions: {} };
+    }
+    
+    // Encontrar la subsección actual
+    const currentSubsectionData = section.subsections.find(sub => sub.subsection === currentSubsection);
+    
+    if (!currentSubsectionData) {
+      return { questions: {} };
+    }
+    
+    // Convertir preguntas a formato compatible con ControlRenderer
+    const questions = currentSubsectionData.questions.reduce((acc, question) => {
+      acc[question.id] = {
+        id: question.id,
+        text: question.text,
+        response: question.response,
+        observations: question.observations,
+        evidence_url: question.evidence_url
+      };
+      return acc;
+    }, {} as Record<string, ControlQuestion>);
+    
+    return {
+      questions,
+      completionPercentage: 0 // Puedes calcular esto basado en las respuestas si lo necesitas
     };
-  }
+  };
   
-  // Manejar guardar respuestas
-  const handleSaveResponses = async (responses: ResponseData) => {
-    // Implementar la lógica para guardar las respuestas
+  // Manejar guardar respuestas compatible con ControlRenderer
+  const handleSaveResponses = async (data: { sectionId: string; updatedSection: ControlSection }) => {
     try {
-            // Usar las respuestas para actualizar el estado o enviar al servidor
-      console.log('Guardando respuestas:', responses);
-      // Ejemplo de cómo podrías actualizar las respuestas
-      // const response = await fetch(`http://localhost:3000/api/forms/update/${formId}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(responses)
-      // });
+      console.log('Guardando respuestas:', data);
+      // Aquí iría la lógica para actualizar auditData con las respuestas actualizadas
+      // y enviar los datos al servidor si es necesario
       
       addAlert('success', 'Respuestas guardadas correctamente');
     } catch (err) {
@@ -215,25 +247,27 @@ const AuditoryPage: React.FC = () => {
     );
   }
   
+  const controlSection = convertSectionForControlRenderer(auditData.audit.sections[currentSection]);
+  
   return (
     <div className="flex flex-col h-screen">
-    <NavBar
-      onSelectControl={handleSectionChange}
-      sections={auditData.audit.sections}
-      currentSection={currentSection}
-      currentSubsection={currentSubsection}
-      metadata={metadata}
-    />
-    <div className="flex-1 overflow-y-auto p-6">
-      <ControlRenderer 
-        section={auditData.audit.sections[currentSection]}
-        sectionId={currentSection}
-        subsectionId={currentSubsection}
-        onSave={handleSaveResponses}
-        metadata={metadata}
+      <NavBar
+        onSelectControl={handleSectionChange}
+        sections={auditData.audit.sections}
+        currentSection={currentSection}
+        currentSubsection={currentSubsection}
+        metadata={metadata || undefined}
       />
+      <div className="flex-1 overflow-y-auto p-6">
+        <ControlRenderer 
+          section={controlSection}
+          sectionId={currentSection}
+          subsectionId={currentSubsection}
+          onSave={handleSaveResponses}
+          metadata={metadata || undefined}
+        />
+      </div>
     </div>
-  </div>
   );
 };
 

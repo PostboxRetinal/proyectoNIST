@@ -2,12 +2,49 @@ import { useState, useEffect } from 'react';
 import { AlignJustify } from 'lucide-react';
 import SideBar from './SideBar';
 
+interface Metadata {
+  standardName?: string;
+  title?: string;
+  companyName?: string;
+  auditName?: string;
+  startDate?: string;
+  endDate?: string;
+  auditor?: string;
+}
+
+interface Option {
+  value: string;
+  label: string;
+  description: string;
+}
+
+interface Question {
+  id: string;
+  text: string;
+  options: Option[];
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Subsection {
+  subsection: string;
+  title: string;
+  questions: Question[];
+}
+
+interface Section {
+  section: string;
+  title: string;
+  subsections: Subsection[];
+}
+
 interface NavigationMenuProps {
   onSelect: (id: string, subsectionId?: string) => void;
-  sections?: Record<string, any>;
+  sections?: Record<string, Section>;
   currentSection?: string;
   currentSubsection?: string;
-  metadata?: any;
+  metadata?: Metadata;
 }
 
 const NavigationMenu = ({ 
