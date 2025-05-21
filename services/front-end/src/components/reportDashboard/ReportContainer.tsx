@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import FormEvaluation from '../formEvaluation/FormEvaluation';
 import { useAlerts } from '../alert/AlertContext';
 import { Link } from 'react-router-dom';
-import { RefreshCw, Home, FileDown, Share2 } from 'lucide-react';
+import { RefreshCw, Home, FileDown, Share2, ExternalLink } from 'lucide-react';
 
 // Interfaces actualizadas para el nuevo formato de FormEvaluation
 interface Option {
@@ -85,12 +85,29 @@ interface FormResponse {
   };
 }
 
+interface ApiForm {
+  id: string | number;
+  name?: string;
+  program?: string;
+  date?: string;
+  fechaCreacion?: string;
+  hasResponses?: boolean;
+}
+
+interface FormListItem {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+}
+
 const ReportContainer: React.FC = () => {
   const { formId } = useParams<{ formId: string }>();
   const [formData, setFormData] = useState<FormResponse | null>(null);
   const [adaptedData, setAdaptedData] = useState<FormDataNew | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [availableForms, setAvailableForms] = useState<FormListItem[]>([]);
   const { addAlert } = useAlerts();
 
   // Función actualizada para transformar los datos de la API al nuevo formato
@@ -145,12 +162,40 @@ const ReportContainer: React.FC = () => {
     };
   };
 
-  // Función para obtener los datos del formulario desde la API
+  // Función para cargar la lista de todos los formularios disponibles
+ const loadAvailableForms = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.get('http://localhost:3000/api/forms/getForms');
+    console.log('Forms list received:', response.data);
+    
+    if (response.data?.success && Array.isArray(response.data.forms)) {
+      // Adaptamos el formato de la respuesta al que necesitamos para la UI
+      const forms = response.data.forms.map((form: ApiForm) => ({
+        id: String(form.id),
+        name: form.name || form.program || `Formulario ${form.id}`,
+        date: form.date || form.fechaCreacion || new Date().toISOString(),
+        status: form.hasResponses ? 'Completado' : 'Pendiente'
+      }));
+      
+      // Aquí está la corrección, especificando el tipo para 'form' en filter
+      setAvailableForms(forms.filter((form: FormListItem) => form.status === 'Completado'));
+      addAlert('success', 'Lista de formularios cargada');
+    } else {
+      throw new Error('No se recibieron datos válidos de la lista de formularios');
+    }
+  } catch (err: any) {
+    console.error('Error al cargar la lista de formularios:', err);
+    addAlert('error', `Error al cargar la lista: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Función para obtener los datos de un formulario específico
   const fetchFormData = async () => {
     if (!formId) {
-      setLoading(false);
-      setError('No se proporcionó un ID de formulario');
-      addAlert('warning', 'No se proporcionó un ID de formulario');
+      loadAvailableForms();
       return;
     }
 
@@ -158,24 +203,36 @@ const ReportContainer: React.FC = () => {
     setError(null);
 
     try {
+      // Usar el ID del formulario en el endpoint
       const endpoint = `http://localhost:3000/api/forms/getForms/${formId}`;
       console.log(`Fetching form data from: ${endpoint}`);
       
-      const response = await axios.get<FormResponse>(endpoint);
-      console.log('Response received:', response);
+      const response = await axios.get(endpoint);
+      console.log('Response received:', response.data);
       
-      if (response.data && response.data.sections) {
-        console.log('Form data received:', response.data);
-        setFormData(response.data);
+      // Verificar si la respuesta contiene los datos esperados
+      // La estructura puede variar dependiendo de tu API
+      if (response.data?.success && response.data.form) {
+        const formData = {
+          success: true,
+          program: response.data.form.program || 'Sin nombre',
+          fechaCreacion: response.data.form.date || new Date().toISOString(),
+          sections: response.data.form.sections || [],
+          configuration: response.data.form.configuration || {
+            thresholds: { lowRisk: 80, mediumRisk: 50 }
+          }
+        };
+        
+        setFormData(formData);
         
         // Adaptar los datos al nuevo formato para FormEvaluation
-        const adaptedFormData = adaptFormData(response.data);
+        const adaptedFormData = adaptFormData(formData);
         console.log('Adapted data for FormEvaluation:', adaptedFormData);
         setAdaptedData(adaptedFormData);
         
         addAlert('success', 'Formulario cargado correctamente');
       } else {
-        throw new Error('No se recibieron datos válidos del formulario');
+        throw new Error(response.data?.message || 'No se recibieron datos válidos del formulario');
       }
     } catch (err: any) {
       console.error('Error al cargar el formulario:', err);
@@ -188,7 +245,11 @@ const ReportContainer: React.FC = () => {
 
   useEffect(() => {
     console.log("FormId recibido:", formId);
-    fetchFormData();
+    if (formId) {
+      fetchFormData();
+    } else {
+      loadAvailableForms();
+    }
   }, [formId]); // Ejecutar cuando cambie formId
 
   // Función para exportar a PDF (implementación futura)
@@ -207,11 +268,53 @@ const ReportContainer: React.FC = () => {
     return (
       <div className="flex flex-col justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-gray-600">Cargando formulario...</p>
+        <p className="text-gray-600">Cargando datos...</p>
       </div>
     );
   }
 
+  // Si no hay formId, mostrar la lista de formularios disponibles
+  if (!formId) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6">Formularios Disponibles</h1>
+        
+        {availableForms.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {availableForms.map(form => (
+              <Link 
+                key={form.id}
+                to={`/report/${form.id}`}
+                className="p-4 border rounded-lg hover:bg-blue-50 transition-colors flex flex-col"
+              >
+                <h3 className="text-xl font-semibold mb-2">{form.name}</h3>
+                <p className="text-gray-600 mb-2">
+                  Fecha: {new Date(form.date).toLocaleDateString('es-ES')}
+                </p>
+                <p className="mb-3">
+                  <span className={`px-2 py-1 rounded text-sm ${
+                    form.status === 'Completado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {form.status}
+                  </span>
+                </p>
+                <span className="text-blue-600 mt-auto flex items-center">
+                  Ver detalles <ExternalLink className="h-4 w-4 ml-2" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 bg-yellow-50 text-yellow-700 rounded-lg">
+            <h2 className="text-lg font-medium">No hay formularios disponibles</h2>
+            <p>No se encontraron formularios con respuestas registradas.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Si hay error o no hay datos, mostrar mensaje de error
   if (error || !formData || !adaptedData) {
     return (
       <div className="p-6 bg-red-50 text-red-700 rounded-lg">
@@ -226,17 +329,18 @@ const ReportContainer: React.FC = () => {
             Reintentar
           </button>
           <Link 
-            to="/"
+            to="/report"
             className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center"
           >
             <Home className="h-5 w-5 mr-2" />
-            Volver al inicio
+            Ver todos los formularios
           </Link>
         </div>
       </div>
     );
   }
 
+  // Si hay datos, mostrar el reporte completo
   return (
     <div className="container mx-auto p-4">
       {/* Cabecera del reporte */}
@@ -358,8 +462,15 @@ const ReportContainer: React.FC = () => {
       {/* Botones de navegación */}
       <div className="mt-8 flex justify-center">
         <Link 
+          to="/report"
+          className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-6 py-2 rounded-lg text-lg flex items-center transition-colors mr-4"
+        >
+          <Home className="h-5 w-5 mr-2" />
+          Ver todos los formularios
+        </Link>
+        <Link 
           to="/"
-          className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-6 py-2 rounded-lg text-lg flex items-center transition-colors"
+          className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg text-lg flex items-center transition-colors"
         >
           <Home className="h-5 w-5 mr-2" />
           Volver al Dashboard
