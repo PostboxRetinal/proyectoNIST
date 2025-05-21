@@ -98,6 +98,8 @@ export function registerAuditRoutes(app: Elysia<any>) {
 					return {
 						success: true,
 						audit: auditResult,
+						// Incluir los títulos de sección en un campo de nivel superior para facilitar el acceso
+						sectionTitles: auditResult.sectionTitles || {},
 					};
 				} catch (err: any) {
 					const errorResponse = createAuditErrorResponse(
@@ -126,6 +128,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 					200: t.Object({
 						success: t.Boolean(),
 						audit: t.Any(),
+						sectionTitles: t.Record(t.String(), t.String()),
 					}),
 					404: errorResponseValidator,
 					500: errorResponseValidator,
@@ -166,7 +169,13 @@ export function registerAuditRoutes(app: Elysia<any>) {
 				response: {
 					200: t.Object({
 						success: t.Boolean(),
-						forms: t.Array(t.Any()),
+						forms: t.Array(t.Object({
+							id: t.String(),
+							name: t.String(),
+							sections: t.Optional(t.Record(t.String(), t.Object({
+								title: t.String()
+							})))
+						})),
 					}),
 					500: errorResponseValidator,
 				},
