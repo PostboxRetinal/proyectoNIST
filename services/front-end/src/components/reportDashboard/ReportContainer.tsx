@@ -85,6 +85,13 @@ interface FormResponse {
   };
 }
 
+interface FormListItem {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+}
+
 interface ApiForm {
   id: string | number;
   name?: string;
@@ -92,13 +99,6 @@ interface ApiForm {
   date?: string;
   fechaCreacion?: string;
   hasResponses?: boolean;
-}
-
-interface FormListItem {
-  id: string;
-  name: string;
-  date: string;
-  status: string;
 }
 
 const ReportContainer: React.FC = () => {
@@ -163,7 +163,7 @@ const ReportContainer: React.FC = () => {
   };
 
   // Función para cargar la lista de todos los formularios disponibles
- const loadAvailableForms = async () => {
+  const loadAvailableForms = async () => {
   setLoading(true);
   try {
     const response = await axios.get('http://localhost:3000/api/forms/getForms');
@@ -191,7 +191,6 @@ const ReportContainer: React.FC = () => {
     setLoading(false);
   }
 };
-
   // Función para obtener los datos de un formulario específico
   const fetchFormData = async () => {
     if (!formId) {
