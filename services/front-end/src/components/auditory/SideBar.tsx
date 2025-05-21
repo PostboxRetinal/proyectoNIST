@@ -1,12 +1,57 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+interface Option {
+  value: string;
+  label: string;
+  description: string;
+}
+
+interface Question {
+  id: string;
+  text: string;
+  options: Option[];
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Subsection {
+  subsection: string;
+  title: string;
+  questions: Question[];
+}
+
+interface Section {
+  section: string;
+  title: string;
+  subsections: Subsection[];
+  completionPercentage?: number;
+}
+
+// Add SubsectionInfo interface which was missing
+interface SubsectionInfo {
+  id: string;
+  title: string;
+}
+
+interface Metadata {
+  standardName?: string;
+  title?: string;
+  companyName?: string;
+  auditName?: string;
+  startDate?: string;
+  endDate?: string;
+  auditor?: string;
+  subsections?: Record<string, SubsectionInfo[]>; // Add this property to fix the error
+}
+
 interface SideBarProps {
-  sections?: Record<string, any>;
+  sections?: Record<string, Section>;
   currentSection?: string;
   currentSubsection?: string;
   onSectionChange?: (sectionId: string, subsectionId?: string) => void;
-  metadata?: any;
+  metadata?: Metadata;
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -24,7 +69,7 @@ const SideBar: React.FC<SideBarProps> = ({
   
   // Determinar qué mapeo de títulos usar según el estándar
   let sectionTitles: Record<string, string> = {};
-  let subsectionInfo: Record<string, Array<{id: string, title: string}>> = {};
+  let subsectionInfo: Record<string, SubsectionInfo[]> = {};
   
   // Verificar el estándar en los metadatos
   if (metadata?.standardName === "NIST800-30") {
@@ -131,7 +176,7 @@ const SideBar: React.FC<SideBarProps> = ({
                 <span className="font-semibold">Estándar:</span> {metadata.standardName}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-semibold">Fecha inicio:</span> {new Date(metadata.startDate).toLocaleDateString()}
+                <span className="font-semibold">Fecha inicio:</span> {metadata.startDate ? new Date(metadata.startDate).toLocaleDateString() : 'No definida'}
               </p>
             </>
           )}

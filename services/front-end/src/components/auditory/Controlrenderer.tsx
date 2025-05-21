@@ -1,22 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { useAlerts } from '../alert/AlertContext';
 
+interface Question {
+  id: string;
+  text: string;
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Section {
+  questions: Record<string, Question>;
+  completionPercentage?: number;
+}
+
+interface SubsectionInfo {
+  id: string;
+  title: string;
+}
+
+interface ResponseData {
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Metadata {
+  standardName?: string;
+  title?: string;
+  companyName?: string;
+  subsections?: Record<string, SubsectionInfo[]>;
+}
+
 interface ControlRendererProps {
-  section: any;
+  section: Section;
   sectionId: string;
-  onSave: (responses: any) => Promise<void>;
-  metadata?: any;
+  onSave: (responses: { sectionId: string; updatedSection: Section }) => Promise<void>;
+  metadata?: Metadata;
   subsectionId?: string;
 }
 
 const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata, subsectionId }) => {
   const { addAlert } = useAlerts();
-  const [responses, setResponses] = useState<Record<string, any>>({});
+  const [responses, setResponses] = useState<Record<string, ResponseData>>({});
   const [isFormDirty, setIsFormDirty] = useState<boolean>(false);
   
   // Determinar qué mapeo de títulos usar según el estándar
   let sectionTitles: Record<string, string> = {};
-  let subsectionInfo: Record<string, Array<{id: string, title: string}>> = {};
+  let subsectionInfo: Record<string, SubsectionInfo[]> = {};
   
   // Verificar el estándar en los metadatos
   if (metadata?.standardName === "NIST800-30") {
@@ -92,10 +123,10 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
   
   useEffect(() => {
     // Inicializar el estado de las respuestas con los valores actuales de la sección
-    const initialResponses: Record<string, any> = {};
+    const initialResponses: Record<string, ResponseData> = {};
     
     if (section && section.questions) {
-      Object.entries(section.questions).forEach(([questionId, question]: [string, any]) => {
+      Object.entries(section.questions).forEach(([questionId, question]) => {
         initialResponses[questionId] = {
           response: question.response || '',
           observations: question.observations || '',
@@ -121,24 +152,30 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
   };
   
   // Guardar cambios
-  const handleSave = () => {
-    const updatedSection = {
-      ...section,
-      questions: Object.entries(section.questions).reduce((acc: Record<string, any>, [questionId, question]: [string, any]) => {
-        acc[questionId] = {
-          ...question,
-          ...responses[questionId]
-        };
-        return acc;
-      }, {})
-    };
-    
-    onSave({
-      sectionId,
-      updatedSection
-    });
-    
-    setIsFormDirty(false);
+  const handleSave = async () => {
+    try {
+      const updatedSection = {
+        ...section,
+        questions: Object.entries(section.questions).reduce((acc, [questionId, question]) => {
+          acc[questionId] = {
+            ...question,
+            ...responses[questionId]
+          };
+          return acc;
+        }, {} as Record<string, Question>)
+      };
+      
+      await onSave({
+        sectionId,
+        updatedSection
+      });
+      
+      setIsFormDirty(false);
+      addAlert('success', 'Cambios guardados correctamente');
+    } catch (error) {
+      console.error('Error al guardar cambios:', error);
+      addAlert('error', 'Error al guardar los cambios');
+    }
   };
   
   // Si no hay sección o preguntas
@@ -182,9 +219,6 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
         </button>
       </div>
       
-      {/* Resto del componente sigue igual */}
-      {/* ... */}
-      
       {/* Mostrar el porcentaje de avance */}
       <div className="mb-6">
         <div className="flex justify-between text-sm mb-1">
@@ -201,7 +235,7 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
       
       {/* Preguntas */}
       <div className="space-y-6">
-        {sortedQuestionEntries.map(([questionId, question]: [string, any]) => (
+        {sortedQuestionEntries.map(([questionId, question]) => (
           <div key={questionId} className="p-4 bg-white rounded-lg shadow">
             <div className="mb-4">
               <h3 className="text-lg font-semibold mb-2">
