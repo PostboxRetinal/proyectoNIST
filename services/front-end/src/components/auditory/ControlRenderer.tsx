@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAlerts } from '../alert/AlertContext';
+import { Link } from 'react-router-dom';
 
 interface Question {
   id: string;
@@ -38,9 +39,10 @@ interface ControlRendererProps {
   metadata?: Metadata;
   subsectionId?: string;
   readOnly?: boolean;
+  auditoryId?: string;
 }
 
-const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata, subsectionId, readOnly = false }) => {
+const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata, subsectionId, readOnly = false, auditoryId  }) => {
   const { addAlert } = useAlerts();
   const [responses, setResponses] = useState<Record<string, ResponseData>>({});
   const [isFormDirty, setIsFormDirty] = useState<boolean>(false);
@@ -194,151 +196,145 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
   
   return (
     <div className="max-w-4xl mx-auto">
-    <div className="flex justify-between items-center mb-6">
-      <div>
-        <h1 className="text-2xl font-bold">
-          {sectionTitles[sectionId] || `Sección ${sectionId}`}
-        </h1>
-        {subsectionTitle && (
-          <h2 className="text-lg text-gray-600">
-            {subsectionId}: {subsectionTitle}
-          </h2>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {sectionTitles[sectionId] || `Sección ${sectionId}`}
+          </h1>
+          {subsectionTitle && (
+            <h2 className="text-lg text-gray-600">
+              {subsectionId}: {subsectionTitle}
+            </h2>
+          )}
+        </div>
+        
+        {/* Solo mostrar botón si NO estamos en modo lectura */}
+        {!readOnly && (
+          <button
+            onClick={handleSave}
+            disabled={!isFormDirty}
+            className={`px-4 py-2 rounded-md ${
+              isFormDirty
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Guardar cambios
+          </button>
+        )}
+        
+        {/* Botón Ver Reporte en modo lectura */}
+        {readOnly && auditoryId && (
+          <Link
+            to={`/report-details/${auditoryId}`}
+            className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm inline-flex items-center whitespace-nowrap w-auto"
+          >
+            Ver Reporte
+          </Link>
         )}
       </div>
       
-      {/* Solo mostrar botón si NO estamos en modo lectura */}
-      {!readOnly && (
-        <button
-          onClick={handleSave}
-          disabled={!isFormDirty}
-          className={`px-4 py-2 rounded-md ${
-            isFormDirty
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          Guardar cambios
-        </button>
+      {/* Mostrar mensaje de modo solo lectura cuando corresponda */}
+      {readOnly && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-blue-700">
+            Modo de visualización. No se pueden realizar cambios en esta auditoría.
+          </p>
+        </div>
       )}
-    </div>
-    
-    {/* Mostrar mensaje de modo solo lectura cuando corresponda */}
-    {readOnly && (
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-        <p className="text-blue-700">
-          Modo de visualización. No se pueden realizar cambios en esta auditoría.
-        </p>
-      </div>
-    )}
-    
-    {/* Preguntas */}
-    <div className="space-y-6">
-      {sortedQuestionEntries.map(([questionId, question]) => (
-        <div key={questionId} className="p-4 bg-white rounded-lg shadow">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">
-              {questionId}: {question.text}
-            </h3>
-          </div>
-          
-          {/* Opciones de respuesta */}
-          <div className="mb-4">
-            <p className="font-medium text-gray-700 mb-2">Respuesta:</p>
-            <div className="flex flex-wrap gap-2">
-              {['yes', 'partial', 'no', 'na'].map((option) => (
-                <label key={option} className={`flex items-center space-x-2 ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}>
-                  <input
-                    type="radio"
-                    name={`response_${questionId}`}
-                    value={option}
-                    checked={responses[questionId]?.response === option}
-                    onChange={() => !readOnly && handleResponseChange(questionId, 'response', option)}
-                    className="form-radio h-4 w-4 text-blue-600"
-                    disabled={readOnly}
-                  />
-                  <span className={`text-gray-700 ${readOnly && responses[questionId]?.response === option ? 'font-medium' : ''}`}>
-                    {option === 'yes' ? 'Sí' : 
-                     option === 'partial' ? 'Parcialmente' : 
-                     option === 'no' ? 'No' : 
-                     'No aplica'}
-                  </span>
-                </label>
-              ))}
+      
+      {/* Preguntas */}
+      <div className="space-y-6">
+        {sortedQuestionEntries.map(([questionId, question]) => (
+          <div key={questionId} className="p-4 bg-white rounded-lg shadow">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2">
+                {questionId}: {question.text}
+              </h3>
+            </div>
+            
+            {/* Opciones de respuesta */}
+            <div className="mb-4">
+              <p className="font-medium text-gray-700 mb-2">Respuesta:</p>
+              <div className="flex flex-wrap gap-2">
+                {['yes', 'partial', 'no', 'na'].map((option) => (
+                  <label key={option} className={`flex items-center space-x-2 ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+                    <input
+                      type="radio"
+                      name={`response_${questionId}`}
+                      value={option}
+                      checked={responses[questionId]?.response === option}
+                      onChange={() => !readOnly && handleResponseChange(questionId, 'response', option)}
+                      className="form-radio h-4 w-4 text-blue-600"
+                      disabled={readOnly}
+                    />
+                    <span className={`text-gray-700 ${readOnly && responses[questionId]?.response === option ? 'font-medium' : ''}`}>
+                      {option === 'yes' ? 'Sí' : 
+                       option === 'partial' ? 'Parcialmente' : 
+                       option === 'no' ? 'No' : 
+                       'No aplica'}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            {/* Observaciones */}
+            <div className="mb-4">
+              <label className="block font-medium text-gray-700 mb-2">
+                Observaciones:
+              </label>
+              {readOnly ? (
+                <div className="p-2 border border-gray-300 rounded-md bg-gray-50 min-h-[75px]">
+                  {responses[questionId]?.observations || '(Sin observaciones)'}
+                </div>
+              ) : (
+                <textarea
+                  value={responses[questionId]?.observations || ''}
+                  onChange={(e) => handleResponseChange(questionId, 'observations', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  rows={3}
+                  disabled={readOnly}
+                />
+              )}
+            </div>
+            
+            {/* URL de evidencia */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                URL de evidencia:
+              </label>
+              {readOnly ? (
+                <div className="p-2 border border-gray-300 rounded-md bg-gray-50">
+                  {responses[questionId]?.evidence_url ? (
+                    <a 
+                      href={responses[questionId]?.evidence_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {responses[questionId]?.evidence_url}
+                    </a>
+                  ) : (
+                    <span className="text-gray-500">(Sin URL de evidencia)</span>
+                  )}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={responses[questionId]?.evidence_url || ''}
+                  onChange={(e) => handleResponseChange(questionId, 'evidence_url', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="https://ejemplo.com/evidencia.pdf"
+                  disabled={readOnly}
+                />
+              )}
             </div>
           </div>
-          
-          {/* Observaciones */}
-          <div className="mb-4">
-            <label className="block font-medium text-gray-700 mb-2">
-              Observaciones:
-            </label>
-            {readOnly ? (
-              <div className="p-2 border border-gray-300 rounded-md bg-gray-50 min-h-[75px]">
-                {responses[questionId]?.observations || '(Sin observaciones)'}
-              </div>
-            ) : (
-              <textarea
-                value={responses[questionId]?.observations || ''}
-                onChange={(e) => handleResponseChange(questionId, 'observations', e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                rows={3}
-                disabled={readOnly}
-              />
-            )}
-          </div>
-          
-          {/* URL de evidencia */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              URL de evidencia:
-            </label>
-            {readOnly ? (
-              <div className="p-2 border border-gray-300 rounded-md bg-gray-50">
-                {responses[questionId]?.evidence_url ? (
-                  <a 
-                    href={responses[questionId]?.evidence_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline break-all"
-                  >
-                    {responses[questionId]?.evidence_url}
-                  </a>
-                ) : (
-                  <span className="text-gray-500">(Sin URL de evidencia)</span>
-                )}
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={responses[questionId]?.evidence_url || ''}
-                onChange={(e) => handleResponseChange(questionId, 'evidence_url', e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="https://ejemplo.com/evidencia.pdf"
-                disabled={readOnly}
-              />
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-    
-    {/* Botón al final para guardar */}
-    {!readOnly && (
-      <div className="mt-8 flex justify-end">
-        <button 
-          onClick={handleSave}
-          disabled={!isFormDirty}
-          className={`px-4 py-2 rounded-md ${
-            isFormDirty
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          Guardar Cambios
-        </button>
+        ))}
       </div>
-    )}
-  </div>
+      
+    </div>
   );
 };
 

@@ -440,7 +440,7 @@ return (
               {auditData && <PdfExporter auditData={auditData} contentRef={reportContentRef} />}
               <button
                 onClick={refreshData}
-                className="bg-blue-600 text-white hover:bg-green-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm"
+                className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Actualizar datos

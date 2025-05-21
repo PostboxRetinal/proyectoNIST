@@ -38,6 +38,7 @@ interface AuditData {
   success?: boolean;
   audit: {
     sections: Record<string, Section>;
+    program?: string; // Add program property to fix the compilation error
   };
 }
 
@@ -194,13 +195,13 @@ useEffect(() => {
     }
   };
   
-    // Convertir la sección para que sea compatible con ControlRenderer
-    const convertSectionForControlRenderer = (section: Section | undefined): ControlSection => {
+  // Convertir la sección para que sea compatible con ControlRenderer
+  const convertSectionForControlRenderer = (section: Section | undefined): ControlSection => {
     if (!section) {
       return { questions: {} };
     }
     
-      // Si la sección ya tiene el formato esperado por ControlRenderer, retornarla directamente
+    // Si la sección ya tiene el formato esperado por ControlRenderer, retornarla directamente
     if (section.questions && !section.subsections) {
       console.log("La sección ya tiene el formato esperado", section);
       return section as ControlSection;
@@ -279,8 +280,6 @@ const handleSaveResponses = async (data: { sectionId: string; updatedSection: Co
     );
   }
   
-  const controlSection = convertSectionForControlRenderer(auditData.audit.sections[currentSection]);
-  
   return (
     <div className="flex flex-col h-screen">
       <NavBar
@@ -292,13 +291,19 @@ const handleSaveResponses = async (data: { sectionId: string; updatedSection: Co
       />
       <div className="flex-1 overflow-y-auto p-6">
         
-        <ControlRenderer 
-          section={controlSection}
+        <ControlRenderer
+          section={convertSectionForControlRenderer(
+            auditData?.audit?.sections[currentSection]
+          )}
           sectionId={currentSection}
           subsectionId={currentSubsection}
           onSave={handleSaveResponses}
-          metadata={metadata || undefined}
-          readOnly={readOnly} // Pasamos el modo lectura al renderer
+          metadata={{
+            standardName: auditData?.audit?.program,
+            // otros metadatos existentes...
+          }}
+          readOnly={readOnly}
+          auditoryId={formId} // Añadir el ID de la auditoría
         />
       </div>
     </div>
