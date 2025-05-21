@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { AuditoryDeleteModal } from "./AuditoryDeleteModal";
 import { AuditoryViewModal } from "./AuditoryViewModal";
 import axios from "axios";
+import { useAlerts } from "../alert/AlertContext"; // Importamos el contexto de alertas
 
 // Interfaces para tipado
 interface AuditoryResponse {
@@ -14,6 +15,19 @@ interface AuditoryResponse {
 interface Auditory {
   id: string;
   name: string;
+}
+
+interface AxiosError {
+  message: string;
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+    statusText?: string;
+  };
+  request?: unknown;
+  config?: unknown;
 }
 
 export default function AuditoryManagement() {
@@ -29,6 +43,9 @@ export default function AuditoryManagement() {
   const [selectedAuditory, setSelectedAuditory] = useState<Auditory | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  
+  // Hook para mostrar alertas
+  const { addAlert } = useAlerts();
 
   // Cargar auditorías al inicio
   useEffect(() => {
@@ -84,16 +101,49 @@ export default function AuditoryManagement() {
     if (!selectedAuditory) return;
     
     try {
-      // Aquí iría la llamada a la API para eliminar
-      // const response = await axios.delete(`http://localhost:3000/api/forms/deleteForm/${selectedAuditory.id}`);
+      // Mostramos un indicador de carga
+      setLoading(true);
       
-      // Por ahora, solo actualizamos el estado local
-      setAuditorias(prevAuditorias => prevAuditorias.filter(a => a.id !== selectedAuditory.id));
-      setShowDeleteModal(false);
-      setSelectedAuditory(null);
-    } catch (err) {
+      // Realizamos la llamada a la API para eliminar el formulario
+      const response = await axios.delete(
+        `http://localhost:3000/api/forms/deleteForm/${selectedAuditory.id}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Verificamos que la eliminación fue exitosa
+      if (response.status === 200) {
+        // Actualizamos el estado local eliminando la auditoría
+        setAuditorias(prevAuditorias => 
+          prevAuditorias.filter(a => a.id !== selectedAuditory.id)
+        );
+        
+        // Mostramos la alerta de éxito
+        addAlert('success', `La auditoría "${selectedAuditory.name}" ha sido eliminada correctamente`);
+        
+        // Cerramos el modal y limpiamos la selección
+        setShowDeleteModal(false);
+        setSelectedAuditory(null);
+      } else {
+        // Si hay algún error en la respuesta
+        console.error("Error en la respuesta al eliminar:", response);
+        setError(`Error al eliminar la auditoría: ${response.data?.message || 'Error desconocido'}`);
+        addAlert('error', `Error al eliminar la auditoría: ${response.data?.message || 'Error desconocido'}`);
+      }
+    } catch (err: unknown) {
       console.error("Error al eliminar auditoría:", err);
-      setError("Error al eliminar la auditoría");
+  
+      const error = err as AxiosError;
+      const errorMessage = error.message || 'Error desconocido';
+  
+      setError(`Error al eliminar la auditoría: ${errorMessage}`);
+      addAlert('error', `Error al eliminar la auditoría: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -179,6 +229,7 @@ export default function AuditoryManagement() {
                           className="text-red-500 hover:text-red-700 transition-colors"
                           onClick={() => iniciarEliminacionAuditoria(auditoria)}
                           aria-label="Eliminar auditoría"
+                          disabled={loading}
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>
