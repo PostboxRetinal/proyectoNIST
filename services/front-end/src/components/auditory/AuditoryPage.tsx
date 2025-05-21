@@ -108,7 +108,7 @@ useEffect(() => {
   
   useEffect(() => {
   // Intentar recuperar los datos de la auditoría del state o del sessionStorage
-
+  
   const loadAuditData = async () => {
     setLoading(true);
     setError(null);
@@ -168,13 +168,12 @@ useEffect(() => {
       } else {
         throw new Error('ID de formulario no proporcionado');
       }
-      } catch (err) {
-    console.error("Error al cargar la auditoría:", err);
-    setError((err as Error).message);
-    // Fixed: removed third parameter
-    addAlert('error', `Error al cargar la auditoría: ${(err as Error).message}`);
-  } finally {
-    setLoading(false);
+    } catch (err) {
+      console.error("Error al cargar la auditoría:", err);
+      setError((err as Error).message);
+      addAlert('error', `Error al cargar la auditoría: ${(err as Error).message}`);
+    } finally {
+      setLoading(false);
     }
   };
   

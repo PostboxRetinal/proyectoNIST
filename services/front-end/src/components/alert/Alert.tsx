@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
@@ -29,22 +29,48 @@ const Alert = ({ type, message, onClose, autoClose = true, duration = 5000 }: Al
     info: 'text-blue-500'
   };
 
+  // Manejar el cierre de forma más robusta usando useCallback
+  const closeAlert = useCallback(() => {
+    setIsVisible(false);
+    // Pequeño retraso para asegurar que la animación se complete antes de llamar onClose
+    setTimeout(() => {
+      if (onClose) onClose();
+    }, 100);
+  }, [onClose]);
+
   // Cierre automático después de "duration" milisegundos
   useEffect(() => {
     if (autoClose && isVisible) {
       const timer = setTimeout(() => {
-        setIsVisible(false);
-        if (onClose) onClose();
+        closeAlert();
       }, duration);
       
       return () => clearTimeout(timer);
     }
-  }, [autoClose, duration, isVisible, onClose]);
+  }, [autoClose, duration, isVisible, closeAlert]);
 
   if (!isVisible) return null;
 
+  // Función para manejar el clic en el botón de cerrar
+  const handleClose = (e: React.MouseEvent) => {
+    // Prevenir comportamiento predeterminado para evitar recargas
+    e.preventDefault();
+    e.stopPropagation();
+    
+    closeAlert();
+  };
+
+  // Prevenir la propagación de todos los clics dentro de la alerta
+  const handleAlertClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className={`flex items-center justify-between p-4 font-sans mb-4 border-l-4 rounded ${styles[type]}`} role="alert">
+    <div 
+      className={`flex items-center justify-between p-4 font-sans mb-4 border-l-4 rounded ${styles[type]}`} 
+      role="alert"
+      onClick={handleAlertClick}
+    >
       <div className="flex items-center">
         <span className={`mr-2 ${iconColor[type]}`}>
           {type === 'success' && <CheckCircle size={20} />}
@@ -57,10 +83,7 @@ const Alert = ({ type, message, onClose, autoClose = true, duration = 5000 }: Al
       <button 
         type="button" 
         className="ml-4 focus:outline-none" 
-        onClick={() => {
-          setIsVisible(false);
-          if (onClose) onClose();
-        }}
+        onClick={handleClose}
       >
         <X size={20} className="text-gray-600 hover:text-gray-800" />
       </button>

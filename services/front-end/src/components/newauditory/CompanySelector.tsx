@@ -75,7 +75,9 @@ const CompanySelector = ({
 
   // Recuperar estado al cargar el componente
   useEffect(() => {
-    try {
+  try {
+    // Solo recuperar estado si no hay selección actual
+    if (!selectedCompany) {
       const savedState = sessionStorage.getItem(FORM_STATE_KEY);
       if (savedState) {
         const parsedState = JSON.parse(savedState);
@@ -93,10 +95,11 @@ const CompanySelector = ({
           }, 100);
         }
       }
-    } catch (error) {
-      console.error("Error recuperando estado guardado:", error);
     }
-  }, [availableCompanies, onSelect]);
+  } catch (error) {
+    console.error("Error recuperando estado guardado:", error);
+  }
+}, [availableCompanies, onSelect, selectedCompany]);
 
   // Guardar estado actual cuando cambia
   useEffect(() => {

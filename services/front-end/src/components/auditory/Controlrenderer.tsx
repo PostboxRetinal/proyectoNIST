@@ -11,7 +11,6 @@ interface Question {
 
 interface Section {
   questions: Record<string, Question>;
-  completionPercentage?: number;
 }
 
 interface SubsectionInfo {
@@ -171,8 +170,7 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
         updatedSection
       });
       
-      setIsFormDirty(false);
-      addAlert('success', 'Cambios guardados correctamente');
+      setIsFormDirty(false);      
     } catch (error) {
       console.error('Error al guardar cambios:', error);
       addAlert('error', 'Error al guardar los cambios');
@@ -232,20 +230,6 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
         </p>
       </div>
     )}
-    
-    {/* Mostrar el porcentaje de avance */}
-    <div className="mb-6">
-      <div className="flex justify-between text-sm mb-1">
-        <span>Avance de la sección</span>
-        <span>{section.completionPercentage?.toFixed(2) || 0}%</span>
-      </div>
-      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div 
-          className="h-full bg-green-500" 
-          style={{ width: `${section.completionPercentage || 0}%` }}
-        ></div>
-      </div>
-    </div>
     
     {/* Preguntas */}
     <div className="space-y-6">
