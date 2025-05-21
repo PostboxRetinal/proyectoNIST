@@ -1,0 +1,77 @@
+name: Pull Request Tests
+
+on:
+  pull_request:
+    branches: [master, feature/integration-frontend-backend]
+    paths:
+      - 'services/**'
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            services/**/*.ts
+            services/**/*.tsx
+            services/**/*.js
+            services/**/*.jsx
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Test affected services
+        run: |
+          # Identificar servicios afectados por los cambios
+          AFFECTED_SERVICES=()
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ $file == services/company-service/* ]]; then
+              if [[ ! " ${AFFECTED_SERVICES[*]} " =~ "company-service" ]]; then
+                AFFECTED_SERVICES+=("company-service")
+              fi
+            elif [[ $file == services/forms-service/* ]]; then
+              if [[ ! " ${AFFECTED_SERVICES[*]} " =~ "forms-service" ]]; then
+                AFFECTED_SERVICES+=("forms-service")
+              fi
+            elif [[ $file == services/user-service/* ]]; then
+              if [[ ! " ${AFFECTED_SERVICES[*]} " =~ "user-service" ]]; then
+                AFFECTED_SERVICES+=("user-service")
+              fi
+            elif [[ $file == services/front-end/* ]]; then
+              if [[ ! " ${AFFECTED_SERVICES[*]} " =~ "front-end" ]]; then
+                AFFECTED_SERVICES+=("front-end")
+              fi
+            fi
+          done
+
+          # Ejecutar pruebas solo en servicios afectados
+          for service in "${AFFECTED_SERVICES[@]}"; do
+            echo "Running tests for $service"
+            cd ./services/$service
+            
+            if [[ $service == "front-end" ]]; then
+              npm install
+              # Descomenta cuando tengas pruebas en el frontend
+              # npm test
+              echo "Frontend tests would run here"
+            else
+              bun install
+              bun test
+            fi
+            
+            cd ../../
+          done
