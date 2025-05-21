@@ -10,6 +10,7 @@ import ReportDashboard from '../pages/ReportDashboard';
 import UserManagement from '../pages/UserManagement';
 import AdminRoute from './AdminRoute';
 import AuditoryPage from '../components/auditory/AuditoryPage';
+import ReportDetailsView from '../pages/ReportDetailsView';
 
 const AppRoutes = () => {
     const routes = useRoutes([
@@ -21,6 +22,7 @@ const AppRoutes = () => {
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
         {path: '/auditory/:formId', element: <AuditoryPage />},
+        {path: '/report-details/:id', element: <ReportDetailsView />},
         
         // Rutas protegidas para administradores
         { path: '/userManagement', element: (

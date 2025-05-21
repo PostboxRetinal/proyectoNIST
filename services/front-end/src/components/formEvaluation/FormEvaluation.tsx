@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-import BarReport from '../reportDashboard/BarReport';
+import BarReport from '../reportDashboard/PieReport';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
@@ -232,28 +232,6 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
         </div>
       </div>
       
-      {/* Leyenda de interpretación */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h4 className="font-medium mb-2">Interpretación de resultados:</h4>
-        <ul className="space-y-2">
-          <li className="flex items-center">
-            <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-            <span>≥ 80%: <strong>Bueno</strong></span>
-          </li>
-          <li className="flex items-center">
-            <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
-            <span>
-              50% - 79.9%: <strong>Regular</strong>
-            </span>
-          </li>
-          <li className="flex items-center">
-            <div className="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
-            <span>
-              &lt; 50%: <strong>Malo</strong>
-            </span>
-          </li>
-        </ul>
-      </div>
     </div>
   );
 };

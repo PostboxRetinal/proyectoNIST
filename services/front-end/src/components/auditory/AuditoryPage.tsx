@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAlerts } from '../alert/AlertContext';
-import ControlRenderer from './ControlRenderer';
+import ControlRenderer from './Controlrenderer';
 import NavBar from '../shared/NavBar';
 
 // Define interfaces for the API data structure
