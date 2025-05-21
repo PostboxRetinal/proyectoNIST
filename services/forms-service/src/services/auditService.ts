@@ -52,7 +52,7 @@ export class AuditService {
 	}
 
 	// Obtener un resultado de auditoría específico
-	static async getAuditResult(id: string): Promise<AuditResult> {
+	static async getAuditResult(id: string): Promise<AuditResult & { sectionTitles?: { [key: string]: string } }> {
 		console.log(`Obteniendo resultado de auditoría con ID: ${id}`);
 		try {
 			const docRef = doc(db, 'audit-results', id);
@@ -60,7 +60,20 @@ export class AuditService {
 
 			if (docSnap.exists()) {
 				console.log('Resultado de auditoría encontrado');
-				return docSnap.data() as AuditResult;
+				const auditResult = docSnap.data() as AuditResult;
+				
+				// Agregar un campo adicional con los títulos de las secciones para facilitar el acceso
+				const sectionTitles: { [key: string]: string } = {};
+				if (auditResult.sections) {
+					Object.entries(auditResult.sections).forEach(([sectionId, sectionData]) => {
+						sectionTitles[sectionId] = sectionData.title;
+					});
+				}
+				
+				return {
+					...auditResult,
+					sectionTitles
+				};
 			}
 
 			console.warn(`Resultado de auditoría con ID ${id} no encontrado`);
@@ -191,6 +204,7 @@ export class AuditService {
 				}
 
 				sections[section.section] = {
+					title: section.title,
 					completionPercentage: sectionResults[section.section],
 					questions: sectionQuestions,
 				};
@@ -263,19 +277,29 @@ export class AuditService {
 		}
 	}
 
-	// Obtener todos los formularios de auditoría (solo ID y nombre)
-	static async getForms(): Promise<{ id: string; name: string }[]> {
+	// Obtener todos los formularios de auditoría (ID, nombre y títulos de secciones)
+	static async getForms(): Promise<{ id: string; name: string; sections?: { [key: string]: { title: string } } }[]> {
 		console.log('Obteniendo todos los formularios de auditoría');
 		try {
 			const formsCollection = collection(db, 'audit-results');
 			const querySnapshot = await getDocs(formsCollection);
 
-			const forms: { id: string; name: string }[] = [];
+			const forms: { id: string; name: string; sections?: { [key: string]: { title: string } } }[] = [];
 			querySnapshot.forEach((doc) => {
 				const data = doc.data() as AuditResult;
+				const sectionTitles: { [key: string]: { title: string } } = {};
+				
+				// Extraer solo los títulos de las secciones
+				if (data.sections) {
+					Object.entries(data.sections).forEach(([sectionId, sectionData]) => {
+						sectionTitles[sectionId] = { title: sectionData.title };
+					});
+				}
+				
 				forms.push({
 					id: doc.id,
 					name: data.program,
+					sections: sectionTitles
 				});
 			});
 

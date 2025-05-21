@@ -81,6 +81,20 @@ const AuditoryPage: React.FC = () => {
   const [currentSection, setCurrentSection] = useState<string>('');
   const [currentSubsection, setCurrentSubsection] = useState<string>('');
   
+  // Estado para determinar si estamos en modo lectura
+  const [readOnly, setReadOnly] = useState<boolean>(false);
+
+useEffect(() => {
+    // Si venimos del modal de visualización (desde home), activar modo lectura
+    if (location.state && location.state.viewMode === 'readonly') {
+      setReadOnly(true);
+    } else {
+      // También podemos verificar por URL usando un query param
+      const queryParams = new URLSearchParams(location.search);
+      setReadOnly(queryParams.get('mode') === 'view');
+    }
+  }, [location]);
+  
   // Función auxiliar para inicializar la primera subsección
   const initializeFirstSubsection = (sectionId: string) => {
     const subsectionMap: Record<string, string> = {
@@ -93,83 +107,80 @@ const AuditoryPage: React.FC = () => {
   };
   
   useEffect(() => {
-    // Intentar recuperar los datos de la auditoría del state o del sessionStorage
-    const loadAuditData = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Comprobar si tenemos datos en el state
-        if (location.state && location.state.auditData) {
-          setAuditData(location.state.auditData);
-          setMetadata(location.state.metadata);
-          
-          // Si hay secciones, seleccionar la primera por defecto
-          if (location.state.auditData.audit && location.state.auditData.audit.sections) {
-            const firstSectionKey = Object.keys(location.state.auditData.audit.sections)[0];
-            setCurrentSection(firstSectionKey);
-            setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
-          }
-          
-          setLoading(false);
-          return;
-        }
-        
-        // Si no hay datos en el state, intentar recuperarlos de sessionStorage
-        const savedAudit = sessionStorage.getItem('currentAudit');
-        if (savedAudit) {
-          const parsedAudit = JSON.parse(savedAudit);
-          setAuditData(parsedAudit.auditData);
-          setMetadata(parsedAudit.metadata);
-          
-          // Si hay secciones, seleccionar la primera por defecto
-          if (parsedAudit.auditData.audit && parsedAudit.auditData.audit.sections) {
-            const firstSectionKey = Object.keys(parsedAudit.auditData.audit.sections)[0];
-            setCurrentSection(firstSectionKey);
-            setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
-          }
-          
-          setLoading(false);
-          return;
-        }
-        
-        // Si no hay datos ni en state ni en sessionStorage, hacer fetch a la API
-        if (formId) {
-          const response = await fetch(`http://localhost:3000/api/forms/getForms/${formId}`);
-          
-          if (!response.ok) {
-            throw new Error('Error al obtener los detalles de la auditoría');
-          }
-          
-          const fetchedData = await response.json();
-          
-          if (fetchedData.success && fetchedData.audit) {
-            setAuditData(fetchedData);
-            // No tenemos metadata en este caso
-            
-            // Seleccionar la primera sección por defecto
-            if (fetchedData.audit && fetchedData.audit.sections) {
-              const firstSectionKey = Object.keys(fetchedData.audit.sections)[0];
-              setCurrentSection(firstSectionKey);
-              setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
-            }
-          } else {
-            throw new Error('No se pudieron obtener los datos de la auditoría');
-          }
-        } else {
-          throw new Error('ID de formulario no proporcionado');
-        }
-      } catch (err) {
-        console.error("Error al cargar la auditoría:", err);
-        setError((err as Error).message);
-        addAlert('error', `Error al cargar la auditoría: ${(err as Error).message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Intentar recuperar los datos de la auditoría del state o del sessionStorage
+  
+  const loadAuditData = async () => {
+    setLoading(true);
+    setError(null);
     
-    loadAuditData();
-  }, [formId, location.state, addAlert]);
+    try {
+      // Comprobar si tenemos datos en el state que coincidan con el formId actual
+      if (location.state && location.state.auditData && location.state.auditoryId === formId) {
+        setAuditData(location.state.auditData);
+        setMetadata(location.state.metadata);
+        
+        // Si hay secciones, seleccionar la primera por defecto
+        if (location.state.auditData.audit && location.state.auditData.audit.sections) {
+          const firstSectionKey = Object.keys(location.state.auditData.audit.sections)[0];
+          setCurrentSection(firstSectionKey);
+          setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
+        }
+        
+        setLoading(false);
+        return;
+      }
+      
+      // Si no hay datos en el state o no coinciden con el formId actual,
+      // borrar el sessionStorage y cargar datos frescos desde la API
+      sessionStorage.removeItem('currentAudit');
+      
+      // Hacer fetch a la API con el formId actual
+      if (formId) {
+        const response = await fetch(`http://localhost:3000/api/forms/getForms/${formId}`);
+        
+        if (!response.ok) {
+          throw new Error('Error al obtener los detalles de la auditoría');
+        }
+        
+        const fetchedData = await response.json();
+        
+        if (fetchedData.success && fetchedData.audit) {
+          setAuditData(fetchedData);
+          
+          // Seleccionar la primera sección por defecto
+          if (fetchedData.audit && fetchedData.audit.sections) {
+            const firstSectionKey = Object.keys(fetchedData.audit.sections)[0];
+            setCurrentSection(firstSectionKey);
+            setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
+          }
+          
+          // Guardar los nuevos datos en sessionStorage para recuperación posterior si se refresca la página
+          const auditoryData = {
+            auditData: fetchedData,
+            metadata: null,
+            auditoryId: formId // Importante: guardar el ID para validación posterior
+          };
+          sessionStorage.setItem('currentAudit', JSON.stringify(auditoryData));
+          
+        } else {
+          throw new Error('No se pudieron obtener los datos de la auditoría');
+        }
+      } else {
+        throw new Error('ID de formulario no proporcionado');
+      }
+    } catch (err) {
+      console.error("Error al cargar la auditoría:", err);
+      setError((err as Error).message);
+      addAlert('error', `Error al cargar la auditoría: ${(err as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  loadAuditData();
+}, [formId, location.state, addAlert]);
+    
+
   
   // Manejar el cambio de sección y subsección
   const handleSectionChange = (sectionId: string, subsectionId?: string) => {
@@ -227,12 +238,19 @@ const AuditoryPage: React.FC = () => {
   };
   
   // Manejar guardar respuestas compatible con ControlRenderer
-  const handleSaveResponses = async (data: { sectionId: string; updatedSection: ControlSection }) => {
+const handleSaveResponses = async (data: { sectionId: string; updatedSection: ControlSection }) => {
+    // No permitir guardar si estamos en modo lectura
+    if (readOnly) {
+      console.log('Modo solo lectura: no se permiten cambios');
+      return;
+    }
+    
     try {
       console.log('Guardando respuestas:', data);
       // Aquí iría la lógica para actualizar auditData con las respuestas actualizadas
       // y enviar los datos al servidor si es necesario
       
+      // Usamos el método estable sin parámetros adicionales
       addAlert('success', 'Respuestas guardadas correctamente');
     } catch (err) {
       console.error("Error al guardar las respuestas:", err);
@@ -273,12 +291,14 @@ const AuditoryPage: React.FC = () => {
         metadata={metadata || undefined}
       />
       <div className="flex-1 overflow-y-auto p-6">
+        
         <ControlRenderer 
           section={controlSection}
           sectionId={currentSection}
           subsectionId={currentSubsection}
           onSave={handleSaveResponses}
           metadata={metadata || undefined}
+          readOnly={readOnly} // Pasamos el modo lectura al renderer
         />
       </div>
     </div>

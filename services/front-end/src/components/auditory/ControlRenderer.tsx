@@ -11,7 +11,6 @@ interface Question {
 
 interface Section {
   questions: Record<string, Question>;
-  completionPercentage?: number;
 }
 
 interface SubsectionInfo {
@@ -38,9 +37,10 @@ interface ControlRendererProps {
   onSave: (responses: { sectionId: string; updatedSection: Section }) => Promise<void>;
   metadata?: Metadata;
   subsectionId?: string;
+  readOnly?: boolean;
 }
 
-const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata, subsectionId }) => {
+const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata, subsectionId, readOnly = false }) => {
   const { addAlert } = useAlerts();
   const [responses, setResponses] = useState<Record<string, ResponseData>>({});
   const [isFormDirty, setIsFormDirty] = useState<boolean>(false);
@@ -170,8 +170,7 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
         updatedSection
       });
       
-      setIsFormDirty(false);
-      addAlert('success', 'Cambios guardados correctamente');
+      setIsFormDirty(false);      
     } catch (error) {
       console.error('Error al guardar cambios:', error);
       addAlert('error', 'Error al guardar los cambios');
@@ -195,17 +194,20 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
   
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {sectionTitles[sectionId] || `Sección ${sectionId}`}
-          </h1>
-          {subsectionTitle && (
-            <h2 className="text-lg text-gray-600">
-              {subsectionId}: {subsectionTitle}
-            </h2>
-          )}
-        </div>
+    <div className="flex justify-between items-center mb-6">
+      <div>
+        <h1 className="text-2xl font-bold">
+          {sectionTitles[sectionId] || `Sección ${sectionId}`}
+        </h1>
+        {subsectionTitle && (
+          <h2 className="text-lg text-gray-600">
+            {subsectionId}: {subsectionTitle}
+          </h2>
+        )}
+      </div>
+      
+      {/* Solo mostrar botón si NO estamos en modo lectura */}
+      {!readOnly && (
         <button
           onClick={handleSave}
           disabled={!isFormDirty}
@@ -217,102 +219,126 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
         >
           Guardar cambios
         </button>
+      )}
+    </div>
+    
+    {/* Mostrar mensaje de modo solo lectura cuando corresponda */}
+    {readOnly && (
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+        <p className="text-blue-700">
+          Modo de visualización. No se pueden realizar cambios en esta auditoría.
+        </p>
       </div>
-      
-      {/* Mostrar el porcentaje de avance */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm mb-1">
-          <span>Avance de la sección</span>
-          <span>{section.completionPercentage?.toFixed(2) || 0}%</span>
-        </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-green-500" 
-            style={{ width: `${section.completionPercentage || 0}%` }}
-          ></div>
-        </div>
-      </div>
-      
-      {/* Preguntas */}
-      <div className="space-y-6">
-        {sortedQuestionEntries.map(([questionId, question]) => (
-          <div key={questionId} className="p-4 bg-white rounded-lg shadow">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">
-                {questionId}: {question.text}
-              </h3>
+    )}
+    
+    {/* Preguntas */}
+    <div className="space-y-6">
+      {sortedQuestionEntries.map(([questionId, question]) => (
+        <div key={questionId} className="p-4 bg-white rounded-lg shadow">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">
+              {questionId}: {question.text}
+            </h3>
+          </div>
+          
+          {/* Opciones de respuesta */}
+          <div className="mb-4">
+            <p className="font-medium text-gray-700 mb-2">Respuesta:</p>
+            <div className="flex flex-wrap gap-2">
+              {['yes', 'partial', 'no', 'na'].map((option) => (
+                <label key={option} className={`flex items-center space-x-2 ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+                  <input
+                    type="radio"
+                    name={`response_${questionId}`}
+                    value={option}
+                    checked={responses[questionId]?.response === option}
+                    onChange={() => !readOnly && handleResponseChange(questionId, 'response', option)}
+                    className="form-radio h-4 w-4 text-blue-600"
+                    disabled={readOnly}
+                  />
+                  <span className={`text-gray-700 ${readOnly && responses[questionId]?.response === option ? 'font-medium' : ''}`}>
+                    {option === 'yes' ? 'Sí' : 
+                     option === 'partial' ? 'Parcialmente' : 
+                     option === 'no' ? 'No' : 
+                     'No aplica'}
+                  </span>
+                </label>
+              ))}
             </div>
-            
-            {/* Opciones de respuesta */}
-            <div className="mb-4">
-              <p className="font-medium text-gray-700 mb-2">Respuesta:</p>
-              <div className="flex flex-wrap gap-2">
-                {['yes', 'partial', 'no', 'na'].map((option) => (
-                  <label key={option} className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name={`response_${questionId}`}
-                      value={option}
-                      checked={responses[questionId]?.response === option}
-                      onChange={() => handleResponseChange(questionId, 'response', option)}
-                      className="form-radio h-4 w-4 text-blue-600"
-                    />
-                    <span className="text-gray-700">
-                      {option === 'yes' ? 'Sí' : 
-                       option === 'partial' ? 'Parcialmente' : 
-                       option === 'no' ? 'No' : 
-                       'No aplica'}
-                    </span>
-                  </label>
-                ))}
+          </div>
+          
+          {/* Observaciones */}
+          <div className="mb-4">
+            <label className="block font-medium text-gray-700 mb-2">
+              Observaciones:
+            </label>
+            {readOnly ? (
+              <div className="p-2 border border-gray-300 rounded-md bg-gray-50 min-h-[75px]">
+                {responses[questionId]?.observations || '(Sin observaciones)'}
               </div>
-            </div>
-            
-            {/* Observaciones */}
-            <div className="mb-4">
-              <label className="block font-medium text-gray-700 mb-2">
-                Observaciones:
-              </label>
+            ) : (
               <textarea
                 value={responses[questionId]?.observations || ''}
                 onChange={(e) => handleResponseChange(questionId, 'observations', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 rows={3}
+                disabled={readOnly}
               />
-            </div>
-            
-            {/* URL de evidencia */}
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                URL de evidencia:
-              </label>
+            )}
+          </div>
+          
+          {/* URL de evidencia */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">
+              URL de evidencia:
+            </label>
+            {readOnly ? (
+              <div className="p-2 border border-gray-300 rounded-md bg-gray-50">
+                {responses[questionId]?.evidence_url ? (
+                  <a 
+                    href={responses[questionId]?.evidence_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline break-all"
+                  >
+                    {responses[questionId]?.evidence_url}
+                  </a>
+                ) : (
+                  <span className="text-gray-500">(Sin URL de evidencia)</span>
+                )}
+              </div>
+            ) : (
               <input
                 type="text"
                 value={responses[questionId]?.evidence_url || ''}
                 onChange={(e) => handleResponseChange(questionId, 'evidence_url', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="https://ejemplo.com/evidencia.pdf"
+                disabled={readOnly}
               />
-            </div>
+            )}
           </div>
-        ))}
-      </div>
-      
-      {/* Botón flotante para guardar */}
-      {isFormDirty && (
-        <div className="fixed bottom-6 right-6">
-          <button
-            onClick={handleSave}
-            className="px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h1a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h1v5.586l-1.293-1.293z" />
-            </svg>
-            Guardar cambios
-          </button>
         </div>
-      )}
+      ))}
     </div>
+    
+    {/* Botón al final para guardar */}
+    {!readOnly && (
+      <div className="mt-8 flex justify-end">
+        <button 
+          onClick={handleSave}
+          disabled={!isFormDirty}
+          className={`px-4 py-2 rounded-md ${
+            isFormDirty
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          Guardar Cambios
+        </button>
+      </div>
+    )}
+  </div>
   );
 };
 

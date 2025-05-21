@@ -74,3 +74,12 @@ services:
             - node_modules/  
         - action: rebuild  
           path: ./services/forms-service/Dockerfile  
+
+  front-end:  
+    build:  
+      context: ./services/front-end  
+      dockerfile: Dockerfile  
+    ports:  
+      - '5173:5173'  
+    depends_on:  
+      - api-gateway  

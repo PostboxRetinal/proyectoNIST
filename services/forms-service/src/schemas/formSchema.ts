@@ -67,6 +67,7 @@ export interface AuditResult {
 	createdAt?: Date;
 	sections: {
 		[sectionId: string]: {
+			title: string;
 			completionPercentage: number;
 			questions: {
 				[questionId: string]: {
