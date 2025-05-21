@@ -37,21 +37,6 @@ export const Content = () => {
         <h1 className="text-3xl font-bold text-blue-700 mb-6 text-center">
           BIENVENIDO DE NUEVO A LA PLATAFORMA DE AUDITORÍA       
         </h1>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 w-full pt-4 mb-10">
-          <div className="bg-blue-50 p-8 rounded-2xl shadow-lg text-center min-h-[180px]">
-            <p className="text-9xl font-bold text-blue-600">4</p>
-            <p className="text-3xl text-gray-600">Auditorías Activas</p>
-          </div>
-          <div className="bg-blue-50 p-8 rounded-2xl shadow-lg text-center min-h-[180px]">
-            <p className="text-9xl font-bold text-yellow-600">2</p>
-            <p className="text-3xl text-gray-600">Pendientes por Aprobar</p>
-          </div>
-          <div className="bg-blue-50 p-8 rounded-2xl shadow-lg text-center min-h-[180px]">
-            <p className="text-9xl font-bold text-green-600">1</p>
-            <p className="text-3xl text-gray-600">Programadas este Mes</p>
-          </div>
-        </div>
         
         <p className="text-xl text-gray-600 text-center mb-8">
           Gestiona, revisa y controla auditorías internas de manera eficiente para el constante 

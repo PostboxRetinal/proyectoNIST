@@ -238,25 +238,109 @@ useEffect(() => {
   };
   
   // Manejar guardar respuestas compatible con ControlRenderer
+// Manejar guardar respuestas compatible con ControlRenderer
 const handleSaveResponses = async (data: { sectionId: string; updatedSection: ControlSection }) => {
-    // No permitir guardar si estamos en modo lectura
-    if (readOnly) {
-      console.log('Modo solo lectura: no se permiten cambios');
-      return;
+  // No permitir guardar si estamos en modo lectura
+  if (readOnly) {
+    console.log('Modo solo lectura: no se permiten cambios');
+    return;
+  }
+  
+  try {
+    console.log('Guardando respuestas:', data);
+    
+    if (!auditData || !auditData.audit || !auditData.audit.sections) {
+      throw new Error('No hay datos de auditoría disponibles para actualizar');
+    }
+
+    // 1. Crear una copia profunda del estado actual
+    const updatedAuditData = {
+      ...auditData,
+      audit: {
+        ...auditData.audit,
+        sections: {
+          ...auditData.audit.sections
+        }
+      }
+    };
+    
+    // 2. Actualizar la sección correspondiente con los nuevos datos
+    const currentSectionData = updatedAuditData.audit.sections[data.sectionId];
+    
+    if (!currentSectionData) {
+      throw new Error(`La sección ${data.sectionId} no existe en los datos de auditoría`);
+    }
+
+    // Si la sección usa el formato con subsecciones, actualizar la subsección actual
+    if (currentSectionData.subsections && Array.isArray(currentSectionData.subsections)) {
+      // Encontrar el índice de la subsección actual
+      const subsectionIndex = currentSectionData.subsections.findIndex(
+        sub => sub.subsection === currentSubsection
+      );
+      
+      if (subsectionIndex === -1) {
+        throw new Error(`La subsección ${currentSubsection} no existe en la sección ${data.sectionId}`);
+      }
+      
+      const updatedQuestions = Object.entries(data.updatedSection.questions).map(([questionId, question]) => {
+        // Puedes poner el console.log fuera del objeto literal
+        console.log("Procesando pregunta:", questionId);
+        
+        return {
+          id: question.id,
+          text: question.text,
+          options: currentSectionData.subsections[subsectionIndex].questions.find(q => q.id === question.id)?.options || [],
+          response: question.response,
+          observations: question.observations,
+          evidence_url: question.evidence_url
+        };
+      });
+      
+      // Actualizar las preguntas en la subsección correspondiente
+      updatedAuditData.audit.sections[data.sectionId].subsections[subsectionIndex].questions = updatedQuestions;
+    } 
+    // Si la sección usa el formato directo sin subsecciones
+    else if (currentSectionData.questions) {
+      updatedAuditData.audit.sections[data.sectionId].questions = data.updatedSection.questions;
     }
     
-    try {
-      console.log('Guardando respuestas:', data);
-      // Aquí iría la lógica para actualizar auditData con las respuestas actualizadas
-      // y enviar los datos al servidor si es necesario
-      
-      // Usamos el método estable sin parámetros adicionales
-      addAlert('success', 'Respuestas guardadas correctamente');
-    } catch (err) {
-      console.error("Error al guardar las respuestas:", err);
-      addAlert('error', `Error al guardar las respuestas: ${(err as Error).message}`);
+    // 3. Actualizar el estado local
+    setAuditData(updatedAuditData);
+    
+    // 4. Enviar los datos actualizados al servidor
+    const response = await fetch(`http://localhost:3000/api/forms/update/${formId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        auditId: formId,
+        sectionId: data.sectionId,
+        subsectionId: currentSubsection,
+        updatedQuestions: data.updatedSection.questions
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al guardar en el servidor');
     }
-  };
+    
+    // 5. Actualizar sessionStorage para mantener consistencia
+    sessionStorage.setItem('currentAudit', JSON.stringify({
+      auditData: updatedAuditData,
+      metadata: metadata,
+      auditoryId: formId
+    }));
+    
+    // 6. Notificar éxito al usuario
+    addAlert('success', 'Respuestas guardadas correctamente');
+    
+  } catch (err) {
+    console.error("Error al guardar las respuestas:", err);
+    addAlert('error', `Error al guardar las respuestas: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+  }
+};
   
   // Renderizar estado de carga
   if (loading) {
