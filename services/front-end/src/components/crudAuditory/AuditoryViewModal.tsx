@@ -34,7 +34,7 @@ export const AuditoryViewModal = ({
             Cerrar
           </button>
           <Link 
-            to={`/report/${auditory.id}`}
+            to={`/report-details/${auditory.id}`}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Ver Reporte Completo

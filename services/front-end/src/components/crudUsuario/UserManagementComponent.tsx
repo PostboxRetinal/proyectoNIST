@@ -339,7 +339,6 @@ const guardarCambiosUsuario = async () => {
               >
                 <option value="admin">Administrador</option>
                 <option value="auditor">Auditor</option>
-                <option value="gestor">Gestor</option>
               </select>
             </div>
 
