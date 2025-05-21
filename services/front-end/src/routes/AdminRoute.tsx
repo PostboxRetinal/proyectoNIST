@@ -30,7 +30,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
     }
     
     setLoading(false);
-  }, []); // Sin dependencias para evitar múltiples ejecuciones
+  }, [addAlert]); // Sin dependencias para evitar múltiples ejecuciones
 
   if (loading) {
     return (

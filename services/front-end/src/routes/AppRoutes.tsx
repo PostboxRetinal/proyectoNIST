@@ -1,5 +1,4 @@
 import { useRoutes } from 'react-router-dom'; 
-import Auditory from '../pages/Auditory';
 import Login from '../pages/Login';
 import Home from '../pages/Home';
 import RegisterBussines from '../pages/RegisterBussines';
@@ -14,9 +13,8 @@ import ReportVisualizationTest from '../components/reportDashboard/ReportVisuali
 import AuditoryPage from '../components/auditory/AuditoryPage';
 
 const AppRoutes = () => {
-    let routes = useRoutes([
+    const routes = useRoutes([
         { path: '/', element: <Home /> },
-        //{ path: '/auditory', element: <Auditory /> },
         { path: '/newAuditory', element: <NewAuditory /> },
         { path: '/loginUser', element: <Login /> },
         { path: '/registerCompany', element: <RegisterBussines /> },

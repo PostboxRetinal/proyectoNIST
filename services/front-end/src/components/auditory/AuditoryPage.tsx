@@ -4,19 +4,58 @@ import { useAlerts } from '../alert/AlertContext';
 import ControlRenderer from './ControlRenderer';
 import NavBar from '../shared/NavBar';
 
-interface AuditoryPageProps {
-  // Puedes definir props si son necesarias
+
+interface Option {
+  value: string;
+  label: string;
+  description: string;
 }
 
-const AuditoryPage: React.FC<AuditoryPageProps> = () => {
+interface Question {
+  id: string;
+  text: string;
+  options: Option[];
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Subsection {
+  subsection: string;
+  title: string;
+  questions: Question[];
+}
+
+interface Section {
+  section: string;
+  title: string;
+  subsections: Subsection[];
+}
+interface AuditData {
+  success?: boolean;
+  audit: {
+    sections: Record<string, Section>;
+  };
+}
+
+interface Metadata {
+  standardName?: string;
+  title?: string;
+  companyName?: string;
+  auditName?: string;
+  startDate?: string;
+  endDate?: string;
+  auditor?: string;
+}
+const AuditoryPage: React.FC = () => {
   const { formId } = useParams<{ formId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const { addAlert } = useAlerts();
   
   // Estados para manejar la auditoría
-  const [auditData, setAuditData] = useState<any>(null);
-  const [metadata, setMetadata] = useState<any>(null);
+  const [auditData, setAuditData] = useState<AuditData | null>(null);
+  const [metadata, setMetadata] = useState<Metadata | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -126,10 +165,21 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
     }
   };
   
+// Definir una interfaz para las respuestas
+  interface ResponseData {
+    [questionId: string]: {
+      response: string | null;
+      observations?: string;
+      evidence_url?: string;
+    };
+  }
+  
   // Manejar guardar respuestas
-  const handleSaveResponses = async (responses: any) => {
+  const handleSaveResponses = async (responses: ResponseData) => {
     // Implementar la lógica para guardar las respuestas
     try {
+            // Usar las respuestas para actualizar el estado o enviar al servidor
+      console.log('Guardando respuestas:', responses);
       // Ejemplo de cómo podrías actualizar las respuestas
       // const response = await fetch(`http://localhost:3000/api/forms/update/${formId}`, {
       //   method: 'PUT',
