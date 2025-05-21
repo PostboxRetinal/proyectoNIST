@@ -62,12 +62,26 @@ export class AuditService {
 				console.log('Resultado de auditoría encontrado');
 				const auditResult = docSnap.data() as AuditResult;
 				
-				// Agregar un campo adicional con los títulos de las secciones para facilitar el acceso
-				const sectionTitles: { [key: string]: string } = {};
-				if (auditResult.sections) {
-					Object.entries(auditResult.sections).forEach(([sectionId, sectionData]) => {
-						sectionTitles[sectionId] = sectionData.title;
-					});
+				// Si ya tiene sectionTitles almacenados, usarlos
+				let sectionTitles = auditResult.sectionTitles || {};
+				
+				// Si no hay sectionTitles o están vacíos, extraerlos de sections
+				if (!auditResult.sectionTitles || Object.keys(auditResult.sectionTitles).length === 0) {
+					sectionTitles = {};
+					if (auditResult.sections) {
+						Object.entries(auditResult.sections).forEach(([sectionId, sectionData]) => {
+							// Asegurarse de que siempre hay un título válido para cada sección
+							sectionTitles[sectionId] = sectionData.title || `Sección ${sectionId}`;
+						});
+					}
+				}
+				
+				// Si no hay títulos para alguna sección que debería existir, agregar títulos predeterminados
+				// Esto es necesario para cumplir con el esquema de validación
+				for (let i = 1; i <= 4; i++) {
+					if (!sectionTitles[i.toString()]) {
+						sectionTitles[i.toString()] = `Sección ${i}`;
+					}
 				}
 				
 				return {
@@ -179,6 +193,10 @@ export class AuditService {
 				AuditService.calculateComplianceAndRisk(audit);
 
 			const sections: AuditResult['sections'] = {};
+			// Guardar los títulos de secciones en un objeto separado
+			const sectionTitles: { [key: string]: string } = {};
+			// Guardar los títulos de subsecciones en un objeto separado
+			const subsectionTitles: { [key: string]: string } = {};
 
 			// Extraer respuestas por sección
 			for (const section of audit.sections) {
@@ -192,7 +210,14 @@ export class AuditService {
 					}
 				> = {};
 
+				// Almacenar el título de la sección
+				sectionTitles[section.section] = section.title;
+
+				// Almacenar los títulos de subsecciones
 				for (const subsection of section.subsections) {
+					// Guardar el título de la subsección
+					subsectionTitles[subsection.subsection] = subsection.title;
+					
 					for (const question of subsection.questions) {
 						sectionQuestions[question.id] = {
 							text: question.text,
@@ -216,6 +241,8 @@ export class AuditService {
 				auditDate: new Date(),
 				completionPercentage,
 				sections,
+				sectionTitles,  // Incluir los títulos de secciones en el resultado
+				subsectionTitles, // Incluir los títulos de subsecciones en el resultado
 			};
 
 			console.log('Objeto de resultado de auditoría preparado correctamente');
@@ -278,28 +305,19 @@ export class AuditService {
 	}
 
 	// Obtener todos los formularios de auditoría (ID, nombre y títulos de secciones)
-	static async getForms(): Promise<{ id: string; name: string; sections?: { [key: string]: { title: string } } }[]> {
+	static async getForms(): Promise<{ id: string; name: string }[]> {
 		console.log('Obteniendo todos los formularios de auditoría');
 		try {
 			const formsCollection = collection(db, 'audit-results');
 			const querySnapshot = await getDocs(formsCollection);
 
-			const forms: { id: string; name: string; sections?: { [key: string]: { title: string } } }[] = [];
+			const forms: { id: string; name: string }[] = [];
 			querySnapshot.forEach((doc) => {
 				const data = doc.data() as AuditResult;
-				const sectionTitles: { [key: string]: { title: string } } = {};
-				
-				// Extraer solo los títulos de las secciones
-				if (data.sections) {
-					Object.entries(data.sections).forEach(([sectionId, sectionData]) => {
-						sectionTitles[sectionId] = { title: sectionData.title };
-					});
-				}
 				
 				forms.push({
 					id: doc.id,
-					name: data.program,
-					sections: sectionTitles
+					name: data.program
 				});
 			});
 

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import {FileDown, RefreshCw, StepBack } from "lucide-react";
+import {RefreshCw, StepBack } from "lucide-react";
 import axios from "axios";
 import { useAlerts } from "../alert/AlertContext";
 import FormEvaluation from "../formEvaluation/FormEvaluation";
 import { adaptFormData, FormDataNew } from "./adapters";
+import PdfExporter from "./PDFExporter";
 
 // Configuración para desarrollo
 const API_BASE_URL = "http://localhost:3000/api";
@@ -268,8 +269,11 @@ export default function ReportDetails() {
   const [error, setError] = useState<string | null>(null);
   const { addAlert } = useAlerts();
   
-  // Referencia para controlar cargas repetidas
+  const reportContentRef = useRef<HTMLDivElement>(null);
+
   const dataFetchedRef = useRef(false);
+
+ 
 
   // Función para cargar datos
   const loadData = async (forceRefresh = false) => {
@@ -365,10 +369,6 @@ export default function ReportDetails() {
     loadData(true); // Forzar recarga
   };
   
-  const exportToPDF = () => {
-    addAlert('info', 'Exportando a PDF...');
-    // Implementar función de exportación
-  };
   
 
   // Efecto para cargar los datos al montar el componente - solo se ejecuta una vez
@@ -382,9 +382,8 @@ export default function ReportDetails() {
       dataFetchedRef.current = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]); // Solo depende de id
+  }, [id]); 
 
-  // El resto del componente permanece igual...
 return (
   <div className="p-6 max-w-6xl mx-auto">
     
@@ -402,7 +401,7 @@ return (
     ) : auditData ? (
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Contenedor principal que agrupa todo el contenido */}
-        <div className="space-y-6">
+        <div className="space-y-6" ref={reportContentRef}>
           {/* Cabecera con información básica de la auditoría */}
           <div className="border-b pb-6">
             <div className="flex justify-between items-center">
@@ -438,13 +437,7 @@ return (
             
             {/* Botones de acción */}
             <div className="flex gap-2 mt-4">
-              <button
-                onClick={exportToPDF}
-                className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm"
-              >
-                <FileDown className="h-4 w-4 mr-2" />
-                Exportar a PDF
-              </button>
+              {auditData && <PdfExporter auditData={auditData} contentRef={reportContentRef} />}
               <button
                 onClick={refreshData}
                 className="bg-blue-600 text-white hover:bg-green-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm"

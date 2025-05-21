@@ -171,10 +171,7 @@ export function registerAuditRoutes(app: Elysia<any>) {
 						success: t.Boolean(),
 						forms: t.Array(t.Object({
 							id: t.String(),
-							name: t.String(),
-							sections: t.Optional(t.Record(t.String(), t.Object({
-								title: t.String()
-							})))
+							name: t.String()
 						})),
 					}),
 					500: errorResponseValidator,

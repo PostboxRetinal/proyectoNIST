@@ -79,6 +79,12 @@ export interface AuditResult {
 			};
 		};
 	};
+	sectionTitles?: {
+		[sectionId: string]: string;
+	};
+	subsectionTitles?: {
+		[subsectionId: string]: string;
+	};
 }
 
 /**
