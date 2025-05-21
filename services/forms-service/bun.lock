@@ -4,11 +4,10 @@
     "": {
       "name": "forms-manager",
       "dependencies": {
-        "@elysiajs/cors": "^1.3.1",
-        "@elysiajs/swagger": "^1.3.0",
+        "@elysiajs/swagger": "^1.2.2",
         "@rasla/logify": "^5.0.0",
         "elysia": "latest",
-        "firebase": "^11.7.1",
+        "firebase": "^11.5.0",
         "uuid": "^11.1.0",
       },
       "devDependencies": {
@@ -17,8 +16,6 @@
     },
   },
   "packages": {
-    "@elysiajs/cors": ["@elysiajs/cors@1.3.1", "", { "peerDependencies": { "elysia": ">= 1.3.0" } }, "sha512-JYfVDD1ndplEVw7tcZBYcpUcPzKfDTTZCyAuml1ld7uKS3r+yIzbySvGaJI2A9q1gWY/r9DsSwd0N86B2TPUQQ=="],
-
     "@elysiajs/swagger": ["@elysiajs/swagger@1.3.0", "", { "dependencies": { "@scalar/themes": "^0.9.52", "@scalar/types": "^0.0.12", "openapi-types": "^12.1.3", "pathe": "^1.1.2" }, "peerDependencies": { "elysia": ">= 1.3.0" } }, "sha512-0fo3FWkDRPNYpowJvLz3jBHe9bFe6gruZUyf+feKvUEEMG9ZHptO1jolSoPE0ffFw1BgN1/wMsP19p4GRXKdfg=="],
 
     "@firebase/analytics": ["@firebase/analytics@0.10.13", "", { "dependencies": { "@firebase/component": "0.6.14", "@firebase/installations": "0.6.14", "@firebase/logger": "0.4.4", "@firebase/util": "1.11.1", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, "sha512-X+6wMOPgA9l0AeeMdMcMfaCP4XKPvrhx55MGuMrfHvUrOvFKldpzBum7KkoGJMoexKmqmKP+mCmJMY9Fb8K6Hw=="],

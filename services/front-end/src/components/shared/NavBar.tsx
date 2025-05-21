@@ -9,10 +9,20 @@ import RegisterUserButton from './buttons/RegisterUserButton';
 import { ChevronDown, Settings, ClipboardCheck, Users } from 'lucide-react';
 
 interface NavBarProps {
-  onSelectControl?: (id: string) => void;
+  onSelectControl?: (id: string, subsectionId?: string) => void;
+  sections?: any;
+  currentSection?: string;
+  currentSubsection?: string;
+  metadata?: any;
 }
 
-const NavBar = ({ onSelectControl = () => {} }: NavBarProps) => {
+const NavBar = ({ 
+  onSelectControl = () => {}, 
+  sections = {},
+  currentSection = '',
+  currentSubsection = '',
+  metadata = null
+}: NavBarProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,7 +30,7 @@ const NavBar = ({ onSelectControl = () => {} }: NavBarProps) => {
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   
-  const isAuditoryPage = location.pathname === '/auditory';
+  const isAuditoryPage = location.pathname.includes('/auditory');
   
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -51,7 +61,15 @@ const NavBar = ({ onSelectControl = () => {} }: NavBarProps) => {
       <div className="container mx-auto flex items-center justify-between px-4 py-2">
         {/* Sección izquierda con logo y menú de navegación */}
         <div className="flex items-center gap-3">
-          {isAuditoryPage && <NavigationMenu onSelect={onSelectControl} />}
+          {isAuditoryPage && (
+            <NavigationMenu 
+              onSelect={onSelectControl} 
+              sections={sections}
+              currentSection={currentSection}
+              currentSubsection={currentSubsection}
+              metadata={metadata}
+            />
+          )}
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="Logo" className="h-16 w-auto" />
           </Link>

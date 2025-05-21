@@ -4,14 +4,91 @@ import { useAlerts } from '../alert/AlertContext';
 interface ControlRendererProps {
   section: any;
   sectionId: string;
-  onSave: (responses: any) => void;
+  onSave: (responses: any) => Promise<void>;
   metadata?: any;
+  subsectionId?: string;
 }
 
-const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata }) => {
+const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, onSave, metadata, subsectionId }) => {
   const { addAlert } = useAlerts();
   const [responses, setResponses] = useState<Record<string, any>>({});
   const [isFormDirty, setIsFormDirty] = useState<boolean>(false);
+  
+  // Determinar qué mapeo de títulos usar según el estándar
+  let sectionTitles: Record<string, string> = {};
+  let subsectionInfo: Record<string, Array<{id: string, title: string}>> = {};
+  
+  // Verificar el estándar en los metadatos
+  if (metadata?.standardName === "NIST800-30") {
+    // Mapeo para NIST800-30
+    sectionTitles = {
+      "1": "PLANIFICAR (PLAN)",
+      "2": "HACER (DO)",
+      "3": "VERIFICAR (CHECK)",
+      "4": "ACTUAR (ACT)"
+    };
+    
+    subsectionInfo = {
+      "1": [
+        {id: "1.1", title: "Risk Framing"},
+        {id: "1.2", title: "Risk Assessment"}
+      ],
+      "2": [
+        {id: "2.1", title: "Risk Response"}
+      ],
+      "3": [
+        {id: "3.1", title: "Risk Monitoring"}
+      ],
+      "4": [
+        {id: "4.1", title: "Mejora continua del proceso de gestión de riesgos"}
+      ]
+    };
+  } 
+  else if (metadata?.standardName === "ISO27001") {
+    // Mapeo para ISO27001
+    sectionTitles = {
+      "1": "PLANIFICAR (PLAN)",
+      "2": "HACER (DO)",
+      "3": "VERIFICAR (CHECK)",
+      "4": "ACTUAR (ACT)"
+    };
+    
+    subsectionInfo = {
+      "1": [
+        {id: "1.1", title: "Risk Framing"},
+        {id: "1.2", title: "Risk Assessment"}
+      ],
+      "2": [
+        {id: "2.1", title: "Risk Response"}
+      ],
+      "3": [
+        {id: "3.1", title: "Risk Monitoring"}
+      ],
+      "4": [
+        {id: "4.1", title: "Mejora continua del proceso de gestión de riesgos"}
+      ]
+    };
+  }
+  else {
+    // Para otros estándares, usar títulos genéricos
+    sectionTitles[sectionId] = `Sección ${sectionId}`;
+    
+    // Si hay subsecciones definidas en los metadatos, usarlas
+    if (metadata?.subsections) {
+      subsectionInfo = metadata.subsections;
+    }
+  }
+  
+  // Obtener el título de la subsección actual
+  const getSubsectionTitle = () => {
+    if (!subsectionId) return null;
+    
+    const subsections = subsectionInfo[sectionId];
+    if (!subsections) return null;
+    
+    const subsection = subsections.find(sub => sub.id === subsectionId);
+    return subsection ? subsection.title : null;
+  };
   
   useEffect(() => {
     // Inicializar el estado de las respuestas con los valores actuales de la sección
@@ -77,10 +154,21 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
   const sortedQuestionEntries = Object.entries(section.questions)
     .sort(([idA], [idB]) => idA.localeCompare(idB, undefined, { numeric: true }));
   
+  const subsectionTitle = getSubsectionTitle();
+  
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Sección {sectionId}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {sectionTitles[sectionId] || `Sección ${sectionId}`}
+          </h1>
+          {subsectionTitle && (
+            <h2 className="text-lg text-gray-600">
+              {subsectionId}: {subsectionTitle}
+            </h2>
+          )}
+        </div>
         <button
           onClick={handleSave}
           disabled={!isFormDirty}
@@ -93,6 +181,9 @@ const ControlRenderer: React.FC<ControlRendererProps> = ({ section, sectionId, o
           Guardar cambios
         </button>
       </div>
+      
+      {/* Resto del componente sigue igual */}
+      {/* ... */}
       
       {/* Mostrar el porcentaje de avance */}
       <div className="mb-6">

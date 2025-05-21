@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAlerts } from '../alert/AlertContext';
-import SideBar from './SideBar';
 import ControlRenderer from './ControlRenderer';
 import NavBar from '../shared/NavBar';
 
@@ -21,8 +20,20 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Estado para la sección actual seleccionada en la barra lateral
+  // Estados para la navegación de secciones y subsecciones
   const [currentSection, setCurrentSection] = useState<string>('');
+  const [currentSubsection, setCurrentSubsection] = useState<string>('');
+  
+  // Función auxiliar para inicializar la primera subsección
+  const initializeFirstSubsection = (sectionId: string) => {
+    const subsectionMap: Record<string, string> = {
+      "1": "1.1",
+      "2": "2.1", 
+      "3": "3.1",
+      "4": "4.1"
+    };
+    return subsectionMap[sectionId] || "";
+  };
   
   useEffect(() => {
     // Intentar recuperar los datos de la auditoría del state o del sessionStorage
@@ -40,6 +51,7 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
           if (location.state.auditData.audit && location.state.auditData.audit.sections) {
             const firstSectionKey = Object.keys(location.state.auditData.audit.sections)[0];
             setCurrentSection(firstSectionKey);
+            setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
           }
           
           setLoading(false);
@@ -57,6 +69,7 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
           if (parsedAudit.auditData.audit && parsedAudit.auditData.audit.sections) {
             const firstSectionKey = Object.keys(parsedAudit.auditData.audit.sections)[0];
             setCurrentSection(firstSectionKey);
+            setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
           }
           
           setLoading(false);
@@ -81,6 +94,7 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
             if (fetchedData.audit && fetchedData.audit.sections) {
               const firstSectionKey = Object.keys(fetchedData.audit.sections)[0];
               setCurrentSection(firstSectionKey);
+              setCurrentSubsection(initializeFirstSubsection(firstSectionKey));
             }
           } else {
             throw new Error('No se pudieron obtener los datos de la auditoría');
@@ -100,9 +114,16 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
     loadAuditData();
   }, [formId, location.state, addAlert]);
   
-  // Manejar el cambio de sección
-  const handleSectionChange = (sectionId: string) => {
+  // Manejar el cambio de sección y subsección
+  const handleSectionChange = (sectionId: string, subsectionId?: string) => {
     setCurrentSection(sectionId);
+    
+    if (subsectionId) {
+      setCurrentSubsection(subsectionId);
+    } else {
+      // Si no se proporciona subsectionId, seleccionar la primera subsección
+      setCurrentSubsection(initializeFirstSubsection(sectionId));
+    }
   };
   
   // Manejar guardar respuestas
@@ -145,29 +166,24 @@ const AuditoryPage: React.FC<AuditoryPageProps> = () => {
   }
   
   return (
-    <>        
-        <NavBar/>
-    <div className="flex h-screen bg-gray-100">
-        
-      {/* Barra lateral con las secciones */}
-      <SideBar 
-        sections={auditData.audit.sections} 
-        currentSection={currentSection}
-        onSectionChange={handleSectionChange}
+    <div className="flex flex-col h-screen">
+    <NavBar
+      onSelectControl={handleSectionChange}
+      sections={auditData.audit.sections}
+      currentSection={currentSection}
+      currentSubsection={currentSubsection}
+      metadata={metadata}
+    />
+    <div className="flex-1 overflow-y-auto p-6">
+      <ControlRenderer 
+        section={auditData.audit.sections[currentSection]}
+        sectionId={currentSection}
+        subsectionId={currentSubsection}
+        onSave={handleSaveResponses}
         metadata={metadata}
       />
-      
-      {/* Contenido principal con las preguntas */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <ControlRenderer 
-          section={auditData.audit.sections[currentSection]}
-          sectionId={currentSection}
-          onSave={handleSaveResponses}
-          metadata={metadata}
-        />
-      </div>
     </div>
-    </>
+  </div>
   );
 };
 

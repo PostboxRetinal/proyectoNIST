@@ -34,13 +34,17 @@ const StandardSelector = ({ onSelect, error, showAlerts = false }: StandardSelec
         
         // Basado en la estructura de respuesta que mostraste
         if (response.data && response.data.success && Array.isArray(response.data.forms)) {
-          setAvailableStandards(response.data.forms);
-          setFetchError(null);
-        } else {
-          console.warn('Formato de respuesta inesperado:', response.data);
-          setFetchError('El formato de respuesta no es el esperado');
-        }
-      } catch (err) {
+        // Filtrar solo los estándares "NIST800-30" y "ISO27001"
+        const filteredStandards = response.data.forms.filter(
+          (standard: Standard) => standard.name === "NIST800-30" || standard.name === "ISO27001"
+        );
+        setAvailableStandards(filteredStandards);
+        setFetchError(null);
+      } else {
+        console.warn('Formato de respuesta inesperado:', response.data);
+        setFetchError('El formato de respuesta no es el esperado');
+      }
+    } catch (err) {
         console.error('Error fetching standards:', err);
         setFetchError('No se pudieron cargar los estándares. Por favor, intenta de nuevo más tarde.');
         if (showAlerts) {
