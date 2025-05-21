@@ -15,7 +15,7 @@ interface Question {
   id: string;
   text: string;
   options: Option[];
-  response?: string;
+  response?: string | null; // Cambiado para aceptar null también
   observations?: string;
   evidence_url?: string;
 }
@@ -32,19 +32,12 @@ interface Section {
   subsections: Subsection[];
 }
 
-interface FormData {
-  program: string;
-  config: {
-    nistThresholds: {
-      lowRisk: number;
-      mediumRisk: number;
-    }
-  };
-  sections: Section[];
-}
-
+// Actualizar la interfaz para usar Section directamente
 interface FormEvaluationProps {
-  formData: FormData;
+  formData: {
+    program: string;
+    sections: Section[];
+  };
 }
 
 interface SectionResult {
@@ -71,6 +64,7 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
   const sectionResults = useMemo<SectionResult[]>(() => {
     if (!formData || !formData.sections) return [];
 
+    // Usar la sección como tipo Section para aprovechar la interfaz
     return formData.sections.map((section: Section) => {
       // Acumular valores y contar preguntas respondidas
       let totalValue = 0;
@@ -110,18 +104,14 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
       // Calcular el puntaje según la fórmula (convertido a porcentaje en base 5)
       const score = totalQuestions > 0 ? (totalValue / (totalQuestions * 5)) * 100 : 0;
       
-      // Utilizar los umbrales de configuración del formulario
-      const lowRiskThreshold = formData.config?.nistThresholds?.lowRisk || 80;
-      const mediumRiskThreshold = formData.config?.nistThresholds?.mediumRisk || 50;
-      
-      // Determinar interpretación y color basados en los rangos configurados
+      // Determinar interpretación y color basados en rangos fijos
       let interpretation = '';
       let color = '';
       
-      if (score >= lowRiskThreshold) {
+      if (score >= 80) {
         interpretation = 'Bueno';
         color = 'rgb(34, 197, 94)'; // Verde
-      } else if (score >= mediumRiskThreshold) {
+      } else if (score >= 50) {
         interpretation = 'Regular';
         color = 'rgb(234, 179, 8)'; // Amarillo
       } else {
@@ -139,24 +129,21 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
     });
   }, [formData]);
 
-  // Calcular el resultado final
+  // El resto del código permanece sin cambios
   const finalResult = useMemo<FinalResult>(() => {
     if (sectionResults.length === 0) return { score: 0, interpretation: 'No evaluado', color: 'gray' };
 
     const totalScore = sectionResults.reduce((sum: number, section: SectionResult) => sum + section.score, 0);
     const averageScore = totalScore / sectionResults.length;
     
-    // Utilizar los umbrales de configuración del formulario
-    const lowRiskThreshold = formData.config?.nistThresholds?.lowRisk || 80;
-    const mediumRiskThreshold = formData.config?.nistThresholds?.mediumRisk || 50;
-    
+    // Usar valores fijos
     let interpretation = '';
     let color = '';
     
-    if (averageScore >= lowRiskThreshold) {
+    if (averageScore >= 80) {
       interpretation = 'Bueno';
       color = 'rgb(34, 197, 94)'; // Verde
-    } else if (averageScore >= mediumRiskThreshold) {
+    } else if (averageScore >= 50) {
       interpretation = 'Regular';
       color = 'rgb(234, 179, 8)'; // Amarillo
     } else {
@@ -169,7 +156,7 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
       interpretation,
       color
     };
-  }, [sectionResults, formData.config]);
+  }, [sectionResults]);
 
   // Preparar datos para el gráfico de barras
   const chartData = useMemo<ChartDataResult>(() => {
@@ -184,6 +171,7 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
     <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6">Evaluación del Formulario</h2>
       
+      {/* Resto del componente sin cambios */}
       {/* Resultado Final */}
       <div className="mb-8 p-4 border rounded-lg text-center" style={{ borderColor: finalResult.color }}>
         <h3 className="text-xl font-semibold mb-2">Resultado Final</h3>
@@ -250,18 +238,18 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
         <ul className="space-y-2">
           <li className="flex items-center">
             <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-            <span>≥ {formData.config?.nistThresholds?.lowRisk || 80}%: <strong>Bueno</strong></span>
+            <span>≥ 80%: <strong>Bueno</strong></span>
           </li>
           <li className="flex items-center">
             <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
             <span>
-              {formData.config?.nistThresholds?.mediumRisk || 50}% - {(formData.config?.nistThresholds?.lowRisk || 80) - 0.1}%: <strong>Regular</strong>
+              50% - 79.9%: <strong>Regular</strong>
             </span>
           </li>
           <li className="flex items-center">
             <div className="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
             <span>
-              {`< ${formData.config?.nistThresholds?.mediumRisk || 50}%`}: <strong>Malo</strong>
+              &lt; 50%: <strong>Malo</strong>
             </span>
           </li>
         </ul>

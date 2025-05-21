@@ -9,7 +9,6 @@ import CreateAuditory from '../pages/CreateAuditory';
 import ReportDashboard from '../pages/ReportDashboard';
 import UserManagement from '../pages/UserManagement';
 import AdminRoute from './AdminRoute';
-import ReportVisualizationTest from '../components/reportDashboard/ReportVisualizationTest';
 import AuditoryPage from '../components/auditory/AuditoryPage';
 
 const AppRoutes = () => {
@@ -21,7 +20,6 @@ const AppRoutes = () => {
         { path: '/registerUser', element: <RegisterUser /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
         { path: '/reportdashboard', element: <ReportDashboard /> },
-        { path: '/test/reports', element: <ReportVisualizationTest /> },
         {path: '/auditory/:formId', element: <AuditoryPage />},
         
         // Rutas protegidas para administradores
