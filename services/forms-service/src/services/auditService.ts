@@ -1,6 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../firebase/firebase';
-import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
+import {
+	collection,
+	doc,
+	setDoc,
+	getDoc,
+	getDocs,
+	deleteDoc,
+} from 'firebase/firestore';
 import { NistAudit, AuditResult, OptionValue } from '../schemas/formSchema';
 import {
 	AuditResultNotFoundError,
@@ -8,9 +15,7 @@ import {
 	InvalidAuditDataError,
 	logAuditError,
 } from '../utils/auditErrors';
-import {
-	RESPONSE_SCORES,
-} from '../constants/auditConstants';
+import { RESPONSE_SCORES } from '../constants/auditConstants';
 
 export class AuditService {
 	// Puntajes asignados a cada tipo de respuesta desde las constantes
@@ -35,10 +40,7 @@ export class AuditService {
 				createdAt: new Date(),
 			};
 
-			await setDoc(
-				doc(db, 'audit-results', id),
-				auditWithId
-			);
+			await setDoc(doc(db, 'audit-results', id), auditWithId);
 			return `Resultado de auditoría guardado con ID: ${id}`;
 		} catch (error) {
 			logAuditError('saveAuditResult', error);
@@ -69,6 +71,33 @@ export class AuditService {
 				throw error;
 			}
 			throw new FirebaseOperationError('obtener resultado de auditoría');
+		}
+	}
+
+	// Eliminar un resultado de auditoría por su ID
+	static async deleteAuditResult(id: string): Promise<void> {
+		console.log(`Eliminando resultado de auditoría con ID: ${id}`);
+		try {
+			// Verificar que el ID existe
+			const docRef = doc(db, 'audit-results', id);
+			const docSnap = await getDoc(docRef);
+
+			if (!docSnap.exists()) {
+				console.warn(`Resultado de auditoría con ID ${id} no encontrado`);
+				throw new AuditResultNotFoundError(id);
+			}
+
+			// Eliminar el documento
+			await deleteDoc(docRef);
+			console.log(
+				`Resultado de auditoría con ID ${id} eliminado correctamente`
+			);
+		} catch (error) {
+			logAuditError('deleteAuditResult', error);
+			if (error instanceof AuditResultNotFoundError) {
+				throw error;
+			}
+			throw new FirebaseOperationError('eliminar resultado de auditoría');
 		}
 	}
 
@@ -235,18 +264,18 @@ export class AuditService {
 	}
 
 	// Obtener todos los formularios de auditoría (solo ID y nombre)
-	static async getForms(): Promise<{id: string, name: string}[]> {
+	static async getForms(): Promise<{ id: string; name: string }[]> {
 		console.log('Obteniendo todos los formularios de auditoría');
 		try {
 			const formsCollection = collection(db, 'audit-results');
 			const querySnapshot = await getDocs(formsCollection);
 
-			const forms: {id: string, name: string}[] = [];
+			const forms: { id: string; name: string }[] = [];
 			querySnapshot.forEach((doc) => {
 				const data = doc.data() as AuditResult;
 				forms.push({
 					id: doc.id,
-					name: data.program
+					name: data.program,
 				});
 			});
 

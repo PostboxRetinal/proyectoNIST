@@ -255,6 +255,59 @@ export function registerAuditRoutes(app: Elysia<any>) {
 					tags: ['Auditorías'],
 				},
 			}
+		)
+
+		// Eliminar una auditoría existente
+		.delete(
+			'/deleteForm/:id',
+			async ({ params, error }) => {
+				try {
+					const { id } = params;
+					await AuditService.deleteAuditResult(id);
+
+					return {
+						success: true,
+						message: 'Auditoría eliminada exitosamente',
+						auditId: id,
+					};
+				} catch (err: any) {
+					const errorResponse = createAuditErrorResponse(
+						err,
+						'Error al eliminar la auditoría'
+					);
+
+					if (errorResponse.status === 404) {
+						return error(404, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					} else {
+						return error(500, {
+							success: false,
+							message: errorResponse.message,
+							errorCode: errorResponse.errorCode,
+						});
+					}
+				}
+			},
+			{
+				params: auditIdValidator,
+				response: {
+					200: t.Object({
+						success: t.Boolean(),
+						message: t.String(),
+						auditId: t.String(),
+					}),
+					404: errorResponseValidator,
+					500: errorResponseValidator,
+				},
+				detail: {
+					summary: 'Eliminar auditoría',
+					description: 'Elimina una auditoría existente por su ID',
+					tags: ['Auditorías'],
+				},
+			}
 		);
 
 	return app;
