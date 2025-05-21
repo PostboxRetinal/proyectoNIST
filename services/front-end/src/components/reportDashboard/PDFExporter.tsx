@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { FileDown } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { useAlerts } from '../alert/AlertContext';
+import { Document, Page, Text, View, StyleSheet, Font, Circle, Svg, Path, pdf } from '@react-pdf/renderer';
 
 // Tipos
 interface FirestoreTimestamp {
@@ -18,6 +17,7 @@ interface Question {
 }
 
 interface Section {
+  title?: string;
   questions: Record<string, Question>;
   completionPercentage?: number;
 }
@@ -31,10 +31,20 @@ interface AuditData {
   sections: Record<string, Section>;
 }
 
-// Fix: Update the type to accept a RefObject that might be null
 interface PdfExporterProps {
   auditData: AuditData;
-  contentRef: React.RefObject<HTMLDivElement | null>;
+  contentRef?: React.RefObject<HTMLDivElement | null>;
+}
+
+interface TemplateConfig {
+  title: string;
+  borderColor: string;
+  badgeColor: string;
+  textColor: string;
+  description: string;
+  footer: string;
+  gradientStart: string;
+  gradientEnd: string;
 }
 
 // Función para determinar la categoría según el porcentaje
@@ -54,15 +64,17 @@ const getCategoryColor = (category: 'good' | 'regular' | 'bad'): string => {
   }
 };
 
-// Configuraciones para las diferentes plantillas
-const templateConfigs = {
+// Configuraciones para las diferentes plantillas - Versión mejorada
+const templateConfigs: Record<'good' | 'regular' | 'bad', TemplateConfig> = {
   good: {
     title: 'RESULTADO SATISFACTORIO',
     borderColor: '#22c55e',
     badgeColor: '#dcfce7',
     textColor: '#15803d',
     description: 'La evaluación muestra un alto nivel de conformidad con los estándares requeridos.',
-    footer: '¡Felicitaciones! Mantenga las buenas prácticas implementadas.'
+    footer: '¡Felicitaciones! Mantenga las buenas prácticas implementadas.',
+    gradientStart: '#dcfce7',
+    gradientEnd: '#ffffff'
   },
   regular: {
     title: 'RESULTADO ACEPTABLE',
@@ -70,7 +82,9 @@ const templateConfigs = {
     badgeColor: '#fef9c3',
     textColor: '#a16207',
     description: 'La evaluación muestra un nivel aceptable de conformidad, pero con áreas de mejora identificadas.',
-    footer: 'Se recomienda implementar acciones correctivas para las áreas deficientes.'
+    footer: 'Se recomienda implementar acciones correctivas para las áreas deficientes.',
+    gradientStart: '#fef9c3',
+    gradientEnd: '#ffffff'
   },
   bad: {
     title: 'RESULTADO NO SATISFACTORIO',
@@ -78,329 +92,676 @@ const templateConfigs = {
     badgeColor: '#fee2e2',
     textColor: '#b91c1c',
     description: 'La evaluación muestra un nivel bajo de conformidad que requiere atención inmediata.',
-    footer: 'Se requiere un plan de acción correctiva urgente para abordar las deficiencias encontradas.'
+    footer: 'Se requiere un plan de acción correctiva urgente para abordar las deficiencias encontradas.',
+    gradientStart: '#fee2e2',
+    gradientEnd: '#ffffff'
   }
 };
 
-const PdfExporter: React.FC<PdfExporterProps> = ({ auditData, contentRef }) => {
+// Registrar fuente para el PDF
+Font.register({
+  family: 'Helvetica',
+  fonts: [
+    { src: 'https://cdn.jsdelivr.net/npm/@canvas-fonts/helvetica@1.0.4/Helvetica.ttf', fontWeight: 'normal' },
+    { src: 'https://cdn.jsdelivr.net/npm/@canvas-fonts/helvetica-bold@1.0.4/Helvetica-Bold.ttf', fontWeight: 'bold' },
+    { src: 'https://cdn.jsdelivr.net/npm/@canvas-fonts/helvetica-oblique@1.0.4/Helvetica-Oblique.ttf', fontStyle: 'italic' },
+    { src: 'https://cdn.jsdelivr.net/npm/@canvas-fonts/helvetica-boldoblique@1.0.4/Helvetica-BoldOblique.ttf', fontWeight: 'bold', fontStyle: 'italic' }
+  ]
+});
+
+// También registramos una fuente más moderna
+Font.register({
+  family: 'Montserrat',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTUSjIg1_i6t8kCHKm459Wlhzg.ttf', fontWeight: 'normal' },
+    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_dJE3gnD-w.ttf', fontWeight: 'bold' },
+    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTUPjIg1_i6t8kCHKm459WxZcgvz-PZ1.ttf', fontStyle: 'italic' }
+  ]
+});
+
+// Estilos para el PDF - Versión mejorada
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: 'column',
+    backgroundColor: '#ffffff',
+    padding: 0,
+  },
+  header: {
+    padding: 30,
+    paddingBottom: 10,
+  },
+  coverGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 15,
+    marginTop: 50,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Montserrat',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333333',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat',
+    marginBottom: 5,
+    color: '#555555',
+    textAlign: 'center',
+  },
+  date: {
+    fontSize: 12,
+    fontFamily: 'Helvetica',
+    marginBottom: 5,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  idText: {
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    color: '#888888',
+    textAlign: 'center',
+  },
+  circleContainer: {
+    alignItems: 'center',
+    marginVertical: 30,
+  },
+  circleText: {
+    position: 'absolute',
+    fontSize: 28,
+    fontFamily: 'Montserrat',
+    fontWeight: 'bold',
+  },
+  percentSymbol: {
+    fontSize: 16,
+    fontWeight: 'normal',
+  },
+  categoryTitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 15,
+    padding: 8,
+    width: '70%',
+    alignSelf: 'center',
+    borderRadius: 4,
+  },
+  description: {
+    fontSize: 12,
+    fontFamily: 'Helvetica',
+    textAlign: 'center',
+    marginHorizontal: 60,
+    marginVertical: 15,
+    color: '#555555',
+    lineHeight: 1.5,
+  },
+  footer: {
+    fontSize: 11,
+    fontFamily: 'Helvetica',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginHorizontal: 60,
+    marginVertical: 15,
+    padding: 10,
+    borderRadius: 4,
+  },
+  generationDate: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    fontSize: 8,
+    fontFamily: 'Helvetica',
+    textAlign: 'center',
+    color: '#969696'
+  },
+  sectionHeader: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  contentContainer: {
+    margin: 30,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 4,
+  },
+  tableHeaderText: {
+    fontSize: 11,
+    fontFamily: 'Montserrat',
+    fontWeight: 'bold',
+    color: '#ffffff'
+  },
+  tableRow: {
+    flexDirection: 'row',
+    marginVertical: 4,
+    padding: 8,
+    borderRadius: 4,
+  },
+  tableRowEven: {
+    backgroundColor: '#f8f9fa',
+  },
+  tableCellSection: {
+    flex: 3,
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    color: '#333333'
+  },
+  tableCellPercentage: {
+    flex: 1,
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    textAlign: 'right',
+    paddingRight: 5,
+  },
+  interpretationHeader: {
+    marginTop: 30,
+    padding: 10,
+    borderRadius: 4,
+  },
+  interpretationTitle: {
+    fontSize: 12,
+    fontFamily: 'Montserrat',
+    fontWeight: 'bold',
+    color: '#ffffff'
+  },
+  interpretationRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  interpretationPercentage: {
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    width: 80,
+    fontWeight: 'bold',
+  },
+  interpretationValue: {
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    color: '#333333'
+  },
+  // Estilos para la página de detalles
+  detailPage: {
+    padding: 30,
+  },
+  detailHeader: {
+    marginBottom: 20,
+    borderBottom: '1px solid #e5e7eb',
+    paddingBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Montserrat',
+    fontWeight: 'bold',
+    marginBottom: 8,
+    marginTop: 20,
+    color: '#333333',
+    paddingBottom: 5, 
+    borderBottomWidth: 2,
+    borderBottomColor: '#e5e7eb',
+    borderBottomStyle: 'solid',
+  },
+  sectionPercentage: {
+    flexDirection: 'row', 
+    justifyContent: 'flex-end', 
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  sectionBadge: {
+    padding: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+  },
+  question: {
+    marginBottom: 12,
+    padding: 8,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#6b7280',
+    borderLeftStyle: 'solid',
+  },
+  questionText: {
+    fontSize: 11,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333333',
+  },
+  responseContainer: {
+    flexDirection: 'row',
+    marginBottom: 3,
+    alignItems: 'center',
+  },
+  responseLabel: {
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    width: 75,
+    color: '#555555',
+  },
+  responseValue: {
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    backgroundColor: '#f1f5f9',
+    padding: 2,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+  },
+  observationText: {
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    fontStyle: 'italic',
+    color: '#666666',
+    marginLeft: 75,
+    marginTop: 3,
+  },
+  logoContainer: {
+    position: 'absolute',
+    top: 30,
+    width: '100%',
+    alignItems: 'center',
+  },
+  watermark: {
+    position: 'absolute',
+    bottom: 50,
+    right: 50,
+    opacity: 0.07,
+    transform: 'rotate(-45deg)',
+  },
+  watermarkText: {
+    fontSize: 60,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+  },
+  divider: {
+    borderBottomColor: '#e5e7eb',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    marginVertical: 15,
+  }
+});
+
+// Componente de logo para el PDF
+const AuditLogo = () => (
+  <View style={styles.logoContainer}>
+    <Svg height="40" width="40">
+      <Circle cx="20" cy="20" r="18" fill="#4f46e5" />
+      <Circle cx="20" cy="20" r="12" fill="#ffffff" />
+      <Circle cx="20" cy="20" r="6" fill="#4f46e5" />
+    </Svg>
+  </View>
+);
+
+// Componente de marca de agua para el PDF
+const Watermark = ({ text }: { text: string }) => (
+  <View style={styles.watermark}>
+    <Text style={[styles.watermarkText, { color: '#e5e7eb' }]}>{text}</Text>
+  </View>
+);
+
+// Componente de PDF para la portada mejorada
+const CoverPage = ({ auditData }: { auditData: AuditData }) => {
+  const percentage = auditData.completionPercentage || 0;
+  const category = getCategory(percentage);
+  const templateConfig = templateConfigs[category];
+  const generationDate = new Date().toLocaleString('es-ES');
+  
+  let dateText = 'Fecha: No disponible';
+  if (auditData.createdAt) {
+    const date = new Date(auditData.createdAt.seconds * 1000).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    dateText = `Fecha: ${date}`;
+  }
+  
+  return (
+    <Page size="A4" style={styles.page}>
+      {/* Fondo con gradiente */}
+      <Svg height="300" width="595" style={styles.coverGradient}>
+        <Path
+          d="M0,0 L595,0 L595,300 C495,250 395,280 295,240 C195,200 95,240 0,200 L0,0 Z"
+          fill={templateConfig.gradientStart}
+        />
+      </Svg>
+      
+      {/* Logo */}
+      <AuditLogo />
+      
+      {/* Marca de agua */}
+      <Watermark text="AUDITORIA" />
+      
+      <View style={styles.titleContainer}>
+        <Text style={styles.title}>INFORME DE AUDITORÍA</Text>
+        <Text style={styles.subtitle}>{auditData.program || 'Auditoría'}</Text>
+        <Text style={styles.date}>{dateText}</Text>
+        <Text style={styles.idText}>ID: {auditData.id}</Text>
+      </View>
+      
+      <View style={styles.circleContainer}>
+        <Svg height="100" width="100">
+          <Circle
+            cx="50"
+            cy="50"
+            r="45"
+            stroke={templateConfig.borderColor}
+            strokeWidth={5}
+            fill="white"
+          />
+          <Circle
+            cx="50"
+            cy="50"
+            r="38"
+            fill={templateConfig.badgeColor}
+          />
+        </Svg>
+        <Text style={[styles.circleText, { color: templateConfig.textColor, top: 37 }]}>
+          {percentage}<Text style={styles.percentSymbol}>%</Text>
+        </Text>
+      </View>
+      
+      <Text style={[
+        styles.categoryTitle, 
+        { 
+          backgroundColor: templateConfig.badgeColor,
+          color: templateConfig.textColor,
+          borderWidth: 1,
+          borderColor: templateConfig.borderColor
+        }
+      ]}>
+        {templateConfig.title}
+      </Text>
+      
+      <Text style={styles.description}>{templateConfig.description}</Text>
+      
+      <Text style={[
+        styles.footer, 
+        { 
+          color: templateConfig.textColor,
+          backgroundColor: templateConfig.badgeColor,
+          borderWidth: 1,
+          borderColor: templateConfig.borderColor
+        }
+      ]}>
+        {templateConfig.footer}
+      </Text>
+      
+      <Text style={styles.generationDate}>Informe generado el {generationDate}</Text>
+    </Page>
+  );
+};
+
+// Componente para la página de detalles - versión mejorada
+const DetailPage = ({ auditData }: { auditData: AuditData }) => {
+  // Función para formatear las respuestas
+  const formatResponse = (response: string): string => {
+    const normalized = response.toLowerCase();
+    if (normalized === 'yes' || normalized === 'si' || normalized === 'sí') return 'Sí';
+    if (normalized === 'no') return 'No';
+    if (normalized === 'partial') return 'Parcial';
+    if (normalized === 'na' || normalized === 'n/a') return 'N/A';
+    return response; // Si no coincide con ninguno, devolver el original
+  };
+
+  // Función para obtener el color según la respuesta
+  const getResponseColor = (response: string): string => {
+    const normalized = response.toLowerCase();
+    if (normalized === 'yes' || normalized === 'si' || normalized === 'sí') return '#22c55e'; // verde
+    if (normalized === 'partial') return '#eab308'; // amarillo
+    if (normalized === 'no') return '#ef4444'; // rojo
+    return '#6b7280'; // gris para N/A
+  };
+
+  // Función para obtener el color de fondo según la respuesta
+  const getResponseBgColor = (response: string): string => {
+    const normalized = response.toLowerCase();
+    if (normalized === 'yes' || normalized === 'si' || normalized === 'sí') return '#dcfce7'; // verde claro
+    if (normalized === 'partial') return '#fef9c3'; // amarillo claro
+    if (normalized === 'no') return '#fee2e2'; // rojo claro
+    return '#f1f5f9'; // gris claro para N/A
+  };
+
+  return (
+    <>
+      {/* Podemos necesitar múltiples páginas dependiendo de la cantidad de secciones y preguntas */}
+      {Object.entries(auditData.sections).map(([sectionId, section], idx) => (
+        <Page size="A4" style={[styles.page, styles.detailPage]} key={sectionId}>
+          {/* Mostrar encabezado solo en la primera página de detalles */}
+          {idx === 0 && (
+            <View style={styles.detailHeader}>
+              <Text style={styles.title}>DETALLE DE LA EVALUACIÓN</Text>
+              <Text style={styles.idText}>
+                {auditData.program} (ID: {auditData.id})
+                {auditData.createdAt && ` - Fecha: ${new Date(auditData.createdAt.seconds * 1000).toLocaleDateString('es-ES', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}`}
+              </Text>
+            </View>
+          )}
+          
+          {/* Marca de agua */}
+          <Watermark text="CONFIDENCIAL" />
+          
+          {/* Título de sección */}
+          <View>
+            <Text style={styles.sectionTitle}>{section.title || sectionId}</Text>
+            <View style={styles.sectionPercentage}>
+              <Text style={[
+                styles.sectionBadge, 
+                { 
+                  backgroundColor: getResponseBgColor(
+                    getCategory(section.completionPercentage || 0) === 'good' ? 'yes' : 
+                    getCategory(section.completionPercentage || 0) === 'regular' ? 'partial' : 'no'
+                  ),
+                  color: getCategoryColor(getCategory(section.completionPercentage || 0))
+                }
+              ]}>
+                Cumplimiento: {section.completionPercentage || 0}%
+              </Text>
+            </View>
+          </View>
+          
+          {/* Preguntas de la sección */}
+          {Object.entries(section.questions).map(([questionId, question]) => {
+            const responseColor = getResponseColor(question.response);
+            
+            return (
+              <View 
+                style={[
+                  styles.question, 
+                  { borderLeftColor: responseColor }
+                ]} 
+                key={questionId}
+              >
+                <Text style={styles.questionText}>{question.text}</Text>
+                
+                <View style={styles.responseContainer}>
+                  <Text style={styles.responseLabel}>Respuesta:</Text>
+                  <Text style={[
+                    styles.responseValue, 
+                    { 
+                      color: responseColor,
+                      backgroundColor: getResponseBgColor(question.response)
+                    }
+                  ]}>
+                    {formatResponse(question.response)}
+                  </Text>
+                </View>
+                
+                {question.observations && (
+                  <Text style={styles.observationText}>{question.observations}</Text>
+                )}
+              </View>
+            );
+          })}
+        </Page>
+      ))}
+    </>
+  );
+};
+
+// Componente para la página de resumen de secciones - versión mejorada
+const SummaryPage = ({ auditData }: { auditData: AuditData }) => {
+  const sectionEntries = Object.entries(auditData.sections);
+  const percentage = auditData.completionPercentage || 0;
+  const category = getCategory(percentage);
+  const templateConfig = templateConfigs[category];
+  
+  return (
+    <Page size="A4" style={styles.page}>
+      <View style={[styles.header, { borderBottomWidth: 2, borderBottomColor: templateConfig.borderColor, borderBottomStyle: 'solid' }]}>
+        <Text style={styles.title}>RESUMEN POR SECCIONES</Text>
+        <Text style={styles.idText}>
+          {auditData.program} - Cumplimiento general: {percentage}%
+        </Text>
+      </View>
+      
+      {/* Marca de agua */}
+      <Watermark text="RESUMEN" />
+      
+      <View style={styles.contentContainer}>
+        {/* Encabezado de tabla */}
+        <View style={[styles.tableHeader, { backgroundColor: '#4f46e5' }]}>
+          <Text style={[styles.tableHeaderText, { flex: 3 }]}>Sección</Text>
+          <Text style={[styles.tableHeaderText, { flex: 1 }]}>Cumplimiento</Text>
+        </View>
+        
+        {/* Filas de tabla */}
+        {sectionEntries.map(([sectionId, section], index) => {
+          const percentage = section.completionPercentage || 0;
+          const sectionCategory = getCategory(percentage);
+          const color = getCategoryColor(sectionCategory);
+          
+          return (
+            <View 
+              key={sectionId}
+              style={[
+                styles.tableRow,
+                index % 2 === 0 ? styles.tableRowEven : {}
+              ]}
+            >
+              <Text style={styles.tableCellSection}>
+                {section.title || sectionId}
+              </Text>
+              <Text style={[
+                styles.tableCellPercentage,
+                styles.responseValue,
+                { 
+                  color,
+                  backgroundColor: templateConfigs[sectionCategory].badgeColor,
+                  textAlign: 'center',
+                  width: 'auto'
+                }
+              ]}>
+                {percentage.toFixed(1)}%
+              </Text>
+            </View>
+          );
+        })}
+        
+        <View style={styles.divider} />
+        
+        {/* Interpretación de resultados */}
+        <View style={[styles.interpretationHeader, { backgroundColor: '#4f46e5' }]}>
+          <Text style={styles.interpretationTitle}>Interpretación de resultados</Text>
+        </View>
+        
+        <View style={[styles.interpretationRow, { backgroundColor: '#f8f9fa', padding: 8, borderRadius: 4 }]}>
+          <Text style={[styles.interpretationPercentage, { color: '#22c55e' }]}>≥ 80%:</Text>
+          <Text style={styles.interpretationValue}>Bueno - Cumplimiento satisfactorio</Text>
+        </View>
+        
+        <View style={[styles.interpretationRow, { padding: 8, borderRadius: 4 }]}>
+          <Text style={[styles.interpretationPercentage, { color: '#eab308' }]}>50% - 79.9%:</Text>
+          <Text style={styles.interpretationValue}>Regular - Requiere mejoras</Text>
+        </View>
+        
+        <View style={[styles.interpretationRow, { backgroundColor: '#f8f9fa', padding: 8, borderRadius: 4 }]}>
+          <Text style={[styles.interpretationPercentage, { color: '#ef4444' }]}>{'< 50%'}:</Text>
+          <Text style={styles.interpretationValue}>Malo - Requiere atención inmediata</Text>
+        </View>
+      </View>
+    </Page>
+  );
+};
+
+// Componente para el documento PDF completo
+const AuditPDF = ({ auditData }: { auditData: AuditData }) => {
+  return (
+    <Document>
+      {/* Portada */}
+      <CoverPage auditData={auditData} />
+      
+      {/* Resumen de secciones */}
+      <SummaryPage auditData={auditData} />
+      
+      {/* Detalles - versión nativa en React PDF */}
+      <DetailPage auditData={auditData} />
+    </Document>
+  );
+};
+
+const PdfExporter: React.FC<PdfExporterProps> = ({ auditData }) => {
   const [exporting, setExporting] = useState(false);
   const { addAlert } = useAlerts();
-
+  
   const exportToPDF = async () => {
-    // Check if contentRef and contentRef.current exist
-    if (!contentRef?.current || !auditData) return;
+    if (!auditData) return;
     
     try {
       setExporting(true);
       addAlert('info', 'Generando PDF, por favor espere...');
       
-      // Determinar la categoría según el porcentaje
-      const percentage = auditData.completionPercentage || 0;
-      const category = getCategory(percentage);
-      const templateConfig = templateConfigs[category];
+      // Crear el documento PDF - ya no usamos html2canvas, solo React PDF
+      const pdfInstance = pdf(<AuditPDF auditData={auditData} />);
       
-      // Configuración PDF
-      const pdfWidth = 210; // A4 width en mm
-      const pdfHeight = 297; // A4 height en mm
-      const margins = 15; // Márgenes en mm
-      
-      // Crear el PDF según la plantilla
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      // ------ PÁGINA DE PORTADA (según la categoría) -------
-      
-      // Fondo y colores según la categoría
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
-      
-      // Borde superior con color según la categoría
-      pdf.setDrawColor(templateConfig.borderColor.replace('#', ''));
-      pdf.setLineWidth(10);
-      pdf.line(0, 5, pdfWidth, 5);
-      
-      // Título de la portada
-      pdf.setFontSize(22);
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('INFORME DE AUDITORÍA', pdfWidth / 2, 40, { align: 'center' });
-      
-      // Programa auditado
-      pdf.setFontSize(16);
-      pdf.text(auditData.program || 'Auditoría', pdfWidth / 2, 55, { align: 'center' });
-      
-      // Fecha
-      let dateText = 'Fecha: No disponible';
-      if (auditData.createdAt) {
-        const date = new Date(auditData.createdAt.seconds * 1000).toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        dateText = `Fecha: ${date}`;
-      }
-      
-      pdf.setFontSize(12);
-      pdf.text(dateText, pdfWidth / 2, 65, { align: 'center' });
-      
-      // ID
-      pdf.setFontSize(10);
-      pdf.text(`ID: ${auditData.id}`, pdfWidth / 2, 72, { align: 'center' });
-      
-      // Círculo con porcentaje de cumplimiento
-      const circleRadius = 30;
-      const circleX = pdfWidth / 2;
-      const circleY = 120;
-      
-      // Dibujar círculo exterior
-      pdf.setDrawColor(templateConfig.borderColor.replace('#', ''));
-      pdf.setLineWidth(2);
-      pdf.circle(circleX, circleY, circleRadius, 'S');
-      
-      // Dibujar círculo interior con color de fondo
-      pdf.setFillColor(templateConfig.badgeColor.replace('#', ''));
-      pdf.circle(circleX, circleY, circleRadius - 1, 'F');
-      
-      // Texto del porcentaje
-      pdf.setFontSize(24);
-      pdf.setTextColor(templateConfig.textColor.replace('#', ''));
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${percentage}%`, circleX, circleY + 2, { align: 'center' });
-      
-      // Categoría
-      pdf.setFontSize(16);
-      pdf.text(templateConfig.title, pdfWidth / 2, 160, { align: 'center' });
-      
-      // Descripción
-      pdf.setFontSize(12);
-      pdf.setTextColor(80, 80, 80);
-      pdf.setFont('helvetica', 'normal');
-      
-      // Dividir descripción en múltiples líneas si es necesario
-      const maxWidth = 150;
-      const lines = pdf.splitTextToSize(templateConfig.description, maxWidth);
-      pdf.text(lines, pdfWidth / 2, 175, { align: 'center' });
-      
-      // Footer
-      pdf.setTextColor(templateConfig.textColor.replace('#', ''));
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'italic');
-      const footerLines = pdf.splitTextToSize(templateConfig.footer, maxWidth);
-      pdf.text(footerLines, pdfWidth / 2, 190, { align: 'center' });
-      
-      // Fecha y hora de generación del informe
-      const generationDate = new Date().toLocaleString('es-ES');
-      pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(`Informe generado el ${generationDate}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
-      
-      // ------- PÁGINAS ADICIONALES CON EL CONTENIDO DEL INFORME -------
-      
-      // Agregar nueva página para el contenido
-      pdf.addPage();
-      
-      // Título de sección
-      pdf.setFontSize(16);
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('DETALLE DE LA EVALUACIÓN', pdfWidth / 2, margins, { align: 'center' });
-      
-      // Subtítulo con ID y fecha
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`${auditData.program} (ID: ${auditData.id}) - ${dateText}`, pdfWidth / 2, margins + 7, { align: 'center' });
-      
-      // Capturar el contenido HTML
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2, // Mayor resolución
-        useCORS: true,
-        logging: false,
-        removeContainer: true,
-        backgroundColor: '#ffffff'
-      });
-      
-      // Convertir canvas a imagen
-      const imgData = canvas.toDataURL('image/png');
-      
-      // Calcular escalado para ajustar al ancho de la página
-      const imgWidth = pdfWidth - (margins * 2);
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      // Añadir imagen del reporte
-      let currentY = margins + 20;
-      
-      // Si la imagen es muy alta, dividirla en varias páginas
-      if (imgHeight > pdfHeight - currentY - margins) {
-        const availableHeight = pdfHeight - currentY - margins;
-        let remainingHeight = imgHeight;
-        let srcY = 0;
-        
-        while (remainingHeight > 0) {
-          const currentHeight = Math.min(remainingHeight, availableHeight);
-          const scale = canvas.width / imgWidth;
-          
-          // Calculate source height in original image pixels
-          const srcHeight = currentHeight * scale;
-          
-          // Create a temporary canvas for the slice
-          const tempCanvas = document.createElement('canvas');
-          const ctx = tempCanvas.getContext('2d');
-          if (!ctx) {
-            throw new Error('Could not create canvas context');
-          }
-          
-          // Set dimensions for the slice
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = srcHeight;
-          
-          // Draw portion of original canvas to temp canvas
-          ctx.drawImage(
-            canvas,        // source
-            0,             // source x
-            srcY,          // source y
-            canvas.width,  // source width
-            srcHeight,     // source height
-            0,             // dest x
-            0,             // dest y
-            canvas.width,  // dest width
-            srcHeight      // dest height
-          );
-          
-          // Convert temp canvas to image data
-          const sliceImgData = tempCanvas.toDataURL('image/png');
-          
-          // Add the slice to PDF
-          pdf.addImage(
-            sliceImgData,   // imageData
-            'PNG',          // format
-            margins,        // x
-            currentY,       // y
-            imgWidth,       // width
-            currentHeight   // height
-          );
-          
-          remainingHeight -= currentHeight;
-          srcY += srcHeight;
-          
-          if (remainingHeight > 0) {
-            // Agregar nueva página
-            pdf.addPage();
-            currentY = margins;
-          }
-        }
-      } else {
-        // La imagen cabe en una sola página
-        pdf.addImage(imgData, 'PNG', margins, currentY, imgWidth, imgHeight);
-      }
-      
-      // ------- PÁGINA FINAL CON RESUMEN DE SECCIONES -------
-      
-      pdf.addPage();
-      
-      // Título de resumen
-      pdf.setFontSize(16);
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('RESUMEN POR SECCIONES', pdfWidth / 2, margins, { align: 'center' });
-      
-      // Agregar tabla de resumen
-      let yPos = margins + 15;
-      const sectionEntries = Object.entries(auditData.sections);
-      
-      // Encabezado de tabla
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(margins, yPos, pdfWidth - (margins * 2), 10, 'F');
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.text('Sección', margins + 5, yPos + 6);
-      pdf.text('Cumplimiento', pdfWidth - margins - 35, yPos + 6);
-      
-      yPos += 12;
-      
-      // Contenido de la tabla
-      pdf.setFont('helvetica', 'normal');
-      sectionEntries.forEach(([sectionId, section], index) => {
-        const percentage = section.completionPercentage || 0;
-        const sectionCategory = getCategory(percentage);
-        const color = getCategoryColor(sectionCategory);
-        
-        // Alternar colores de fondo para filas
-        if (index % 2 === 0) {
-          pdf.setFillColor(250, 250, 250);
-          pdf.rect(margins, yPos - 2, pdfWidth - (margins * 2), 10, 'F');
-        }
-        
-        // Nombre de sección
-        pdf.setTextColor(60, 60, 60);
-        pdf.text(sectionId, margins + 5, yPos + 4);
-        
-        // Porcentaje con color
-        pdf.setTextColor(color.replace('#', ''));
-        pdf.text(`${percentage}%`, pdfWidth - margins - 35, yPos + 4);
-        
-        yPos += 10;
-        
-        // Agregar nueva página si es necesario
-        if (yPos > pdfHeight - margins) {
-          pdf.addPage();
-          yPos = margins + 10;
-        }
-      });
-      
-      // Añadir interpretación
-      yPos += 5;
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(margins, yPos, pdfWidth - (margins * 2), 10, 'F');
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.text('Interpretación de resultados', margins + 5, yPos + 6);
-      
-      yPos += 15;
-      
-      // Leyendas de interpretación
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
-      // Bueno
-      pdf.setTextColor('#22c55e');
-      pdf.text('≥ 80%:', margins + 5, yPos);
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bueno', margins + 25, yPos);
-      
-      yPos += 8;
-      
-      // Regular
-      pdf.setTextColor('#eab308');
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('50% - 79.9%:', margins + 5, yPos);
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Regular', margins + 35, yPos);
-      
-      yPos += 8;
-      
-      // Malo
-      pdf.setTextColor('#ef4444');
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('< 50%:', margins + 5, yPos);
-      pdf.setTextColor(60, 60, 60);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Malo', margins + 25, yPos);
-      
-      // Guardar PDF
+      // Guardar el archivo
       const fileName = `Auditoria_${auditData.id}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
+      const blob = await pdfInstance.toBlob();
+      
+      // Crear un enlace de descarga y hacer clic en él
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+      
+      // Limpieza
+      setTimeout(() => {
+        URL.revokeObjectURL(link.href);
+      }, 100);
       
       addAlert('success', `PDF generado correctamente como "${fileName}"`);
     } catch (error) {
       console.error('Error al generar PDF:', error);
-      addAlert('error', 'Error al generar el PDF');
+      
+      let errorMessage = 'Error desconocido al generar el PDF.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      addAlert('error', `Error al generar el PDF: ${errorMessage}`);
     } finally {
       setExporting(false);
     }
@@ -410,11 +771,8 @@ const PdfExporter: React.FC<PdfExporterProps> = ({ auditData, contentRef }) => {
     <button
       onClick={exportToPDF}
       disabled={exporting}
-      className={`
-        bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded-lg 
-        flex items-center transition-colors text-sm
-        ${exporting ? 'opacity-70 cursor-not-allowed' : ''}
-      `}
+      className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm shadow-md"
+      style={{ opacity: exporting ? 0.7 : 1, cursor: exporting ? 'not-allowed' : 'pointer' }}
     >
       {exporting ? (
         <>
