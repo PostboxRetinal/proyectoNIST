@@ -1,34 +1,13 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, Eye, Trash2, Home, RefreshCw } from "lucide-react";
+import { PlusCircle, Home, RefreshCw, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AuditoryDeleteModal } from "./AuditoryDeleteModal";
 import { AuditoryViewModal } from "./AuditoryViewModal";
-import axios from "axios";
-import { useAlerts } from "../alert/AlertContext"; // Importamos el contexto de alertas
-
-// Interfaces para tipado
-interface AuditoryResponse {
-  success: boolean;
-  forms: Auditory[];
-}
-
-interface Auditory {
-  id: string;
-  name: string;
-}
-
-interface AxiosError {
-  message: string;
-  response?: {
-    data?: {
-      message?: string;
-      error?: string;
-    };
-    statusText?: string;
-  };
-  request?: unknown;
-  config?: unknown;
-}
+import { AuditoryTable } from "./AuditoryTable";
+import { UploadJsonModal } from "./UploadJsonModal";
+import { useAlerts } from "../alert/AlertContext";
+import { auditoryService } from "../../services/auditoryService";
+import { Auditory, AxiosError, AuditFormData } from "./auditoryTypes";
 
 export default function AuditoryManagement() {
   // Estados para gestionar las auditorías
@@ -43,7 +22,8 @@ export default function AuditoryManagement() {
   const [selectedAuditory, setSelectedAuditory] = useState<Auditory | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
   // Hook para mostrar alertas
   const { addAlert } = useAlerts();
 
@@ -55,22 +35,11 @@ export default function AuditoryManagement() {
   // Función para obtener las auditorías desde la API
   const fetchAuditorias = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      const response = await axios.get<AuditoryResponse>("http://localhost:3000/api/forms/getForms", {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        withCredentials: false
-      });
-      
-      if (response.data && response.data.success) {
-        setAuditorias(response.data.forms);
-        setError(null);
-      } else {
-        console.warn('Formato de respuesta inesperado:', response.data);
-        setError('El formato de respuesta no es el esperado');
-      }
+      const auditoriasData = await auditoryService.getAllAudits();
+      setAuditorias(auditoriasData);
     } catch (err) {
       console.error("Error al cargar auditorías:", err);
       setError("No se pudieron cargar las auditorías. Por favor, intenta de nuevo más tarde.");
@@ -101,39 +70,20 @@ export default function AuditoryManagement() {
     if (!selectedAuditory) return;
     
     try {
-      // Mostramos un indicador de carga
       setLoading(true);
+      await auditoryService.deleteAudit(selectedAuditory.id);
       
-      // Realizamos la llamada a la API para eliminar el formulario
-      const response = await axios.delete(
-        `http://localhost:3000/api/forms/deleteForm/${selectedAuditory.id}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        }
+      // Actualizamos el estado local eliminando la auditoría
+      setAuditorias(prevAuditorias => 
+        prevAuditorias.filter(a => a.id !== selectedAuditory.id)
       );
       
-      // Verificamos que la eliminación fue exitosa
-      if (response.status === 200) {
-        // Actualizamos el estado local eliminando la auditoría
-        setAuditorias(prevAuditorias => 
-          prevAuditorias.filter(a => a.id !== selectedAuditory.id)
-        );
-        
-        // Mostramos la alerta de éxito
-        addAlert('success', `La auditoría "${selectedAuditory.name}" ha sido eliminada correctamente`);
-        
-        // Cerramos el modal y limpiamos la selección
-        setShowDeleteModal(false);
-        setSelectedAuditory(null);
-      } else {
-        // Si hay algún error en la respuesta
-        console.error("Error en la respuesta al eliminar:", response);
-        setError(`Error al eliminar la auditoría: ${response.data?.message || 'Error desconocido'}`);
-        addAlert('error', `Error al eliminar la auditoría: ${response.data?.message || 'Error desconocido'}`);
-      }
+      // Mostramos la alerta de éxito
+      addAlert('success', `La auditoría "${selectedAuditory.name}" ha sido eliminada correctamente`);
+      
+      // Cerramos el modal y limpiamos la selección
+      setShowDeleteModal(false);
+      setSelectedAuditory(null);
     } catch (err: unknown) {
       console.error("Error al eliminar auditoría:", err);
   
@@ -144,6 +94,23 @@ export default function AuditoryManagement() {
       addAlert('error', `Error al eliminar la auditoría: ${errorMessage}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para manejar la subida de una auditoría
+  const handleUploadAuditory = async (jsonData: AuditFormData) => {
+    try {
+      await auditoryService.uploadAudit(jsonData);
+      addAlert('success', `Auditoría "${jsonData.program}" subida correctamente`);
+      setShowUploadModal(false);
+      fetchAuditorias(); // Refresh the list
+      return Promise.resolve();
+    } catch (err) {
+      console.error("Error al subir auditoría:", err);
+      const error = err as AxiosError;
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Error desconocido';
+      addAlert('error', `Error al subir la auditoría: ${errorMessage}`);
+      return Promise.reject(error);
     }
   };
 
@@ -165,6 +132,13 @@ export default function AuditoryManagement() {
               Crear Formulario
             </Link>
             
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="bg-purple-600 text-white hover:bg-purple-700 px-5 py-2 rounded-lg flex items-center transition-colors"
+            >
+              <Upload className="h-5 w-5 mr-2" />
+              Subir JSON
+            </button>
             
             <button
               onClick={fetchAuditorias}
@@ -195,58 +169,13 @@ export default function AuditoryManagement() {
           </div>
         )}
         
-        {/* Estado de carga */}
-        {loading ? (
-          <div className="text-center py-10 flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          /* Tabla de auditorías */
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
-            <table className="min-w-full bg-white overflow-hidden">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="py-3 px-4 text-left text-gray-700">Nombre</th>
-                  <th className="py-3 px-4 text-left text-gray-700">ID</th>
-                  <th className="py-3 px-4 text-left text-gray-700">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {auditoriasFiltradas.map((auditoria) => (
-                  <tr key={auditoria.id} className="hover:bg-gray-50">
-                    <td className="py-3 px-4">{auditoria.name}</td>
-                    <td className="py-3 px-4 text-xs text-gray-500">{auditoria.id}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex space-x-2">
-                        <button 
-                          className="text-blue-500 hover:text-blue-700 transition-colors"
-                          onClick={() => verDetallesAuditoria(auditoria)}
-                          aria-label="Ver detalles"
-                        >
-                          <Eye className="h-5 w-5" />
-                        </button>
-                        <button 
-                          className="text-red-500 hover:text-red-700 transition-colors"
-                          onClick={() => iniciarEliminacionAuditoria(auditoria)}
-                          aria-label="Eliminar auditoría"
-                          disabled={loading}
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        
-        {!loading && auditoriasFiltradas.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-gray-500">No se encontraron auditorías con ese filtro</p>
-          </div>
-        )}
+        {/* Tabla de auditorías */}
+        <AuditoryTable 
+          auditorias={auditoriasFiltradas}
+          loading={loading}
+          onView={verDetallesAuditoria}
+          onDelete={iniciarEliminacionAuditoria}
+        />
         
         {/* Botones de navegación */}
         <div className="mt-8 flex justify-center">
@@ -260,7 +189,7 @@ export default function AuditoryManagement() {
         </div>
       </div>
       
-      {/* Modales específicos para auditorías */}
+      {/* Modales */}
       <AuditoryDeleteModal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -270,7 +199,7 @@ export default function AuditoryManagement() {
         onConfirm={confirmarEliminarAuditoria}
         auditoryName={selectedAuditory?.name}
       />
-      
+
       <AuditoryViewModal
         isOpen={showViewModal}
         onClose={() => {
@@ -278,6 +207,12 @@ export default function AuditoryManagement() {
           setSelectedAuditory(null);
         }}
         auditory={selectedAuditory || undefined}
+      />
+      
+      <UploadJsonModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleUploadAuditory}
       />
     </div>
   );
