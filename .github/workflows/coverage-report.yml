@@ -1,0 +1,52 @@
+name: Coverage Report
+
+on:
+  workflow_run:
+    workflows: ['Unit Tests']
+    types:
+      - completed
+  workflow_dispatch: # Permite ejecutar el workflow manualmente
+
+jobs:
+  publish-coverage:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all workflow artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: unit-tests.yml
+          workflow_conclusion: success
+          path: ./coverage
+
+      - name: Generate combined coverage report
+        run: |
+          mkdir -p ./coverage-report
+
+          # Comprueba y copia los informes de cobertura disponibles a una ubicación común
+          find ./coverage -name "*.html" -o -name "*.json" | while read file; do
+            cp -r "$(dirname "$file")" ./coverage-report/ || echo "Error copying $file"
+          done
+
+          # Crear un resumen HTML para visualizar
+          echo "<html><head><title>Cobertura de Pruebas - Proyecto NIST</title></head>" > ./coverage-report/index.html
+          echo "<body><h1>Resumen de Cobertura de Pruebas</h1>" >> ./coverage-report/index.html
+          echo "<ul>" >> ./coverage-report/index.html
+
+          # Lista cada servicio con su informe de cobertura
+          for dir in $(find ./coverage-report -type d -mindepth 1 -maxdepth 1); do
+            service=$(basename "$dir")
+            echo "<li><a href='./$service/'>$service</a></li>" >> ./coverage-report/index.html
+          done
+
+          echo "</ul></body></html>" >> ./coverage-report/index.html
+
+      - name: Deploy coverage report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./coverage-report
+          destination_dir: coverage
+          full_commit_message: 'Actualizado informe de cobertura de pruebas'
