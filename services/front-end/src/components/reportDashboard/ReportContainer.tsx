@@ -184,9 +184,21 @@ const ReportContainer: React.FC = () => {
     } else {
       throw new Error('No se recibieron datos válidos de la lista de formularios');
     }
-  } catch (err: any) {
-    console.error('Error al cargar la lista de formularios:', err);
-    addAlert('error', `Error al cargar la lista: ${err.message}`);
+  }   catch (err: unknown) {
+    console.error('Error al cargar el formulario:', err);
+    
+    let errorMessage = 'Error desconocido al cargar el formulario';
+    
+    if (err instanceof Error) {
+      errorMessage = err.message;
+    } else if (typeof err === 'object' && err !== null) {
+      // Para manejar errores de Axios que podrían tener una estructura diferente
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      errorMessage = errorObj.response?.data?.message || errorMessage;
+    }
+    
+    setError(errorMessage);
+    addAlert('error', `Error al cargar el formulario: ${errorMessage}`);
   } finally {
     setLoading(false);
   }
@@ -233,10 +245,23 @@ const ReportContainer: React.FC = () => {
       } else {
         throw new Error(response.data?.message || 'No se recibieron datos válidos del formulario');
       }
-    } catch (err: any) {
+    }catch (err: unknown) {
       console.error('Error al cargar el formulario:', err);
-      setError(err.response?.data?.message || err.message || 'Error desconocido al cargar el formulario');
-      addAlert('error', `Error al cargar el formulario: ${err.response?.data?.message || err.message}`);
+      
+      let errorMessage = 'Error desconocido al cargar el formulario';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        // Para manejar errores de Axios
+        const errorObj = err as { response?: { data?: { message?: string } } };
+        if (errorObj.response?.data?.message) {
+          errorMessage = errorObj.response.data.message;
+        }
+      }
+      
+      setError(errorMessage);
+      addAlert('error', `Error al cargar el formulario: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
