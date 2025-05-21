@@ -19,7 +19,6 @@ interface User {
   role: string;
   createdAt: string;
   updatedAt: string;
-  newPassword?: string;
 }
 
 interface ApiError {
@@ -124,50 +123,39 @@ export default function UserManagementComponent() {
     setShowEditModal(true);
   };
 
-  // Guardar cambios del usuario editado
-  const guardarCambiosUsuario = async () => {
-    if (!editingUser) return;
+const guardarCambiosUsuario = async () => {
+  if (!editingUser) return;
 
-    const updateData = {
+  try {
+    // Cambiar de updateUser/ a update/
+    const response = await axios.put(`http://localhost:3000/api/user/update/${editingUser.uid}`, {
       email: editingUser.email,
       role: editingUser.role
-    };
-
-    if (editingUser.newPassword && editingUser.newPassword.trim() !== "") {
-      Object.assign(updateData, { password: editingUser.newPassword });
-    }
-
-    try {
-      const response = await axios.put(`http://localhost:3000/api/user/updateUser/${editingUser.uid}`, {
-        email: editingUser.email,
-        role: editingUser.role
-      });
+    });
  
-      if (response.data.success) {
-        // Actualizar la lista de usuarios con el usuario modificado
-        setUsuarios(prevUsuarios => 
-          prevUsuarios.map(usuario => 
-            usuario.uid === editingUser.uid ? {
-              ...editingUser,
-              updatedAt: new Date().toISOString(),
-              // Eliminamos el campo temporal de contraseña
-              newPassword: undefined
-            } : usuario
-          )
-        );
-        
-        setShowEditModal(false);
-        setEditingUser(null);
-        addAlert("success", "Usuario actualizado correctamente");
-      } else {
-        addAlert("error", "Error al actualizar usuario: " + response.data.message);
-      }
-    } catch (err: unknown) {
-      const error = err as ApiError;
-      console.error("Error al actualizar usuario:", error);
-      addAlert("error", error.response?.data?.message || error.message || "Error al conectar con el servidor");
+    if (response.data.success) {
+      // Actualizar la lista de usuarios con el usuario modificado
+      setUsuarios(prevUsuarios => 
+        prevUsuarios.map(usuario => 
+          usuario.uid === editingUser.uid ? {
+            ...editingUser,
+            updatedAt: new Date().toISOString()
+          } : usuario
+        )
+      );
+      
+      setShowEditModal(false);
+      setEditingUser(null);
+      addAlert("success", "Usuario actualizado correctamente");
+    } else {
+      addAlert("error", "Error al actualizar usuario: " + response.data.message);
     }
-  };
+  } catch (err: unknown) {
+    const error = err as ApiError;
+    console.error("Error al actualizar usuario:", error);
+    addAlert("error", error.response?.data?.message || error.message || "Error al conectar con el servidor");
+  }
+};
 
   // Manejar cambios en el formulario de edición
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -354,24 +342,7 @@ export default function UserManagementComponent() {
                 <option value="gestor">Gestor</option>
               </select>
             </div>
-            
-            {/* Campo para cambiar contraseña */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nueva Contraseña
-              </label>
-              <input
-                type="password"
-                name="newPassword"
-                value={editingUser.newPassword || ''}
-                onChange={handleEditChange}
-                placeholder="Dejar vacío para mantener la actual"
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Sólo introduce una nueva contraseña si deseas cambiarla.
-              </p>
-            </div>
+
           </>
         )}
       </EditModal>
