@@ -4,8 +4,22 @@ import CompanySelector from './CompanySelector';
 import StandardSelector from './StandardSelector';
 import { useAlerts } from '../alert/AlertContext';
 
+// Create a proper type instead of using 'any'
+interface AuditFormData {
+  companyId: string;
+  companyName: string;
+  standardId: string;
+  standardName: string;
+  auditName: string;
+  startDate: string;
+  endDate: string;
+  objective: string;
+  scope: string;
+  errors?: Record<string, string>;
+}
+
 interface AuditFormProps {
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: AuditFormData) => void;
   showValidationAlerts?: boolean;
 }
 
@@ -17,7 +31,7 @@ const AuditForm = ({ onSubmit, showValidationAlerts = false }: AuditFormProps) =
   const navigate = useNavigate();
 
   // Estado del formulario
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AuditFormData>({
     companyId: '',
     companyName: '',
     standardId: '',
@@ -149,16 +163,20 @@ const AuditForm = ({ onSubmit, showValidationAlerts = false }: AuditFormProps) =
     
     const isValid = validateForm();
     if (isValid) {
-    onSubmit(formData);
-    
-    // Navegar a /auditory cuando el formulario es válido
-    navigate('/auditory', { 
-      state: { 
-        formData,
-        fromCreation: true  // Para saber que venimos de la creación
-      } 
-    });
-  }  else {
+      // Use addAlert to inform about successful form submission
+      addAlert('success', 'Formulario de auditoría creado correctamente');
+      onSubmit(formData);
+      
+      // Navegar a /auditory cuando el formulario es válido
+      navigate('/auditory', { 
+        state: { 
+          formData,
+          fromCreation: true  // Para saber que venimos de la creación
+        } 
+      });
+    } else {
+      // Use addAlert to notify about validation errors
+      addAlert('error', 'Por favor corrige los errores en el formulario');
       onSubmit({ ...formData, errors });
     }
   };
@@ -225,7 +243,6 @@ const AuditForm = ({ onSubmit, showValidationAlerts = false }: AuditFormProps) =
           error={errors.companyId}
           currentFormData={formData}
           showAlerts={showValidationAlerts}
-          
         />
         
         <StandardSelector 

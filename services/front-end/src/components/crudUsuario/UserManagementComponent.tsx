@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PlusCircle, Edit, Trash2, Home, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -22,6 +22,15 @@ interface User {
   newPassword?: string;
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message: string;
+}
+
 export default function UserManagementComponent() {
   // Obtenemos la función para mostrar alertas
   const { addAlert } = useAlerts();
@@ -42,13 +51,8 @@ export default function UserManagementComponent() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Cargar usuarios desde la API al montar el componente
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   // Función para obtener los usuarios desde la API
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get<UserResponse>("http://localhost:3000/api/user/getUsers");
@@ -65,14 +69,20 @@ export default function UserManagementComponent() {
         setError("Error al cargar usuarios: " + response.data.message);
         addAlert("error", "Error al cargar usuarios: " + response.data.message);
       }
-    } catch (err: any) {
-      console.error("Error al cargar usuarios:", err);
-      setError(err.response?.data?.message || "Error al conectar con el servidor");
-      addAlert("error", err.response?.data?.message || "Error al conectar con el servidor");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Error al cargar usuarios:", error);
+      setError(error.response?.data?.message || error.message || "Error al conectar con el servidor");
+      addAlert("error", error.response?.data?.message || error.message || "Error al conectar con el servidor");
     } finally {
       setLoading(false);
     }
-  };
+  }, [addAlert]);
+  
+  // Cargar usuarios desde la API al montar el componente
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
   
   // Filtrar usuarios por nombre o email
   const usuariosFiltrados = usuarios.filter(usuario => 
@@ -101,9 +111,10 @@ export default function UserManagementComponent() {
       } else {
         addAlert("error", "Error al eliminar usuario: " + response.data.message);
       }
-    } catch (err: any) {
-      console.error("Error al eliminar usuario:", err);
-      addAlert("error", err.response?.data?.message || "Error al conectar con el servidor");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Error al eliminar usuario:", error);
+      addAlert("error", error.response?.data?.message || error.message || "Error al conectar con el servidor");
     }
   };
 
@@ -151,9 +162,10 @@ export default function UserManagementComponent() {
       } else {
         addAlert("error", "Error al actualizar usuario: " + response.data.message);
       }
-    } catch (err: any) {
-      console.error("Error al actualizar usuario:", err);
-      addAlert("error", err.response?.data?.message || "Error al conectar con el servidor");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Error al actualizar usuario:", error);
+      addAlert("error", error.response?.data?.message || error.message || "Error al conectar con el servidor");
     }
   };
 

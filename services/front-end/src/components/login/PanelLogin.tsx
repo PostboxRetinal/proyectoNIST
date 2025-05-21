@@ -1,7 +1,7 @@
 import { useState } from "react";
 import logo from '../../assets/C&C logo2.png';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ChevronLeft } from 'lucide-react';
 
 interface LoginResponse {
@@ -9,6 +9,10 @@ interface LoginResponse {
   message: string;
   userId: string;
   role: string;
+}
+
+interface ErrorResponse {
+  message?: string;
 }
 
 export default function PanelLogin() {
@@ -52,12 +56,13 @@ export default function PanelLogin() {
         
         navigate('/');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error de login:', err);
       
       // Manejar diferentes tipos de errores basados en las respuestas del backend
-      if (err.response) {
-        const errorMessage = err.response.data.message || 'Error en la autenticación';
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError<ErrorResponse>;
+        const errorMessage = axiosError.response?.data?.message || 'Error en la autenticación';
         setError(errorMessage);
       } else {
         setError('Error en la conexión con el servidor. Intenta más tarde.');

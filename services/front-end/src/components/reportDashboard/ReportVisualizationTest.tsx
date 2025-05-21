@@ -1,5 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FormEvaluation from '../formEvaluation/FormEvaluation';
+
+// Definir una interfaz para los datos del formulario
+interface FormDataOption {
+  value: string;
+  label: string;
+  description: string;
+}
+
+interface FormQuestion {
+  id: string;
+  text: string;
+  options: FormDataOption[];
+  response: string;
+  observations: string;
+  evidence_url: string;
+}
+
+interface FormSubsection {
+  subsection: string;
+  title: string;
+  questions: FormQuestion[];
+}
+
+interface FormSection {
+  section: string;
+  title: string;
+  subsections: FormSubsection[];
+}
+
+interface FormThresholds {
+  lowRisk: number;
+  mediumRisk: number;
+}
+
+interface FormDataType {
+  program: string;
+  config: {
+    nistThresholds: FormThresholds;
+  };
+  sections: FormSection[];
+}
 
 // Datos de muestra con formato actualizado para ser compatible con CreateAuditForm
 const sampleFormData = {
@@ -231,24 +272,11 @@ const ReportVisualizationTest: React.FC = () => {
     lowRisk: 80,        // Cambiado de "riesgoBajo" a "lowRisk"
     mediumRisk: 50      // Cambiado de "riesgoMedio" a "mediumRisk"
   });
-  const [formDataForDisplay, setFormDataForDisplay] = useState<any>(null);
+  const [formDataForDisplay, setFormDataForDisplay] = useState<FormDataType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Simular una carga con un pequeño retraso
-    setIsLoading(true);
-    
-    const timer = setTimeout(() => {
-      const data = getFormDataForTest();
-      setFormDataForDisplay(data);
-      setIsLoading(false);
-      console.log("Datos preparados para la visualización:", data);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [selectedTest, customThresholds]);
-
-  const getFormDataForTest = () => {
+  // Usar useCallback para que la función se memorice y no se recree en cada renderizado
+  const getFormDataForTest = useCallback((): FormDataType => {
     switch (selectedTest) {
       case "low":
         return {
@@ -272,7 +300,21 @@ const ReportVisualizationTest: React.FC = () => {
           }
         };
     }
-  };
+  }, [selectedTest, customThresholds]);
+
+  useEffect(() => {
+    // Simular una carga con un pequeño retraso
+    setIsLoading(true);
+    
+    const timer = setTimeout(() => {
+      const data = getFormDataForTest();
+      setFormDataForDisplay(data);
+      setIsLoading(false);
+      console.log("Datos preparados para la visualización:", data);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [selectedTest, customThresholds, getFormDataForTest]);
 
   return (
     <div className="container mx-auto p-4">
