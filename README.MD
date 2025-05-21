@@ -6,6 +6,8 @@ Proyecto de microservicios backend construido con ElysiaJS y Bun, usando Firebas
 
 - **api-gateway**: Puerta de entrada para todas las peticiones externas. Redirige y controla el acceso a los microservicios internos.
 - **user-service**: Microservicio dedicado a la autenticación y gestión de usuarios (registro, login, recuperación de contraseña, etc.) usando Firebase Auth y Firestore.
+- **company-service**: Microservicio para gestionar la información de empresas.
+- **forms-service**: Microservicio para manejar los formularios y auditorías NIST.
 
 Cada microservicio es independiente y se comunica a través del API Gateway. El despliegue se realiza mediante Docker y Docker Compose.
 
@@ -16,6 +18,11 @@ Cada microservicio es independiente y se comunica a través del API Gateway. El 
 - [Firebase](https://firebase.google.com/) (Auth y Firestore)
 - [Swagger](https://swagger.io/) (documentación interactiva de la API)
 - [Docker](https://www.docker.com/) y [Docker Compose](https://docs.docker.com/compose/)
+- [Vitest](https://vitest.dev/) (framework de testing para Bun/Node.js)
+
+## Testing
+
+El proyecto incluye tests unitarios para cada microservicio. Para más información sobre cómo ejecutar los tests, consulta [la guía de testing](TESTING.md).
 
 ## Requisitos previos
 

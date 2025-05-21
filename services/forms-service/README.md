@@ -1,15 +1,19 @@
-# Elysia with Bun runtime
+# Elysia con el runtime de Bun
 
-## Getting Started
-To get started with this template, simply paste this command into your terminal:
+## Primeros Pasos
+
+Para comenzar con esta plantilla, simplemente pega este comando en tu terminal:
+
 ```bash
 bun create elysia ./elysia-example
 ```
 
-## Development
-To start the development server run:
+## Desarrollo
+
+Para iniciar el servidor de desarrollo ejecuta:
+
 ```bash
 bun run dev
 ```
 
-Open http://localhost:3000/ with your browser to see the result.
+Abre http://localhost:3000/ en tu navegador para ver el resultado.

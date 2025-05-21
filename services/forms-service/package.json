@@ -2,7 +2,10 @@
 	"name": "forms-manager",
 	"version": "1.0.1",
 	"scripts": {
-		"dev": "bun run --watch src/index.ts"
+		"dev": "bun run --watch src/index.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@elysiajs/swagger": "^1.2.2",
@@ -12,6 +15,9 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"bun-types": "latest"
+		"@vitest/coverage-v8": "^3.1.4",
+		"bun-types": "latest",
+		"vi-fetch": "^0.8.0",
+		"vitest": "^3.1.4"
 	}
 }
