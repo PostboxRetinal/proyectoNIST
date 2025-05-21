@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 export const AuditoryViewModal = ({ 
   isOpen, 
   onClose, 
@@ -34,7 +35,8 @@ export const AuditoryViewModal = ({
             Cerrar
           </button>
           <Link 
-            to={`/report/${auditory.id}`}
+            to={`/reportdetails/${auditory.id}`}
+            replace={true}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Ver Reporte Completo

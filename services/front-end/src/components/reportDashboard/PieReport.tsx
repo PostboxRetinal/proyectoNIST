@@ -10,12 +10,6 @@ interface PieChartProps {
   title?: string;
 }
 
-// Definición de tipo para el tooltip en ChartJS
-interface ChartTooltipItem extends TooltipItem<'pie'> {
-  parsed: number;
-  label: string;
-}
-
 const PieReport: React.FC<PieChartProps> = ({ 
   data, 
   labels, 
@@ -74,10 +68,9 @@ const PieReport: React.FC<PieChartProps> = ({
       },
       tooltip: {
         callbacks: {
-          label: function(tooltipItem: ChartTooltipItem) {
-            // Ahora usamos un tipo específico en lugar de any
-            const value = tooltipItem.parsed || 0;
-            return `${tooltipItem.label}: ${value}%`;
+          label: function(context: TooltipItem<'pie'>) {
+            const value = context.raw as number;
+            return `${context.dataset.label}: ${value.toFixed(2)}%`;
           }
         }
       },

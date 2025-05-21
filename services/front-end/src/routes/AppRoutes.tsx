@@ -6,7 +6,6 @@ import RegisterUser from '../pages/RegisterUser';
 import NewAuditory from '../pages/NewAuditory';
 import AuditoryManagement from '../pages/AuditoryManagement';
 import CreateAuditory from '../pages/CreateAuditory';
-import ReportDashboard from '../pages/ReportDashboard';
 import UserManagement from '../pages/UserManagement';
 import AdminRoute from './AdminRoute';
 import AuditoryPage from '../components/auditory/AuditoryPage';
@@ -20,9 +19,8 @@ const AppRoutes = () => {
         { path: '/registerCompany', element: <RegisterBussines /> },
         { path: '/registerUser', element: <RegisterUser /> },
         { path: '/createauditory', element: <CreateAuditory /> },        
-        { path: '/reportdashboard', element: <ReportDashboard /> },
         {path: '/auditory/:formId', element: <AuditoryPage />},
-        {path: '/report-details/:id', element: <ReportDetailsView />},
+        {path: '/reportdetails/:id', element: <ReportDetailsView />},
         
         // Rutas protegidas para administradores
         { path: '/userManagement', element: (

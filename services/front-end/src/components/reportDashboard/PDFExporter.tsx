@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileDown } from 'lucide-react';
 import { useAlerts } from '../alert/AlertContext';
-import { Document, Page, Text, View, StyleSheet, Font, Circle, Svg, Path, pdf } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Circle, Svg, Line, pdf } from '@react-pdf/renderer';
 
 // Tipos
 interface FirestoreTimestamp {
@@ -33,7 +33,7 @@ interface AuditData {
 
 interface PdfExporterProps {
   auditData: AuditData;
-  contentRef?: React.RefObject<HTMLDivElement | null>;
+  contentRef?: React.RefObject<HTMLDivElement | null>; // Hacemos contentRef opcional ya que no lo usaremos
 }
 
 interface TemplateConfig {
@@ -43,8 +43,6 @@ interface TemplateConfig {
   textColor: string;
   description: string;
   footer: string;
-  gradientStart: string;
-  gradientEnd: string;
 }
 
 // Función para determinar la categoría según el porcentaje
@@ -64,7 +62,7 @@ const getCategoryColor = (category: 'good' | 'regular' | 'bad'): string => {
   }
 };
 
-// Configuraciones para las diferentes plantillas - Versión mejorada
+// Configuraciones para las diferentes plantillas
 const templateConfigs: Record<'good' | 'regular' | 'bad', TemplateConfig> = {
   good: {
     title: 'RESULTADO SATISFACTORIO',
@@ -72,9 +70,7 @@ const templateConfigs: Record<'good' | 'regular' | 'bad', TemplateConfig> = {
     badgeColor: '#dcfce7',
     textColor: '#15803d',
     description: 'La evaluación muestra un alto nivel de conformidad con los estándares requeridos.',
-    footer: '¡Felicitaciones! Mantenga las buenas prácticas implementadas.',
-    gradientStart: '#dcfce7',
-    gradientEnd: '#ffffff'
+    footer: '¡Felicitaciones! Mantenga las buenas prácticas implementadas.'
   },
   regular: {
     title: 'RESULTADO ACEPTABLE',
@@ -82,9 +78,7 @@ const templateConfigs: Record<'good' | 'regular' | 'bad', TemplateConfig> = {
     badgeColor: '#fef9c3',
     textColor: '#a16207',
     description: 'La evaluación muestra un nivel aceptable de conformidad, pero con áreas de mejora identificadas.',
-    footer: 'Se recomienda implementar acciones correctivas para las áreas deficientes.',
-    gradientStart: '#fef9c3',
-    gradientEnd: '#ffffff'
+    footer: 'Se recomienda implementar acciones correctivas para las áreas deficientes.'
   },
   bad: {
     title: 'RESULTADO NO SATISFACTORIO',
@@ -92,9 +86,7 @@ const templateConfigs: Record<'good' | 'regular' | 'bad', TemplateConfig> = {
     badgeColor: '#fee2e2',
     textColor: '#b91c1c',
     description: 'La evaluación muestra un nivel bajo de conformidad que requiere atención inmediata.',
-    footer: 'Se requiere un plan de acción correctiva urgente para abordar las deficiencias encontradas.',
-    gradientStart: '#fee2e2',
-    gradientEnd: '#ffffff'
+    footer: 'Se requiere un plan de acción correctiva urgente para abordar las deficiencias encontradas.'
   }
 };
 
@@ -109,17 +101,7 @@ Font.register({
   ]
 });
 
-// También registramos una fuente más moderna
-Font.register({
-  family: 'Montserrat',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTUSjIg1_i6t8kCHKm459Wlhzg.ttf', fontWeight: 'normal' },
-    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_dJE3gnD-w.ttf', fontWeight: 'bold' },
-    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTUPjIg1_i6t8kCHKm459WxZcgvz-PZ1.ttf', fontStyle: 'italic' }
-  ]
-});
-
-// Estilos para el PDF - Versión mejorada
+// Estilos para el PDF
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -127,96 +109,73 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   header: {
-    padding: 30,
-    paddingBottom: 10,
-  },
-  coverGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 300,
+    height: 10,
+    marginBottom: 30,
   },
   titleContainer: {
     alignItems: 'center',
     marginBottom: 15,
-    marginTop: 50,
   },
   title: {
-    fontSize: 24,
-    fontFamily: 'Montserrat',
+    fontSize: 22,
+    fontFamily: 'Helvetica',
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#333333',
-    textAlign: 'center',
+    color: '#3C3C3C'
   },
   subtitle: {
-    fontSize: 18,
-    fontFamily: 'Montserrat',
+    fontSize: 16,
+    fontFamily: 'Helvetica',
     marginBottom: 5,
-    color: '#555555',
-    textAlign: 'center',
+    color: '#3C3C3C'
   },
   date: {
     fontSize: 12,
     fontFamily: 'Helvetica',
     marginBottom: 5,
-    color: '#666666',
-    textAlign: 'center',
+    color: '#3C3C3C'
   },
   idText: {
     fontSize: 10,
     fontFamily: 'Helvetica',
-    color: '#888888',
-    textAlign: 'center',
+    color: '#3C3C3C'
   },
   circleContainer: {
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 20,
   },
   circleText: {
     position: 'absolute',
-    fontSize: 28,
-    fontFamily: 'Montserrat',
+    fontSize: 24,
+    fontFamily: 'Helvetica',
     fontWeight: 'bold',
-  },
-  percentSymbol: {
-    fontSize: 16,
-    fontWeight: 'normal',
   },
   categoryTitle: {
-    fontSize: 18,
-    fontFamily: 'Montserrat',
+    fontSize: 16,
+    fontFamily: 'Helvetica',
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 15,
-    padding: 8,
-    width: '70%',
-    alignSelf: 'center',
-    borderRadius: 4,
+    marginVertical: 10,
   },
   description: {
     fontSize: 12,
     fontFamily: 'Helvetica',
     textAlign: 'center',
-    marginHorizontal: 60,
+    marginHorizontal: 30,
     marginVertical: 15,
-    color: '#555555',
-    lineHeight: 1.5,
+    color: '#505050'
   },
   footer: {
     fontSize: 11,
     fontFamily: 'Helvetica',
     fontStyle: 'italic',
     textAlign: 'center',
-    marginHorizontal: 60,
+    marginHorizontal: 30,
     marginVertical: 15,
-    padding: 10,
-    borderRadius: 4,
   },
   generationDate: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 10,
     left: 0,
     right: 0,
     fontSize: 8,
@@ -229,196 +188,119 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   contentContainer: {
-    margin: 30,
+    margin: 15,
   },
   tableHeader: {
     flexDirection: 'row',
-    padding: 10,
+    backgroundColor: '#F0F0F0',
+    padding: 5,
     marginBottom: 10,
-    borderRadius: 4,
   },
   tableHeaderText: {
-    fontSize: 11,
-    fontFamily: 'Montserrat',
+    fontSize: 10,
+    fontFamily: 'Helvetica',
     fontWeight: 'bold',
-    color: '#ffffff'
+    color: '#3C3C3C'
   },
   tableRow: {
     flexDirection: 'row',
-    marginVertical: 4,
-    padding: 8,
-    borderRadius: 4,
+    marginVertical: 3,
+    padding: 3,
   },
   tableRowEven: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
   },
   tableCellSection: {
     flex: 3,
     fontSize: 10,
     fontFamily: 'Helvetica',
-    color: '#333333'
+    color: '#3C3C3C'
   },
   tableCellPercentage: {
     flex: 1,
     fontSize: 10,
     fontFamily: 'Helvetica',
-    fontWeight: 'bold',
     textAlign: 'right',
     paddingRight: 5,
   },
   interpretationHeader: {
-    marginTop: 30,
-    padding: 10,
-    borderRadius: 4,
+    marginTop: 20,
+    backgroundColor: '#F0F0F0',
+    padding: 5,
   },
   interpretationTitle: {
-    fontSize: 12,
-    fontFamily: 'Montserrat',
+    fontSize: 10,
+    fontFamily: 'Helvetica',
     fontWeight: 'bold',
-    color: '#ffffff'
+    color: '#3C3C3C'
   },
   interpretationRow: {
     flexDirection: 'row',
-    marginTop: 10,
+    marginTop: 8,
     alignItems: 'center',
-    paddingHorizontal: 5,
   },
   interpretationPercentage: {
     fontSize: 10,
     fontFamily: 'Helvetica',
-    width: 80,
-    fontWeight: 'bold',
+    width: 70,
   },
   interpretationValue: {
     fontSize: 10,
     fontFamily: 'Helvetica',
     fontWeight: 'bold',
-    color: '#333333'
+    color: '#3C3C3C'
   },
   // Estilos para la página de detalles
   detailPage: {
     padding: 30,
   },
   detailHeader: {
-    marginBottom: 20,
+    marginBottom: 15,
     borderBottom: '1px solid #e5e7eb',
-    paddingBottom: 15,
+    paddingBottom: 10,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontFamily: 'Montserrat',
-    fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 20,
-    color: '#333333',
-    paddingBottom: 5, 
-    borderBottomWidth: 2,
-    borderBottomColor: '#e5e7eb',
-    borderBottomStyle: 'solid',
-  },
-  sectionPercentage: {
-    flexDirection: 'row', 
-    justifyContent: 'flex-end', 
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  sectionBadge: {
-    padding: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    fontSize: 9,
-    fontFamily: 'Helvetica',
-    fontWeight: 'bold',
-  },
-  question: {
-    marginBottom: 12,
-    padding: 8,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 6,
-    borderLeftWidth: 3,
-    borderLeftColor: '#6b7280',
-    borderLeftStyle: 'solid',
-  },
-  questionText: {
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Helvetica',
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#333333',
+    marginTop: 15,
+    color: '#3C3C3C',
+    borderBottom: '1px solid #e5e7eb',
+    paddingBottom: 3,
+  },
+  question: {
+    marginBottom: 8,
+    padding: 5,
+  },
+  questionText: {
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    marginBottom: 3,
   },
   responseContainer: {
     flexDirection: 'row',
-    marginBottom: 3,
-    alignItems: 'center',
+    marginBottom: 2,
   },
   responseLabel: {
     fontSize: 9,
     fontFamily: 'Helvetica',
-    width: 75,
-    color: '#555555',
+    width: 70,
   },
   responseValue: {
     fontSize: 9,
     fontFamily: 'Helvetica',
-    fontWeight: 'bold',
-    backgroundColor: '#f1f5f9',
-    padding: 2,
-    paddingHorizontal: 6,
-    borderRadius: 10,
   },
   observationText: {
     fontSize: 9,
     fontFamily: 'Helvetica',
     fontStyle: 'italic',
     color: '#666666',
-    marginLeft: 75,
-    marginTop: 3,
-  },
-  logoContainer: {
-    position: 'absolute',
-    top: 30,
-    width: '100%',
-    alignItems: 'center',
-  },
-  watermark: {
-    position: 'absolute',
-    bottom: 50,
-    right: 50,
-    opacity: 0.07,
-    transform: 'rotate(-45deg)',
-  },
-  watermarkText: {
-    fontSize: 60,
-    fontFamily: 'Helvetica',
-    fontWeight: 'bold',
-  },
-  divider: {
-    borderBottomColor: '#e5e7eb',
-    borderBottomWidth: 1,
-    borderBottomStyle: 'solid',
-    marginVertical: 15,
   }
 });
 
-// Componente de logo para el PDF
-const AuditLogo = () => (
-  <View style={styles.logoContainer}>
-    <Svg height="40" width="40">
-      <Circle cx="20" cy="20" r="18" fill="#4f46e5" />
-      <Circle cx="20" cy="20" r="12" fill="#ffffff" />
-      <Circle cx="20" cy="20" r="6" fill="#4f46e5" />
-    </Svg>
-  </View>
-);
-
-// Componente de marca de agua para el PDF
-const Watermark = ({ text }: { text: string }) => (
-  <View style={styles.watermark}>
-    <Text style={[styles.watermarkText, { color: '#e5e7eb' }]}>{text}</Text>
-  </View>
-);
-
-// Componente de PDF para la portada mejorada
+// Componente de PDF para la portada
 const CoverPage = ({ auditData }: { auditData: AuditData }) => {
   const percentage = auditData.completionPercentage || 0;
   const category = getCategory(percentage);
@@ -437,19 +319,17 @@ const CoverPage = ({ auditData }: { auditData: AuditData }) => {
   
   return (
     <Page size="A4" style={styles.page}>
-      {/* Fondo con gradiente */}
-      <Svg height="300" width="595" style={styles.coverGradient}>
-        <Path
-          d="M0,0 L595,0 L595,300 C495,250 395,280 295,240 C195,200 95,240 0,200 L0,0 Z"
-          fill={templateConfig.gradientStart}
+      {/* Barra superior de color */}
+      <Svg height="10" width="595">
+        <Line
+          x1="0"
+          y1="5" 
+          x2="595" 
+          y2="5"
+          strokeWidth={10}
+          stroke={templateConfig.borderColor}
         />
       </Svg>
-      
-      {/* Logo */}
-      <AuditLogo />
-      
-      {/* Marca de agua */}
-      <Watermark text="AUDITORIA" />
       
       <View style={styles.titleContainer}>
         <Text style={styles.title}>INFORME DE AUDITORÍA</Text>
@@ -459,50 +339,33 @@ const CoverPage = ({ auditData }: { auditData: AuditData }) => {
       </View>
       
       <View style={styles.circleContainer}>
-        <Svg height="100" width="100">
+        <Svg height="60" width="60">
           <Circle
-            cx="50"
-            cy="50"
-            r="45"
+            cx="30"
+            cy="30"
+            r="30"
             stroke={templateConfig.borderColor}
-            strokeWidth={5}
-            fill="white"
+            strokeWidth={2}
           />
           <Circle
-            cx="50"
-            cy="50"
-            r="38"
+            cx="30"
+            cy="30"
+            r="29"
             fill={templateConfig.badgeColor}
           />
         </Svg>
-        <Text style={[styles.circleText, { color: templateConfig.textColor, top: 37 }]}>
-          {percentage}<Text style={styles.percentSymbol}>%</Text>
+        <Text style={[styles.circleText, { color: templateConfig.textColor }]}>
+          {percentage.toFixed(2)}%
         </Text>
       </View>
       
-      <Text style={[
-        styles.categoryTitle, 
-        { 
-          backgroundColor: templateConfig.badgeColor,
-          color: templateConfig.textColor,
-          borderWidth: 1,
-          borderColor: templateConfig.borderColor
-        }
-      ]}>
+      <Text style={[styles.categoryTitle, { color: templateConfig.textColor }]}>
         {templateConfig.title}
       </Text>
       
       <Text style={styles.description}>{templateConfig.description}</Text>
       
-      <Text style={[
-        styles.footer, 
-        { 
-          color: templateConfig.textColor,
-          backgroundColor: templateConfig.badgeColor,
-          borderWidth: 1,
-          borderColor: templateConfig.borderColor
-        }
-      ]}>
+      <Text style={[styles.footer, { color: templateConfig.textColor }]}>
         {templateConfig.footer}
       </Text>
       
@@ -511,7 +374,7 @@ const CoverPage = ({ auditData }: { auditData: AuditData }) => {
   );
 };
 
-// Componente para la página de detalles - versión mejorada
+// Componente para la página de detalles - en lugar de una imagen, haremos una versión nativa de React PDF
 const DetailPage = ({ auditData }: { auditData: AuditData }) => {
   // Función para formatear las respuestas
   const formatResponse = (response: string): string => {
@@ -532,15 +395,6 @@ const DetailPage = ({ auditData }: { auditData: AuditData }) => {
     return '#6b7280'; // gris para N/A
   };
 
-  // Función para obtener el color de fondo según la respuesta
-  const getResponseBgColor = (response: string): string => {
-    const normalized = response.toLowerCase();
-    if (normalized === 'yes' || normalized === 'si' || normalized === 'sí') return '#dcfce7'; // verde claro
-    if (normalized === 'partial') return '#fef9c3'; // amarillo claro
-    if (normalized === 'no') return '#fee2e2'; // rojo claro
-    return '#f1f5f9'; // gris claro para N/A
-  };
-
   return (
     <>
       {/* Podemos necesitar múltiples páginas dependiendo de la cantidad de secciones y preguntas */}
@@ -552,98 +406,60 @@ const DetailPage = ({ auditData }: { auditData: AuditData }) => {
               <Text style={styles.title}>DETALLE DE LA EVALUACIÓN</Text>
               <Text style={styles.idText}>
                 {auditData.program} (ID: {auditData.id})
-                {auditData.createdAt && ` - Fecha: ${new Date(auditData.createdAt.seconds * 1000).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}`}
+                {auditData.createdAt && ` - Fecha: ${new Date(auditData.createdAt.seconds * 1000).toLocaleDateString()}`}
               </Text>
             </View>
           )}
           
-          {/* Marca de agua */}
-          <Watermark text="CONFIDENCIAL" />
-          
           {/* Título de sección */}
           <View>
             <Text style={styles.sectionTitle}>{section.title || sectionId}</Text>
-            <View style={styles.sectionPercentage}>
-              <Text style={[
-                styles.sectionBadge, 
-                { 
-                  backgroundColor: getResponseBgColor(
-                    getCategory(section.completionPercentage || 0) === 'good' ? 'yes' : 
-                    getCategory(section.completionPercentage || 0) === 'regular' ? 'partial' : 'no'
-                  ),
-                  color: getCategoryColor(getCategory(section.completionPercentage || 0))
-                }
-              ]}>
-                Cumplimiento: {section.completionPercentage || 0}%
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 5 }}>
+              <Text style={[styles.idText, { color: getCategoryColor(getCategory(section.completionPercentage || 0)) }]}>
+                Porcentaje de cumplimiento: {(section.completionPercentage || 0).toFixed(2)}%
               </Text>
             </View>
           </View>
           
           {/* Preguntas de la sección */}
-          {Object.entries(section.questions).map(([questionId, question]) => {
-            const responseColor = getResponseColor(question.response);
-            
-            return (
-              <View 
-                style={[
-                  styles.question, 
-                  { borderLeftColor: responseColor }
-                ]} 
-                key={questionId}
-              >
-                <Text style={styles.questionText}>{question.text}</Text>
-                
-                <View style={styles.responseContainer}>
-                  <Text style={styles.responseLabel}>Respuesta:</Text>
-                  <Text style={[
-                    styles.responseValue, 
-                    { 
-                      color: responseColor,
-                      backgroundColor: getResponseBgColor(question.response)
-                    }
-                  ]}>
-                    {formatResponse(question.response)}
-                  </Text>
-                </View>
-                
-                {question.observations && (
-                  <Text style={styles.observationText}>{question.observations}</Text>
-                )}
+          {Object.entries(section.questions).map(([questionId, question]) => (
+            <View style={styles.question} key={questionId}>
+              <Text style={styles.questionText}>{question.text}</Text>
+              
+              <View style={styles.responseContainer}>
+                <Text style={styles.responseLabel}>Respuesta:</Text>
+                <Text style={[styles.responseValue, { color: getResponseColor(question.response) }]}>
+                  {formatResponse(question.response)}
+                </Text>
               </View>
-            );
-          })}
+              
+              {question.observations && (
+                <View style={styles.responseContainer}>
+                  <Text style={styles.responseLabel}>Observaciones:</Text>
+                  <Text style={styles.observationText}>{question.observations}</Text>
+                </View>
+              )}
+            </View>
+          ))}
         </Page>
       ))}
     </>
   );
 };
 
-// Componente para la página de resumen de secciones - versión mejorada
+// Componente para la página de resumen de secciones
 const SummaryPage = ({ auditData }: { auditData: AuditData }) => {
   const sectionEntries = Object.entries(auditData.sections);
-  const percentage = auditData.completionPercentage || 0;
-  const category = getCategory(percentage);
-  const templateConfig = templateConfigs[category];
   
   return (
     <Page size="A4" style={styles.page}>
-      <View style={[styles.header, { borderBottomWidth: 2, borderBottomColor: templateConfig.borderColor, borderBottomStyle: 'solid' }]}>
+      <View style={styles.sectionHeader}>
         <Text style={styles.title}>RESUMEN POR SECCIONES</Text>
-        <Text style={styles.idText}>
-          {auditData.program} - Cumplimiento general: {percentage}%
-        </Text>
       </View>
-      
-      {/* Marca de agua */}
-      <Watermark text="RESUMEN" />
       
       <View style={styles.contentContainer}>
         {/* Encabezado de tabla */}
-        <View style={[styles.tableHeader, { backgroundColor: '#4f46e5' }]}>
+        <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderText, { flex: 3 }]}>Sección</Text>
           <Text style={[styles.tableHeaderText, { flex: 1 }]}>Cumplimiento</Text>
         </View>
@@ -665,42 +481,31 @@ const SummaryPage = ({ auditData }: { auditData: AuditData }) => {
               <Text style={styles.tableCellSection}>
                 {section.title || sectionId}
               </Text>
-              <Text style={[
-                styles.tableCellPercentage,
-                styles.responseValue,
-                { 
-                  color,
-                  backgroundColor: templateConfigs[sectionCategory].badgeColor,
-                  textAlign: 'center',
-                  width: 'auto'
-                }
-              ]}>
-                {percentage.toFixed(1)}%
+              <Text style={[styles.tableCellPercentage, { color }]}>
+                {percentage.toFixed(2)}%
               </Text>
             </View>
           );
         })}
         
-        <View style={styles.divider} />
-        
         {/* Interpretación de resultados */}
-        <View style={[styles.interpretationHeader, { backgroundColor: '#4f46e5' }]}>
+        <View style={[styles.interpretationHeader, { marginTop: 20 }]}>
           <Text style={styles.interpretationTitle}>Interpretación de resultados</Text>
         </View>
         
-        <View style={[styles.interpretationRow, { backgroundColor: '#f8f9fa', padding: 8, borderRadius: 4 }]}>
+        <View style={styles.interpretationRow}>
           <Text style={[styles.interpretationPercentage, { color: '#22c55e' }]}>≥ 80%:</Text>
-          <Text style={styles.interpretationValue}>Bueno - Cumplimiento satisfactorio</Text>
+          <Text style={styles.interpretationValue}>Bueno</Text>
         </View>
         
-        <View style={[styles.interpretationRow, { padding: 8, borderRadius: 4 }]}>
+        <View style={styles.interpretationRow}>
           <Text style={[styles.interpretationPercentage, { color: '#eab308' }]}>50% - 79.9%:</Text>
-          <Text style={styles.interpretationValue}>Regular - Requiere mejoras</Text>
+          <Text style={styles.interpretationValue}>Regular</Text>
         </View>
         
-        <View style={[styles.interpretationRow, { backgroundColor: '#f8f9fa', padding: 8, borderRadius: 4 }]}>
+        <View style={styles.interpretationRow}>
           <Text style={[styles.interpretationPercentage, { color: '#ef4444' }]}>{'< 50%'}:</Text>
-          <Text style={styles.interpretationValue}>Malo - Requiere atención inmediata</Text>
+          <Text style={styles.interpretationValue}>Malo</Text>
         </View>
       </View>
     </Page>
@@ -714,11 +519,11 @@ const AuditPDF = ({ auditData }: { auditData: AuditData }) => {
       {/* Portada */}
       <CoverPage auditData={auditData} />
       
-      {/* Resumen de secciones */}
-      <SummaryPage auditData={auditData} />
-      
       {/* Detalles - versión nativa en React PDF */}
       <DetailPage auditData={auditData} />
+      
+      {/* Resumen de secciones */}
+      <SummaryPage auditData={auditData} />
     </Document>
   );
 };
@@ -771,8 +576,11 @@ const PdfExporter: React.FC<PdfExporterProps> = ({ auditData }) => {
     <button
       onClick={exportToPDF}
       disabled={exporting}
-      className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm shadow-md"
-      style={{ opacity: exporting ? 0.7 : 1, cursor: exporting ? 'not-allowed' : 'pointer' }}
+      className={`
+        bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded-lg 
+        flex items-center transition-colors text-sm
+        ${exporting ? 'opacity-70 cursor-not-allowed' : ''}
+      `}
     >
       {exporting ? (
         <>

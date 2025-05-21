@@ -180,7 +180,7 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
             className="w-32 h-32 rounded-full flex items-center justify-center mb-4 text-white text-2xl font-bold"
             style={{ backgroundColor: finalResult.color }}
           >
-            {finalResult.score}%
+             {finalResult.score.toFixed(2)}%
           </div>
           <p className="text-lg font-medium" style={{ color: finalResult.color }}>
             Interpretación: <span className="font-bold">{finalResult.interpretation}</span>
@@ -220,7 +220,7 @@ const FormEvaluation: React.FC<FormEvaluationProps> = ({ formData }) => {
                   <td className="py-3 px-4">{section.sectionId}</td>
                   <td className="py-3 px-4">{section.sectionTitle}</td>
                   <td className="py-3 px-4 text-center font-medium" style={{ color: section.color }}>
-                    {section.score}%
+                    {section.score.toFixed(2)}%
                   </td>
                   <td className="py-3 px-4 text-center font-medium" style={{ color: section.color }}>
                     {section.interpretation}

@@ -107,7 +107,7 @@ const calculatePercentage = (questions: Record<string, Question>): number => {
     }
   }
   
-  return Math.round(totalScore / totalQuestions);
+  return parseFloat((totalScore / totalQuestions).toFixed(2));
 };
 
 // Función auxiliar para convertir AuditData a FormResponse
@@ -252,7 +252,7 @@ const processAuditData = (rawData: RawAuditData): AuditData => {
       }
       
       if (sectionCount > 0) {
-        processedData.completionPercentage = Math.round(totalScore / sectionCount);
+        processedData.completionPercentage = parseFloat((totalScore / sectionCount).toFixed(2));
       }
     }
   }
@@ -422,12 +422,12 @@ return (
               </div>
               <div className="flex flex-col items-end">
                 <span className="text-gray-700">Progreso general:</span>
-                <span className="font-semibold text-lg">{auditData.completionPercentage || 0}%</span>
+                <span className="font-semibold text-lg">{(auditData.completionPercentage || 0).toFixed(2)}%</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2.5 mt-1">
                   <div 
                     className="h-2.5 rounded-full"
                     style={{ 
-                      width: `${auditData.completionPercentage || 0}%`,
+                      width: `${(auditData.completionPercentage || 0).toFixed(2)}%`,
                       backgroundColor: getColorForPercentage(auditData.completionPercentage || 0)
                     }}
                   />
@@ -446,7 +446,7 @@ return (
                 Actualizar datos
               </button>
             <Link 
-              to="/reportdashboard"
+              to="/auditoryManagement"
               className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded-lg flex items-center transition-colors text-sm"
             >
                 <StepBack className="h-4 w-4 mr-2" />
