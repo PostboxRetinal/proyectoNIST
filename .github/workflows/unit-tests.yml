@@ -1,0 +1,138 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [master, feature/integration-frontend-backend]
+    paths:
+      - 'services/**'
+  pull_request:
+    branches: [master, feature/integration-frontend-backend]
+    paths:
+      - 'services/**'
+  workflow_dispatch: # Permite ejecutar el workflow manualmente
+
+jobs:
+  test-company-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/company-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+      - name: Generate coverage report
+        run: bun test --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: company-service-coverage
+          path: ./services/company-service/coverage/**
+
+  test-forms-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/forms-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+      - name: Generate coverage report
+        run: bun test --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: forms-service-coverage
+          path: ./services/forms-service/coverage/**
+
+  test-user-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/user-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+      - name: Generate coverage report
+        run: bun test --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: user-service-coverage
+          path: ./services/user-service/coverage/**
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/front-end
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      # Añade este step cuando tengas tests en el frontend
+      # - name: Run tests
+      #   run: npm test
+
+  notify:
+    needs:
+      [
+        test-company-service,
+        test-forms-service,
+        test-user-service,
+        test-frontend,
+      ]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test results
+        run: |
+          if [[ ${{ needs.test-company-service.result }} == 'success' && ${{ needs.test-forms-service.result }} == 'success' && ${{ needs.test-user-service.result }} == 'success' && ${{ needs.test-frontend.result }} == 'success' ]]; then
+            echo "All tests passed successfully!"
+            exit 0
+          else
+            echo "Some tests failed!"
+            exit 1
+          fi

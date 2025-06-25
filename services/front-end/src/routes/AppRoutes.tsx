@@ -1,23 +1,41 @@
 import { useRoutes } from 'react-router-dom'; 
-import Iso27001 from '../pages/Iso27001';
 import Login from '../pages/Login';
 import Home from '../pages/Home';
-import Register from '../pages/Register';
-import NewAuditory from '../components/newauditory/NewAuditory';
-import Mainauditory from '../pages/ManagerAuditory';
+import RegisterBussines from '../pages/RegisterBussines';
+import RegisterUser from '../pages/RegisterUser';
+import NewAuditory from '../pages/NewAuditory';
+import AuditoryManagement from '../pages/AuditoryManagement';
 import CreateAuditory from '../pages/CreateAuditory';
-
+import UserManagement from '../pages/UserManagement';
+import AdminRoute from './AdminRoute';
+import AuditoryPage from '../components/auditory/AuditoryPage';
+import ReportDetailsView from '../pages/ReportDetailsView';
 
 const AppRoutes = () => {
-    let routes = useRoutes([
+    const routes = useRoutes([
         { path: '/', element: <Home /> },
-        { path: '/iso27001', element: <Iso27001 /> },
-        { path: '/newauditory', element: <NewAuditory /> },
-        { path: '/api/loginUser', element: <Login /> },
-        { path: '/api/registerUser', element: <Register /> },
-        { path: '/mainauditory', element: <Mainauditory /> },
-        { path: '/createauditory', element: <CreateAuditory /> }
-        //{ path: '/*', element: <NotFound /> }
+        { path: '/newAuditory', element: <NewAuditory /> },
+        { path: '/loginUser', element: <Login /> },
+        { path: '/registerCompany', element: <RegisterBussines /> },
+        { path: '/registerUser', element: <RegisterUser /> },
+        { path: '/createauditory', element: <CreateAuditory /> },        
+        {path: '/auditory/:formId', element: <AuditoryPage />},
+        {path: '/reportdetails/:id', element: <ReportDetailsView />},
+        
+        // Rutas protegidas para administradores
+        { path: '/userManagement', element: (
+            <AdminRoute>
+              <UserManagement />
+            </AdminRoute>
+          ) 
+        },
+        { path: '/auditoryManagement', element: (
+            <AdminRoute>
+              <AuditoryManagement />
+            </AdminRoute>
+          ) 
+        },
+        // Otras rutas protegidas...
       
 
     ])

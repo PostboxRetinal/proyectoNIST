@@ -14,7 +14,7 @@ export default function Home() {
 
   return (
     <div>
-      <NavBar pageTitle="Inicio" />
+      <NavBar/>
       {isAuthenticated ? <Content /> : <GuestHome />}
     </div>
   );

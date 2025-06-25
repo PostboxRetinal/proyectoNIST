@@ -1,13 +1,18 @@
 import { useState } from "react";
 import logo from '../../assets/C&C logo2.png';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ChevronLeft } from 'lucide-react';
 
 interface LoginResponse {
   success: boolean;
   message: string;
   userId: string;
+  role: string;
+}
+
+interface ErrorResponse {
+  message?: string;
 }
 
 export default function PanelLogin() {
@@ -31,30 +36,33 @@ export default function PanelLogin() {
     
     try {
       // Llamada al endpoint de login del backend
-      const response = await axios.post<LoginResponse>('http://localhost:4001/api/user/login', {
+      const response = await axios.post<LoginResponse>('http://localhost:3000/api/user/login', {
         email,
         password
       });
       
       // Si la respuesta es exitosa
       if (response.data.success) {
-        console.log('Login exitoso:', response.data);
-
+        
         // Guardar el nombre de usuario (usando el email como nombre temporal)
         localStorage.setItem('userName', email.split('@')[0]);
         
         // Guardar la información de usuario en localStorage para mantener la sesión
         localStorage.setItem('userId', response.data.userId);
         
+        // Guardar el rol del usuario
+        localStorage.setItem('role', response.data.role);
         // Redirigir al usuario a la página principal
+        
         navigate('/');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error de login:', err);
       
       // Manejar diferentes tipos de errores basados en las respuestas del backend
-      if (err.response) {
-        const errorMessage = err.response.data.message || 'Error en la autenticación';
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError<ErrorResponse>;
+        const errorMessage = axiosError.response?.data?.message || 'Error en la autenticación';
         setError(errorMessage);
       } else {
         setError('Error en la conexión con el servidor. Intenta más tarde.');
@@ -122,7 +130,7 @@ export default function PanelLogin() {
 
           <p className="text-center text-sm text-gray-600">
             ¿No tienes cuenta?{' '}
-            <Link to="/api/registerUser" className="text-blue-500 hover:underline">
+            <Link to="/registerUser" className="text-blue-500 hover:underline">
               Regístrate
             </Link>
           </p>

@@ -2,7 +2,58 @@ import { useState, useEffect } from 'react';
 import { AlignJustify } from 'lucide-react';
 import SideBar from './SideBar';
 
-const NavigationMenu = ({ onSelect }: { onSelect: (id: string) => void }) => {
+interface Metadata {
+  standardName?: string;
+  title?: string;
+  companyName?: string;
+  auditName?: string;
+  startDate?: string;
+  endDate?: string;
+  auditor?: string;
+}
+
+interface Option {
+  value: string;
+  label: string;
+  description: string;
+}
+
+interface Question {
+  id: string;
+  text: string;
+  options: Option[];
+  response: string | null;
+  observations: string;
+  evidence_url: string;
+}
+
+interface Subsection {
+  subsection: string;
+  title: string;
+  questions: Question[];
+}
+
+interface Section {
+  section: string;
+  title: string;
+  subsections: Subsection[];
+}
+
+interface NavigationMenuProps {
+  onSelect: (id: string, subsectionId?: string) => void;
+  sections?: Record<string, Section>;
+  currentSection?: string;
+  currentSubsection?: string;
+  metadata?: Metadata;
+}
+
+const NavigationMenu = ({ 
+  onSelect, 
+  sections = {}, 
+  currentSection = '', 
+  currentSubsection,
+  metadata 
+}: NavigationMenuProps) => {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
   
   const toggleSidebar = () => {
@@ -60,9 +111,12 @@ const NavigationMenu = ({ onSelect }: { onSelect: (id: string) => void }) => {
       <SideBar 
         isOpen={isSidebarOpen} 
         onClose={closeSidebar} 
-        onSelect={onSelect}
+        onSectionChange={onSelect}
+        sections={sections}
+        currentSection={currentSection}
+        currentSubsection={currentSubsection}
+        metadata={metadata}
       />
-      
     </div>
   );
 };

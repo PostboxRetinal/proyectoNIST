@@ -1,28 +1,85 @@
-services:
-  api-gateway:
-    build:
-      context: ./services/api-gateway
-      dockerfile: Dockerfile
-    environment:
-      - TZ=Etc/GMT+5
-    ports:
-      - '3000:80'
-    depends_on:
-      - user-service
-      - doc-manager
-  user-service:
-    build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
-    ports:
-      - '4001:4001'
-    env_file:
-      - ./services/user-service/.env
-  doc-manager:
-    build:
-      context: ./services/doc-manager
-      dockerfile: Dockerfile
-    ports:
-      - '4002:4002'
-    env_file:
-      - ./services/doc-manager/.env
+services:  
+  api-gateway:  
+    build:  
+      context: ./services/api-gateway  
+      dockerfile: Dockerfile  
+    environment:  
+      - TZ=Etc/GMT+5  
+    ports:  
+      - '3000:80'  
+    depends_on:  
+      - user-service  
+      - company-service  
+      - forms-service
+    develop:  
+      watch:  
+        - action: sync  
+          path: ./services/api-gateway  
+          target: /app  
+          ignore:  
+            - node_modules/  
+        - action: rebuild  
+          path: ./services/api-gateway/Dockerfile  
+  
+  user-service:  
+    build:  
+      context: ./services/user-service  
+      dockerfile: Dockerfile  
+    ports:  
+      - '4001:4001'  
+    env_file:  
+      - ./services/user-service/.env  
+    develop:  
+      watch:  
+        - action: sync  
+          path: ./services/user-service  
+          target: /app  
+          ignore:  
+            - node_modules/  
+        - action: rebuild  
+          path: ./services/user-service/Dockerfile  
+  
+  company-service:  
+    build:  
+      context: ./services/company-service  
+      dockerfile: Dockerfile  
+    ports:  
+      - '4002:4002'  
+    env_file:  
+      - ./services/company-service/.env  
+    develop:  
+      watch:  
+        - action: sync  
+          path: ./services/company-service  
+          target: /app  
+          ignore:  
+            - node_modules/  
+        - action: rebuild  
+          path: ./services/company-service/Dockerfile  
+  
+  forms-service:  
+    build:  
+      context: ./services/forms-service
+      dockerfile: Dockerfile  
+    ports:  
+      - '4003:4003'  
+    env_file:  
+      - ./services/forms-service/.env  
+    develop:  
+      watch:  
+        - action: sync  
+          path: ./services/forms-service
+          target: /app  
+          ignore:  
+            - node_modules/  
+        - action: rebuild  
+          path: ./services/forms-service/Dockerfile  
+
+  front-end:  
+    build:  
+      context: ./services/front-end  
+      dockerfile: Dockerfile  
+    ports:  
+      - '5173:5173'  
+    depends_on:  
+      - api-gateway  

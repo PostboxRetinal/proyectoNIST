@@ -21,7 +21,7 @@ export const createUserValidator = t.Object({
 		error:
 			'La contraseña debe tener al menos 6 caracteres, incluir una letra minúscula, un número y un carácter no alfanumérico',
 	}),
-	role: t.Optional(RoleValidator),
+	role: t.String(RoleValidator),
 });
 
 export const loginUserValidator = t.Object({
@@ -39,4 +39,12 @@ export const resetPasswordValidator = t.Object({
 		format: 'email',
 		error: 'Debe proporcionar un email válido',
 	}),
+});
+
+export const updateUserValidator = t.Object({
+	email: t.Optional(t.String({
+		format: 'email',
+		error: 'Debe proporcionar un email válido',
+	})),
+	role: t.Optional(t.String(RoleValidator)),
 });

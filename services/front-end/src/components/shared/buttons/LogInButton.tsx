@@ -11,7 +11,7 @@ const LoginButton = ({
 }: LoginButtonProps) => {
   return (
     <Link
-      to="/api/loginUser"
+      to="/loginUser"
       className={className}
     >
       {showText && "Iniciar Sesión"}

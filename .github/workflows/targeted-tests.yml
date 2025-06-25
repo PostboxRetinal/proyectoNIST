@@ -1,0 +1,153 @@
+name: Targeted Tests
+
+on:
+  push:
+    branches: [master, feature/integration-frontend-backend]
+    paths:
+      - 'services/company-service/src/**'
+      - 'services/company-service/tests/**'
+      - 'services/forms-service/src/**'
+      - 'services/forms-service/tests/**'
+      - 'services/user-service/src/**'
+      - 'services/user-service/tests/**'
+  workflow_dispatch: # Permite ejecutar el workflow manualmente
+
+jobs:
+  identify-tests:
+    runs-on: ubuntu-latest
+    outputs:
+      company_tests: ${{ steps.find-tests.outputs.company_tests }}
+      forms_tests: ${{ steps.find-tests.outputs.forms_tests }}
+      user_tests: ${{ steps.find-tests.outputs.user_tests }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v39
+
+      - name: Find related test files
+        id: find-tests
+        run: |
+          # Initialize empty arrays for test files
+          COMPANY_TESTS=()
+          FORMS_TESTS=()
+          USER_TESTS=()
+
+          # Process each changed file
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            # Extract the base name without extension
+            filename=$(basename "$file" .ts)
+            filename=$(basename "$filename" .js)
+            
+            # Check which service this file belongs to
+            if [[ $file == services/company-service/src/* ]]; then
+              # Look for corresponding test files
+              test_files=$(find ./services/company-service/tests -name "*${filename}*.test.ts" -o -name "*${filename}*.spec.ts")
+              if [ -n "$test_files" ]; then
+                # Add each test file to the array
+                while IFS= read -r test_file; do
+                  COMPANY_TESTS+=("$test_file")
+                done <<< "$test_files"
+              fi
+            elif [[ $file == services/forms-service/src/* ]]; then
+              test_files=$(find ./services/forms-service/tests -name "*${filename}*.test.ts" -o -name "*${filename}*.spec.ts")
+              if [ -n "$test_files" ]; then
+                while IFS= read -r test_file; do
+                  FORMS_TESTS+=("$test_file")
+                done <<< "$test_files"
+              fi
+            elif [[ $file == services/user-service/src/* ]]; then
+              test_files=$(find ./services/user-service/tests -name "*${filename}*.test.ts" -o -name "*${filename}*.spec.ts")
+              if [ -n "$test_files" ]; then
+                while IFS= read -r test_file; do
+                  USER_TESTS+=("$test_file")
+                done <<< "$test_files"
+              fi
+            fi
+          done
+
+          # Convert arrays to JSON format
+          echo "company_tests=$(echo "${COMPANY_TESTS[@]}" | tr ' ' ',')" >> $GITHUB_OUTPUT
+          echo "forms_tests=$(echo "${FORMS_TESTS[@]}" | tr ' ' ',')" >> $GITHUB_OUTPUT
+          echo "user_tests=$(echo "${USER_TESTS[@]}" | tr ' ' ',')" >> $GITHUB_OUTPUT
+
+  run-company-tests:
+    needs: identify-tests
+    if: ${{ needs.identify-tests.outputs.company_tests != '' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/company-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run targeted tests
+        run: |
+          IFS=',' read -ra TEST_FILES <<< "${{ needs.identify-tests.outputs.company_tests }}"
+          for test_file in "${TEST_FILES[@]}"; do
+            echo "Running test: $test_file"
+            bun test "$test_file"
+          done
+
+  run-forms-tests:
+    needs: identify-tests
+    if: ${{ needs.identify-tests.outputs.forms_tests != '' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/forms-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run targeted tests
+        run: |
+          IFS=',' read -ra TEST_FILES <<< "${{ needs.identify-tests.outputs.forms_tests }}"
+          for test_file in "${TEST_FILES[@]}"; do
+            echo "Running test: $test_file"
+            bun test "$test_file"
+          done
+
+  run-user-tests:
+    needs: identify-tests
+    if: ${{ needs.identify-tests.outputs.user_tests != '' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/user-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run targeted tests
+        run: |
+          IFS=',' read -ra TEST_FILES <<< "${{ needs.identify-tests.outputs.user_tests }}"
+          for test_file in "${TEST_FILES[@]}"; do
+            echo "Running test: $test_file"
+            bun test "$test_file"
+          done

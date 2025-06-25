@@ -1,43 +1,30 @@
 import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { logger } from '@rasla/logify';
-import { cors } from '@elysiajs/cors';
 import { registerUserRoutes } from './routes/userRoutes';
 
 const app = new Elysia({ prefix: '/api/user' });
 
 app
 	.use(
-		cors({
-			origin: ['http://api-gateway:80', 'http://localhost:5173'],
-			methods: ['GET', 'POST', 'PUT', 'DELETE'],
-			allowedHeaders: ['Content-Type', 'Authorization', 'X-Gateway-Source'],
-		})
-	)
-
-	.use(
 		swagger({
 			documentation: {
 				info: {
-					title: 'proyectoNIST User Service API',
+					title: 'proyectoNIST user-service API',
 					version: '1.0.0',
 				},
 			},
 		})
 	)
 	.use(logger({ includeIp: true }))
-	// Verificación de gateway antes de las rutas
 
 	// Registrar rutas después de la verificación del gateway
 	.use(registerUserRoutes)
 
 	// Gestión de errores y lanzamiento del servidor
-	.onError(({ code, error, set }) => {
+	.onError(({ code, set }) => {
 		if (code === 'VALIDATION') {
 			set.status = 400;
-
-			// Extraemos los detalles de validación del error
-			const fieldErrors = error.all || [];
 
 			// Definimos objetos vacíos con tipos específicos
 			const errorMessages: Record<string, string> = {}; // Objeto que tendrá claves de tipo string y valores de tipo string
@@ -66,8 +53,8 @@ app
 			message: 'Error interno del servidor',
 		};
 	})
-	.listen(Bun.env.USER_SERVICE_PORT ?? 4001);
+	.listen(Bun.env.SERVICE_PORT ?? 4001);
 
 console.log(
-	`🦊 User Service ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
+	`[USER_SVC] ejecutándose en http://${app.server?.hostname}:${app.server?.port}`
 );
