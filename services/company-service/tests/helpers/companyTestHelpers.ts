@@ -5,6 +5,7 @@
 
 import { CompanyData } from '../../src/schemas/companySchemas';
 import { BusinessType, EmployeeRange } from '../../src/constants/businessTypes';
+import { Elysia } from 'elysia';
 
 /**
  * Creates a simple valid company object for testing
@@ -13,7 +14,7 @@ import { BusinessType, EmployeeRange } from '../../src/constants/businessTypes';
  */
 export function createTestCompany(overrides = {}): CompanyData {
 	const defaultCompany: CompanyData = {
-		nit: 'test-company-id',
+		nit: `test-company-id-${Math.random()}`,
 		companyName: 'Test Company',
 		email: 'testing@outlook.com',
 		businessType: 'Otro' as BusinessType,
@@ -25,4 +26,16 @@ export function createTestCompany(overrides = {}): CompanyData {
 	};
 
 	return { ...defaultCompany, ...overrides };
+}
+
+/**
+ * Handles a request and returns the response with a parsed body
+ * @param app - The Elysia app instance
+ * @param request - The request to handle
+ * @returns The response with the parsed body
+ */
+export async function handleRequest(app: Elysia, request: Request) {
+    const response = await app.handle(request);
+    const body = await response.json().catch(() => null); // Handle cases where there's no JSON body
+    return { status: response.status, body };
 }

@@ -1,8 +1,12 @@
-import { describe, it, expect, beforeEach, vi, Mock } from 'vitest'; // <-- Añadido Mock
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Elysia } from 'elysia';
 import { registerCompanyRoutes } from '../../../src/routes/companyRoutes';
 import { CompanyService } from '../../../src/services/companyService';
 import { CompanyNotFoundError } from '../../../src/utils/companyErrors';
+import {
+	createTestCompany,
+	handleRequest,
+} from '../../helpers/companyTestHelpers';
 
 vi.mock('../../../src/services/companyService');
 
@@ -15,35 +19,32 @@ describe('Company Routes', () => {
 	});
 
 	it('POST /newCompany debe crear una empresa', async () => {
-		// CORRECCIÓN: Usamos 'as Mock'
-		(CompanyService.createCompany as Mock).mockResolvedValue({
-			companyId: 'test-id-123',
+		const mockCompany = createTestCompany({ nit: '123456789' });
+		const { createdAt, updatedAt, ...requestBody } = mockCompany;
+
+		vi.mocked(CompanyService.createCompany).mockResolvedValue(mockCompany);
+
+		const request = new Request('http://localhost/newCompany', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(requestBody),
 		});
 
-		const response = await app
-			.handle(
-				new Request('http://localhost/newCompany', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ nit: '123' }),
-				})
-			)
-			.then((res) => res.json());
+		const { body, status } = await handleRequest(app, request);
 
-		expect(response.success).toBe(true);
-		expect(response.companyId).toBe('test-id-123');
+		expect(status).toBe(200);
+		expect(body.success).toBe(true);
+		expect(body.company.nit).toBe('123456789');
 	});
 
-	it('GET /nit/:nit debe manejar empresa no encontrada', async () => {
-		// CORRECCIÓN: Usamos 'as Mock'
-		(CompanyService.getCompanyByNit as Mock).mockRejectedValue(
+	it('GET /getNit/:nit debe manejar empresa no encontrada', async () => {
+		vi.mocked(CompanyService.getCompanyByNit).mockRejectedValue(
 			new CompanyNotFoundError('12345')
 		);
 
-		const response = await app.handle(
-			new Request('http://localhost/nit/12345')
-		);
+		const request = new Request('http://localhost/getNit/12345');
+		const { status } = await handleRequest(app, request);
 
-		expect(response.status).toBe(404);
+		expect(status).toBe(404);
 	});
 });

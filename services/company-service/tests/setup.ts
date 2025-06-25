@@ -5,29 +5,42 @@ import { vi } from 'vitest';
 /**
  * ARCHIVO DE CONFIGURACIÓN GLOBAL PARA PRUEBAS
  *
- * Se carga ANTES que todos los tests gracias a la bandera --preload.
+ * Se carga ANTES que todos los tests gracias a la opción `setupFiles` en `vitest.config.ts`.
  * Su propósito es preparar un entorno de pruebas simulado (mocked).
  */
 
-// 1. Mockeamos NUESTRO PROPIO módulo de firebase para evitar la inicialización real.
-// ESTO ES LO MÁS IMPORTANTE PARA PREVENIR EL ERROR 'auth/invalid-api-key'.
-vi.mock('../src/firebase/firebase', () => ({
-	db: {}, // Un objeto vacío para la base de datos
-	auth: {}, // Un objeto vacío para la autenticación
+// 1. Mockeamos las librerías CORE de Firebase para prevenir la inicialización real.
+// Esto previene el error 'auth/invalid-api-key' de forma definitiva.
+vi.mock('firebase/app', () => ({
+	initializeApp: vi.fn().mockReturnValue({}),
+	getApps: vi.fn().mockReturnValue([]),
+	getApp: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock('firebase/auth', () => ({
+	getAuth: vi.fn(() => ({}))
 }));
 
 // 2. Mockeamos la LIBRERÍA 'firebase/firestore' para controlar sus funciones.
-// NO usamos vi.mocked, usamos vi.fn() para crear funciones simuladas vacías.
 vi.mock('firebase/firestore', () => ({
-	collection: vi.fn(),
-	doc: vi.fn(),
-	getDocs: vi.fn(),
-	setDoc: vi.fn(),
-	query: vi.fn(),
-	where: vi.fn(),
-	getDoc: vi.fn(),
-	updateDoc: vi.fn(),
-	deleteDoc: vi.fn(),
+    getFirestore: vi.fn(() => ({})),
+    collection: vi.fn(),
+    doc: vi.fn(),
+    getDocs: vi.fn(),
+    setDoc: vi.fn(),
+    query: vi.fn(),
+    where: vi.fn(),
+    getDoc: vi.fn(),
+    updateDoc: vi.fn(),
+    deleteDoc: vi.fn(),
 }));
+
+// 3. Mock para el entorno de Bun
+if (typeof global.Bun === 'undefined') {
+    // @ts-expect-error Bun is not available in the test environment, so we mock it
+    global.Bun = {
+        env: process.env,
+    };
+}
 
 console.log('✅ Entorno de pruebas de Firebase simulado globalmente.');

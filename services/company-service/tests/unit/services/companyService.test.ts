@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, vi, Mock } from 'vitest'; // <-- Añadido Mock
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { CompanyService } from '../../../src/services/companyService';
 import * as firestore from 'firebase/firestore';
 import { CompanyData } from '../../../src/schemas/companySchemas';
@@ -22,21 +22,17 @@ describe('CompanyService', () => {
 
 	it('debe devolver true si el NIT existe', async () => {
 		const mockSnapshot = { empty: false, docs: [{ id: 'company1' }] };
-		// CORRECCIÓN: Usamos 'as Mock' en lugar de 'as vi.Mock'
-		(firestore.getDocs as Mock).mockResolvedValue(mockSnapshot);
+		vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as any);
 		await expect(CompanyService.nitExists('123456789')).resolves.toBe(true);
 	});
 
 	it('debe crear una empresa exitosamente', async () => {
 		vi.spyOn(CompanyService, 'nitExists').mockResolvedValue(false);
-		vi.spyOn(CompanyService as any, 'generateCompanyId').mockReturnValue(
-			'test-id'
-		);
 		const companyData = getMockCompanyData();
 
 		const result = await CompanyService.createCompany(companyData);
 
-		expect(result).toEqual({ success: true, companyId: 'test-id' });
+		expect(result).toEqual(expect.objectContaining(companyData));
 		expect(firestore.setDoc).toHaveBeenCalledTimes(1);
 	});
 });
