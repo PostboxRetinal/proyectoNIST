@@ -2,11 +2,11 @@ name: Unit Tests
 
 on:
   push:
-    branches: [master, feature/integration-frontend-backend]
+    branches: [master, tests]
     paths:
       - 'services/**'
   pull_request:
-    branches: [master, feature/integration-frontend-backend]
+    branches: [master, tests]
     paths:
       - 'services/**'
   workflow_dispatch: # Permite ejecutar el workflow manualmente
@@ -35,7 +35,7 @@ jobs:
         run: bun test --coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Actualizada a v4
         with:
           name: company-service-coverage
           path: ./services/company-service/coverage/**
@@ -63,7 +63,7 @@ jobs:
         run: bun test --coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Actualizada a v4
         with:
           name: forms-service-coverage
           path: ./services/forms-service/coverage/**
@@ -91,7 +91,7 @@ jobs:
         run: bun test --coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Actualizada a v4
         with:
           name: user-service-coverage
           path: ./services/user-service/coverage/**

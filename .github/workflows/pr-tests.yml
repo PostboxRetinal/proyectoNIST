@@ -2,7 +2,7 @@ name: Pull Request Tests
 
 on:
   pull_request:
-    branches: [master, feature/integration-frontend-backend]
+    branches: [master, tests]
     paths:
       - 'services/**'
 
