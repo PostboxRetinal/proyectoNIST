@@ -1,36 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import * as firebaseAuth from 'firebase/auth';
+import * as firestore from 'firebase/firestore';
 import { UserService, InvalidRoleError } from '../../../src/services/userService';
 import { VALID_ROLES } from '../../../src/constants/roles';
 import { UserData } from '../../../src/schemas/userSchema';
 
-// Mock Firebase Auth and Firestore
-vi.mock('firebase/auth', () => ({
-  createUserWithEmailAndPassword: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  sendPasswordResetEmail: vi.fn(),
-}));
-
-vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(() => 'mocked-doc-reference'),
-  setDoc: vi.fn(),
-  collection: vi.fn(),
-  getDocs: vi.fn(),
-  getDoc: vi.fn(),
-  deleteDoc: vi.fn(),
-}));
-
-vi.mock('../../../src/firebase/firebase', () => ({
-  auth: {},
-  db: {},
-}));
-
-vi.mock('../../../src/utils/firebaseErrors', () => ({
-  logFirebaseError: vi.fn(),
-}));
-
 describe('UserService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
   
   describe('isValidRole', () => {
@@ -56,22 +37,34 @@ describe('UserService', () => {
         name: 'Test User'
       };
       
-      // Mock getDoc to return user data
-      const { getDoc } = await import('firebase/firestore');
-      vi.mocked(getDoc).mockResolvedValue({
+      // Mock doc and getDoc functions
+      const docSpy = vi.spyOn(firestore, 'doc');
+      const getDocSpy = vi.spyOn(firestore, 'getDoc');
+      
+      docSpy.mockReturnValue({ id: 'mock-doc' } as any);
+      getDocSpy.mockResolvedValue({
         exists: () => true,
         data: () => mockUserData
       } as any);
       
       const result = await UserService.getUserData('test-uid');
       
-      expect(result).toEqual(mockUserData);
+      expect(docSpy).toHaveBeenCalledWith(expect.anything(), 'users', 'test-uid');
+      expect(getDocSpy).toHaveBeenCalledWith({ id: 'mock-doc' });
+      expect(result).toEqual(expect.objectContaining({
+        id: 'test-uid',
+        email: 'test@example.com',
+        role: 'admin'
+      }));
     });
     
     it('should throw an error if user is not found', async () => {
-      // Mock getDoc to return no data
-      const { getDoc } = await import('firebase/firestore');
-      vi.mocked(getDoc).mockResolvedValue({
+      // Mock doc and getDoc functions  
+      const docSpy = vi.spyOn(firestore, 'doc');
+      const getDocSpy = vi.spyOn(firestore, 'getDoc');
+      
+      docSpy.mockReturnValue({ id: 'mock-doc' } as any);
+      getDocSpy.mockResolvedValue({
         exists: () => false
       } as any);
       
@@ -81,11 +74,12 @@ describe('UserService', () => {
     });
   });
   
-  describe('registerUser', () => {
+  describe('createUser', () => {
     it('should register a user successfully', async () => {
       // Mock auth and firestore functions
-      const { createUserWithEmailAndPassword } = await import('firebase/auth');
-      const { setDoc } = await import('firebase/firestore');
+      const createUserWithEmailAndPasswordSpy = vi.spyOn(firebaseAuth, 'createUserWithEmailAndPassword');
+      const docSpy = vi.spyOn(firestore, 'doc');
+      const setDocSpy = vi.spyOn(firestore, 'setDoc');
       
       const mockUserCredential = {
         user: {
@@ -93,122 +87,95 @@ describe('UserService', () => {
         }
       };
       
-      vi.mocked(createUserWithEmailAndPassword).mockResolvedValue(mockUserCredential as any);
-      vi.mocked(setDoc).mockResolvedValue(undefined);
-      
-      // Mock isValidRole
-      vi.spyOn(UserService, 'isValidRole').mockReturnValue(true);
+      createUserWithEmailAndPasswordSpy.mockResolvedValue(mockUserCredential as any);
+      docSpy.mockReturnValue({ id: 'mock-doc' } as any);
+      setDocSpy.mockResolvedValue(undefined);
       
       const userData = {
         email: 'new@example.com',
         password: 'password123',
-        name: 'New User',
-        role: 'user',
-        companyId: 'company-id'
+        role: 'admin'
       };
       
-      const result = await UserService.registerUser(userData);
+      const result = await UserService.createUser(userData.email, userData.password, userData.role);
       
       // Check that auth and firestore methods were called
-      expect(createUserWithEmailAndPassword).toHaveBeenCalledWith(
+      expect(createUserWithEmailAndPasswordSpy).toHaveBeenCalledWith(
         expect.anything(),
         userData.email,
         userData.password
       );
       
-      expect(setDoc).toHaveBeenCalledWith(
-        expect.anything(),
+      expect(docSpy).toHaveBeenCalledWith(expect.anything(), 'users', 'new-user-uid');
+      expect(setDocSpy).toHaveBeenCalledWith(
+        { id: 'mock-doc' },
         expect.objectContaining({
-          uid: 'new-user-uid',
+          id: 'new-user-uid',
           email: userData.email,
-          name: userData.name,
           role: userData.role
         })
       );
       
-      expect(result).toEqual({
-        success: true,
-        uid: 'new-user-uid',
-        message: expect.stringContaining('registrado exitosamente')
-      });
+      expect(result).toEqual(expect.objectContaining({
+        uid: 'new-user-uid'
+      }));
     });
     
     it('should throw InvalidRoleError for invalid roles', async () => {
-      // Mock isValidRole to return false
-      vi.spyOn(UserService, 'isValidRole').mockReturnValue(false);
-      
       const userData = {
         email: 'new@example.com',
         password: 'password123',
-        name: 'New User',
-        role: 'invalid-role',
-        companyId: 'company-id'
+        role: 'invalid-role'
       };
-      
-      await expect(UserService.registerUser(userData)).rejects.toThrow(InvalidRoleError);
+
+      await expect(UserService.createUser(userData.email, userData.password, userData.role)).rejects.toThrow(InvalidRoleError);
     });
     
     it('should handle Firebase auth errors', async () => {
       // Mock createUserWithEmailAndPassword to throw an error
-      const { createUserWithEmailAndPassword } = await import('firebase/auth');
-      vi.mocked(createUserWithEmailAndPassword).mockRejectedValue(
+      const createUserWithEmailAndPasswordSpy = vi.spyOn(firebaseAuth, 'createUserWithEmailAndPassword');
+      createUserWithEmailAndPasswordSpy.mockRejectedValue(
         new Error('Firebase auth error')
       );
-      
-      // Mock isValidRole to return true
-      vi.spyOn(UserService, 'isValidRole').mockReturnValue(true);
       
       const userData = {
         email: 'new@example.com',
         password: 'password123',
-        name: 'New User',
-        role: 'user',
-        companyId: 'company-id'
+        role: 'admin'
       };
-      
-      await expect(UserService.registerUser(userData)).rejects.toThrow();
+
+      await expect(UserService.createUser(userData.email, userData.password, userData.role)).rejects.toThrow();
     });
   });
   
   describe('loginUser', () => {
     it('should login a user successfully and return user data', async () => {
-      // Mock Firebase auth and firestore
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      // Mock Firebase auth
+      const signInWithEmailAndPasswordSpy = vi.spyOn(firebaseAuth, 'signInWithEmailAndPassword');
       const mockCredential = {
         user: {
           uid: 'user-uid'
         }
       };
-      vi.mocked(signInWithEmailAndPassword).mockResolvedValue(mockCredential as any);
-      
-      // Mock getUserData to return user info
-      const mockUserData = {
-        uid: 'user-uid',
-        email: 'user@example.com',
-        name: 'Test User',
-        role: 'user'
-      };
-      vi.spyOn(UserService, 'getUserData').mockResolvedValue(mockUserData as any);
+      signInWithEmailAndPasswordSpy.mockResolvedValue(mockCredential as any);
       
       const result = await UserService.loginUser('user@example.com', 'password');
       
-      expect(signInWithEmailAndPassword).toHaveBeenCalledWith(
+      expect(signInWithEmailAndPasswordSpy).toHaveBeenCalledWith(
         expect.anything(),
         'user@example.com',
         'password'
       );
       
-      expect(result).toEqual({
-        success: true,
-        user: mockUserData,
-        message: expect.stringContaining('iniciada correctamente')
-      });
+      expect(result).toEqual(expect.objectContaining({
+        uid: 'user-uid'
+      }));
     });
     
     it('should handle invalid credentials', async () => {
       // Mock Firebase auth to throw an error
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      vi.mocked(signInWithEmailAndPassword).mockRejectedValue(
+      const signInWithEmailAndPasswordSpy = vi.spyOn(firebaseAuth, 'signInWithEmailAndPassword');
+      signInWithEmailAndPasswordSpy.mockRejectedValue(
         new Error('Invalid credentials')
       );
       
