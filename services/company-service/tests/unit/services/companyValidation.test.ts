@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { CompanyService } from '../../../src/services/companyService';
 import {
 	VALID_BUSINESS_TYPES,
 	VALID_EMPLOYEE_RANGES,
 } from '../../../src/constants/businessTypes';
+import { CompanyService } from '../../../src/services/companyService';
 
 // Este test ahora funciona porque el setup.ts global previene el ReferenceError.
 describe('CompanyService Validation Functions', () => {

@@ -1,28 +1,32 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Elysia } from 'elysia';
-import { registerCompanyRoutes } from '../../../src/routes/companyRoutes';
-import { CompanyService } from '../../../src/services/companyService';
 import { CompanyNotFoundError } from '../../../src/utils/companyErrors';
 import {
 	createTestCompany,
 	handleRequest,
 } from '../../helpers/companyTestHelpers';
-
-vi.mock('../../../src/services/companyService');
+import { registerCompanyRoutes } from '../../../src/routes/companyRoutes';
+import { CompanyService } from '../../../src/services/companyService';
 
 describe('Company Routes', () => {
 	let app: Elysia;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.restoreAllMocks();
 		app = registerCompanyRoutes(new Elysia());
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('POST /newCompany debe crear una empresa', async () => {
 		const mockCompany = createTestCompany({ nit: '123456789' });
 		const { createdAt, updatedAt, ...requestBody } = mockCompany;
 
-		vi.mocked(CompanyService.createCompany).mockResolvedValue(mockCompany);
+		vi.spyOn(CompanyService, 'createCompany').mockResolvedValue(mockCompany);
 
 		const request = new Request('http://localhost/newCompany', {
 			method: 'POST',
@@ -38,7 +42,7 @@ describe('Company Routes', () => {
 	});
 
 	it('GET /getNit/:nit debe manejar empresa no encontrada', async () => {
-		vi.mocked(CompanyService.getCompanyByNit).mockRejectedValue(
+		vi.spyOn(CompanyService, 'getCompanyByNit').mockRejectedValue(
 			new CompanyNotFoundError('12345')
 		);
 
