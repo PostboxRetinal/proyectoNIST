@@ -28,10 +28,20 @@ describe('CompanyService', () => {
 
 	it('debe devolver true si el NIT existe', async () => {
 		const mockSnapshot = { empty: false, docs: [{ id: 'company1' }] };
-		const getDocsSpy = vi.spyOn(firestore, 'getDocs');
-		getDocsSpy.mockResolvedValue(mockSnapshot as any);
+		
+		// Mock all the Firestore functions needed for this test
+		const collectionSpy = vi.spyOn(firestore, 'collection').mockReturnValue({ id: 'mock-collection' } as any);
+		const querySpy = vi.spyOn(firestore, 'query').mockReturnValue({ id: 'mock-query' } as any);
+		const whereSpy = vi.spyOn(firestore, 'where').mockReturnValue({ id: 'mock-where' } as any);
+		const getDocsSpy = vi.spyOn(firestore, 'getDocs').mockResolvedValue(mockSnapshot as any);
 		
 		await expect(CompanyService.nitExists('123456789')).resolves.toBe(true);
+		
+		// Verify the mocks were called
+		expect(collectionSpy).toHaveBeenCalled();
+		expect(querySpy).toHaveBeenCalled();
+		expect(whereSpy).toHaveBeenCalled();
+		expect(getDocsSpy).toHaveBeenCalled();
 	});
 
 	it('debe crear una empresa exitosamente', async () => {
@@ -42,13 +52,10 @@ describe('CompanyService', () => {
 		// Mock the nitExists method to return false (NIT doesn't exist)
 		const nitExistsSpy = vi.spyOn(CompanyService, 'nitExists').mockResolvedValue(false);
 		
-		// Mock firestore.setDoc to simulate successful document creation
-		const setDocSpy = vi.spyOn(firestore, 'setDoc');
-		setDocSpy.mockResolvedValue(undefined);
-		
-		// Mock the firestore.doc to return a mock document reference
-		const docSpy = vi.spyOn(firestore, 'doc');
-		docSpy.mockReturnValue({ id: 'mocked-doc-id' } as any);
+		// Mock all Firestore functions
+		const collectionSpy = vi.spyOn(firestore, 'collection').mockReturnValue({ id: 'mock-collection' } as any);
+		const docSpy = vi.spyOn(firestore, 'doc').mockReturnValue({ id: 'mock-doc' } as any);
+		const setDocSpy = vi.spyOn(firestore, 'setDoc').mockResolvedValue(undefined);
 
 		const result = await CompanyService.createCompany(inputDataWithoutTimestamps);
 
@@ -59,7 +66,9 @@ describe('CompanyService', () => {
 		expect(result.createdAt).toBeInstanceOf(Date);
 		expect(result.updatedAt).toBeInstanceOf(Date);
 		
-		// Verify Firebase setDoc was called
+		// Verify Firebase functions were called
+		expect(collectionSpy).toHaveBeenCalledWith(expect.anything(), 'companies');
+		expect(docSpy).toHaveBeenCalled();
 		expect(setDocSpy).toHaveBeenCalledTimes(1);
 		expect(nitExistsSpy).toHaveBeenCalledWith(inputDataWithoutTimestamps.nit);
 	});

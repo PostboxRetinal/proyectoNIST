@@ -11,5 +11,6 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
     },
     globals: true,
+    pool: 'threads',
   }
 })
