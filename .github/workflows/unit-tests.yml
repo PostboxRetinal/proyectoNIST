@@ -28,17 +28,27 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests
-        run: bun test
+      - name: Run tests with coverage
+        run: bun run test:coverage
 
-      - name: Generate coverage report
-        run: bun test --coverage
+      - name: Check coverage files
+        run: |
+          echo "Checking for coverage files..."
+          ls -la
+          if [ -d "coverage" ]; then
+            echo "Coverage directory found:"
+            ls -la coverage/
+          else
+            echo "No coverage directory found"
+          fi
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4 # Actualizada a v4
+        uses: actions/upload-artifact@v4
         with:
           name: company-service-coverage
-          path: ./services/company-service/coverage/**
+          path: ./services/company-service/coverage/
+          retention-days: 1
+        if: always()
 
   test-forms-service:
     runs-on: ubuntu-latest
@@ -56,17 +66,27 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests
-        run: bun test
+      - name: Run tests with coverage
+        run: bun run test:coverage
 
-      - name: Generate coverage report
-        run: bun test --coverage
+      - name: Check coverage files
+        run: |
+          echo "Checking for coverage files..."
+          ls -la
+          if [ -d "coverage" ]; then
+            echo "Coverage directory found:"
+            ls -la coverage/
+          else
+            echo "No coverage directory found"
+          fi
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4 # Actualizada a v4
+        uses: actions/upload-artifact@v4
         with:
           name: forms-service-coverage
-          path: ./services/forms-service/coverage/**
+          path: ./services/forms-service/coverage/
+          retention-days: 1
+        if: always()
 
   test-user-service:
     runs-on: ubuntu-latest
@@ -84,17 +104,27 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests
-        run: bun test
+      - name: Run tests with coverage
+        run: bun run test:coverage
 
-      - name: Generate coverage report
-        run: bun test --coverage
+      - name: Check coverage files
+        run: |
+          echo "Checking for coverage files..."
+          ls -la
+          if [ -d "coverage" ]; then
+            echo "Coverage directory found:"
+            ls -la coverage/
+          else
+            echo "No coverage directory found"
+          fi
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4 # Actualizada a v4
+        uses: actions/upload-artifact@v4
         with:
           name: user-service-coverage
-          path: ./services/user-service/coverage/**
+          path: ./services/user-service/coverage/
+          retention-days: 1
+        if: always()
 
   test-frontend:
     runs-on: ubuntu-latest
