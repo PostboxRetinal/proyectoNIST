@@ -1,84 +1,220 @@
-# Guía de Pruebas para los Servicios del Proyecto NIST
+# Guía de Pruebas para el Proyecto NIST
 
-Este documento proporciona instrucciones para ejecutar pruebas para cada microservicio en el proyecto NIST.
+Este documento proporciona una guía completa para el sistema de testing del proyecto NIST, incluyendo ejecución de pruebas, cobertura y CI/CD.
+
+## 🎯 **Estado Actual del Testing**
+
+- ✅ **Pruebas Unitarias Completas**: Todos los servicios tienen cobertura completa
+- ✅ **Firebase Mocking**: Sistema robusto de mocks para testing aislado
+- ✅ **CI/CD Automatizado**: Testing y cobertura automáticos en GitHub Actions
+- ✅ **Reportes de Cobertura**: Generación y publicación automática en GitHub Pages
+- ✅ **Testing de Rutas**: Pruebas de integración con Elysia
 
 ## Prerrequisitos
 
-- Asegúrate de tener instalado [Bun](https://bun.sh/) (versión 1.0.0+)
-- Todas las dependencias están instaladas (ejecuta `bun install` en cada directorio de servicio)
+- [Bun](https://bun.sh/) (versión 1.0.0+)
+- Todas las dependencias instaladas (ejecuta `bun install` en cada directorio de servicio)
+- Docker y Docker Compose (para testing con servicios completos)
 
-## Enfoque Actual de Pruebas
+## 🚀 **Ejecución de Pruebas**
 
-El proyecto utiliza un enfoque de pruebas centrado que prioriza la prueba de funciones puras y lógica de negocio que no dependen de dependencias externas. Este enfoque fue adoptado debido a desafíos de compatibilidad entre Bun, Vitest y ciertos patrones de mocking.
+### **Pruebas Locales**
 
-### Ejecución de Pruebas
-
-Para ejecutar todas las pruebas actuales que funcionan:
+#### **Ejecutar todas las pruebas en un servicio:**
 
 ```bash
-cd /path/to/proyectoNIST
-echo "Ejecutando Pruebas del Servicio de Empresas:" && \
-cd services/company-service && bun test tests/unit/services/companyValidation.test.ts && \
-echo -e "\nEjecutando Pruebas del Servicio de Usuarios:" && \
-cd ../user-service && bun test tests/unit/services/userValidation.test.ts && \
-echo -e "\nEjecutando Pruebas del Servicio de Formularios:" && \
-cd ../forms-service && bun test tests/unit/utils/schemaValidator.test.ts
+# Cambiar al directorio del servicio
+cd services/company-service
+# o
+cd services/forms-service  
+# o
+cd services/user-service
+
+# Ejecutar todas las pruebas
+bun test
+
+# Ejecutar pruebas con cobertura
+bun run test:coverage
+
+# Ejecutar en modo watch (recarga automática)
+bun test --watch
+
+# Abrir interfaz web de Vitest
+bun test --ui
 ```
 
-## Estructura de Pruebas
+#### **Ejecutar pruebas específicas:**
 
-Cada servicio sigue una estructura de pruebas similar:
+```bash
+# Pruebas de un archivo específico
+bun test tests/unit/services/companyService.test.ts
 
+# Pruebas por patrón
+bun test --grep "should create company"
+
+# Pruebas de un directorio
+bun test tests/unit/services/
 ```
-services/
-  <service-name>/
-    tests/
-      helpers/      # Ayudantes de prueba y factorías
-      unit/
-        services/   # Pruebas para clases de servicio
-        utils/      # Pruebas para funciones de utilidad
+
+## 📊 **Reportes de Cobertura**
+
+### **Generación Local**
+
+```bash
+# Generar reporte de cobertura para un servicio
+cd services/company-service
+bun run test:coverage
+
+# Los reportes se generan en ./coverage/index.html
+# Abrir en navegador
+open coverage/index.html  # macOS
+xdg-open coverage/index.html  # Linux
 ```
 
-### Pruebas Unitarias
+### **Reportes Automáticos en CI/CD**
 
-Nuestras pruebas unitarias se centran en:
+Los reportes de cobertura se generan automáticamente y están disponibles en:
 
-1. **Funciones Puras**: Pruebas de funciones que no dependen de dependencias externas
+**🌐 [Dashboard de Cobertura en GitHub Pages](https://postboxretinal.github.io/proyectoNIST/coverage/)**
 
-   - Funciones de validación (ej., `isValidRole`, `isValidBusinessType`)
-   - Constantes y validadores de esquemas
-   - Funciones de utilidad
+- [Cobertura Company Service](https://postboxretinal.github.io/proyectoNIST/coverage/company-service/)
+- [Cobertura Forms Service](https://postboxretinal.github.io/proyectoNIST/coverage/forms-service/)  
+- [Cobertura User Service](https://postboxretinal.github.io/proyectoNIST/coverage/user-service/)
 
-2. **Ayudantes de Pruebas**: Funciones de factoría para generar datos de prueba consistentemente
+## 🏗️ **Estructura de Pruebas**
 
-## Notas de Compatibilidad
+Cada servicio sigue una estructura consistente:
 
-Al trabajar con Vitest y Bun, hemos encontrado algunos problemas de compatibilidad:
+```yaml
+services/<service-name>/
+├── tests/
+│   ├── setup.ts              # Configuración global de mocks
+│   ├── helpers/              # Ayudantes y factorías de datos
+│   │   └── <service>TestHelpers.ts
+│   └── unit/                 # Pruebas unitarias
+│       ├── services/         # Lógica de negocio
+│       ├── routes/           # Endpoints de API
+│       └── utils/            # Funciones utilitarias
+├── vitest.config.ts          # Configuración de Vitest
+└── package.json              # Scripts de testing
+```
 
-1. **Limitaciones de Mocking**: Los patrones complejos de `vi.mock()` pueden no funcionar como se espera con el runtime de Bun
-2. **Mocking de Importaciones**: El enfoque estándar para hacer mock de importaciones tiene limitaciones
+## 🧪 **Tipos de Pruebas**
 
-La recomendación actual es:
+### **1. Pruebas Unitarias**
 
-- Centrarse en probar la lógica de negocio pura sin mocks
-- Utilizar patrones de inyección de dependencias cuando sea posible
-- Crear objetos de prueba simplificados con ayudantes de pruebas
+Prueban componentes individuales de forma aislada:
 
-## Escribiendo Nuevas Pruebas
+- **Servicios de Negocio**: Lógica de CRUD, validaciones, transformaciones
+- **Validadores**: Esquemas y reglas de negocio
+- **Utilidades**: Funciones auxiliares y helpers
+- **Constantes**: Valores y configuraciones
 
-Al crear nuevas pruebas:
+```bash
+# Ejemplos de archivos de pruebas unitarias
+tests/unit/services/companyService.test.ts
+tests/unit/services/userService.test.ts
+tests/unit/utils/schemaValidator.test.ts
+```
 
-1. Céntrate en probar funciones puras que no requieran mocking complejo
-2. Utiliza las factorías de ayudantes de prueba para crear datos de prueba consistentes
-3. Mantén las pruebas centradas en un solo aspecto de la funcionalidad
-4. Utiliza nombres de prueba descriptivos que expliquen qué se está probando
-5. Para funciones que interactúan con dependencias externas, considera escribir pruebas simplificadas que verifiquen la lógica central
+### **2. Pruebas de Integración**
 
-## Mejoras Futuras
+Prueban la interacción entre componentes:
 
-A medida que mejore la compatibilidad entre Bun y Vitest, planeamos expandir el conjunto de pruebas para incluir:
+- **Rutas de API**: Testing de endpoints con Elysia
+- **Flujos de Datos**: Desde request hasta response
+- **Autenticación**: Middleware y permisos
+- **Validación de Esquemas**: Input/output de APIs
 
-- Pruebas de servicio más completas con mocking adecuado de dependencias
-- Pruebas de rutas para verificar el comportamiento de la API
-- Pruebas de integración para flujos críticos de usuario
-- Informes de cobertura de pruebas
+```bash
+# Ejemplos de archivos de pruebas de integración
+tests/unit/routes/companyRoutes.test.ts
+tests/unit/routes/userRoutes.test.ts
+```
+
+### **3. Mocking de Firebase**
+
+Sistema robusto para aislar pruebas de dependencias externas:
+
+- **Firestore**: Simulación completa de operaciones de base de datos
+- **Firebase Auth**: Mocking de autenticación y autorización
+- **Storage**: Simulación de operaciones de archivos
+
+```typescript
+// Ejemplo de configuración en tests/setup.ts
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(),
+  collection: vi.fn(),
+  addDoc: vi.fn(),
+  getDocs: vi.fn(),
+  // ... más mocks
+}));
+```
+
+## ⚙️ **Configuración del Sistema de Testing**
+
+### **Vitest Configuration**
+
+Cada servicio tiene un `vitest.config.ts` optimizado:
+
+### **Setup Global (tests/setup.ts)**
+
+Configuración de mocks globales para Firebase:
+
+### **Package.json Scripts**
+
+Scripts estandarizados en cada servicio:
+
+## 🔄 **CI/CD y Automatización**
+
+### **GitHub Actions Workflows**
+
+#### **Unit Tests Workflow** (`.github/workflows/unit-tests.yml`)
+
+```yaml
+# Ejecuta pruebas automáticamente en cada push/PR
+- Instala dependencias con Bun
+- Ejecuta tests con cobertura para cada servicio
+- Sube artifacts de cobertura
+- Notifica resultados
+```
+
+#### **Coverage Report Workflow** (`.github/workflows/coverage-report.yml`)
+
+```yaml
+# Se ejecuta después del workflow de tests
+- Descarga artifacts de cobertura de todos los servicios
+- Combina reportes en un dashboard unificado
+- Despliega a GitHub Pages automáticamente
+```
+
+### **Triggers de CI/CD**
+
+Las pruebas se ejecutan automáticamente cuando:
+
+- 🚀 **Push** a ramas `master` o `tests`
+- 🔀 **Pull Request** hacia `master` o `tests`
+- 📁 **Cambios** en el directorio `services/`
+- 🔧 **Trigger manual** desde GitHub Actions
+
+### **Artifacts y Reportes**
+
+- **📊 Cobertura**: Almacenada como artifacts de GitHub
+- **📈 Reportes**: Combinados y publicados en GitHub Pages
+- **🔍 Logs**: Disponibles en cada workflow run
+- **📋 Notificaciones**: Estado de tests en badges del README
+
+## 📋 **Resumen de Comandos**
+
+```bash
+# Comandos más utilizados
+bun test                    # Ejecutar todas las pruebas
+bun run test:coverage       # Ejecutar con cobertura
+bun test --watch           # Modo desarrollo con recarga
+bun test --ui              # Interfaz web de Vitest
+
+# Para CI/CD local
+./scripts/test-all.sh      # Ejecutar todos los servicios
+```
+
+**🎯 Para más información, consulta el [README principal](./README.MD) del proyecto.**
