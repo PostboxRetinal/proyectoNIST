@@ -26,8 +26,7 @@ if (typeof global.Bun === 'undefined') {
     };
 }
 
-// 2. Mockeamos las librerías CORE de Firebase para prevenir la inicialización real.
-// Esto previene el error 'auth/invalid-api-key' de forma definitiva.
+// 2. Mock Firebase modules using vi.mock at the top level
 vi.mock('firebase/app', () => ({
 	initializeApp: vi.fn().mockReturnValue({}),
 	getApps: vi.fn().mockReturnValue([]),
@@ -38,7 +37,6 @@ vi.mock('firebase/auth', () => ({
 	getAuth: vi.fn(() => ({}))
 }));
 
-// 3. Mockeamos la LIBRERÍA 'firebase/firestore' para controlar sus funciones.
 vi.mock('firebase/firestore', () => ({
     getFirestore: vi.fn(() => ({})),
     collection: vi.fn(),
@@ -52,7 +50,7 @@ vi.mock('firebase/firestore', () => ({
     deleteDoc: vi.fn(),
 }));
 
-// 4. Mock the Firebase configuration file directly to prevent validation errors
+// 3. Mock the Firebase configuration file directly to prevent validation errors  
 vi.mock('../src/firebase/firebase.ts', () => ({
     auth: {},
     db: {},
