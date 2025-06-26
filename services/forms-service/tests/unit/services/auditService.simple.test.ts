@@ -1,10 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { AuditService } from '../../../src/services/auditService';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { NistAudit } from '../../../src/schemas/formSchema';
+import { AuditService } from '../../../src/services/auditService';
 
 describe('AuditService', () => {
 	beforeEach(() => {
 		// No need to reset mocks anymore
+	});
+
+	afterEach(() => {
+		// Ensure cleanup
 	});
 
 	describe('prepareAuditResultObject', () => {

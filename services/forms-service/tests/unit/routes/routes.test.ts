@@ -1,37 +1,24 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Elysia } from 'elysia';
+import { NistAudit } from '../../../src/schemas/formSchema';
 import { registerAuditRoutes } from '../../../src/routes/routes';
 import { AuditService } from '../../../src/services/auditService';
-import { NistAudit } from '../../../src/schemas/formSchema';
-
-// Mock AuditService
-vi.mock('../../../src/services/auditService', () => ({
-	AuditService: {
-		prepareAuditResultObject: vi.fn(),
-		saveAuditResult: vi.fn(),
-		getAuditResultById: vi.fn(),
-		getAuditsByCompanyId: vi.fn(),
-		deleteAuditResult: vi.fn(),
-	},
-}));
-
-// Mock error handling
-vi.mock('../../../src/utils/auditErrors', () => ({
-	createAuditErrorResponse: vi.fn((_err, message) => ({
-		success: false,
-		message: message || 'Error genérico',
-		error: 'MOCK_ERROR',
-		status: 400,
-	})),
-}));
 
 describe('Audit Routes', () => {
 	let app: Elysia;
 
 	beforeEach(() => {
+		// Clear all mocks and restore original implementations
 		vi.clearAllMocks();
+		vi.restoreAllMocks();
 		app = new Elysia();
 		registerAuditRoutes(app);
+	});
+
+	afterEach(() => {
+		// Ensure cleanup after each test
+		vi.clearAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	describe('POST /newForm', () => {
@@ -46,11 +33,13 @@ describe('Audit Routes', () => {
 				sections: {}, // Objeto vacío para simplificar
 			};
 
-			// Setup mocks
-			vi.mocked(AuditService.prepareAuditResultObject).mockReturnValue(
-				mockPreparedAudit
-			);
-			vi.mocked(AuditService.saveAuditResult).mockResolvedValue('test-id');
+			// Setup spies instead of mocks
+			const prepareAuditSpy = vi
+				.spyOn(AuditService, 'prepareAuditResultObject')
+				.mockReturnValue(mockPreparedAudit);
+			const saveAuditSpy = vi
+				.spyOn(AuditService, 'saveAuditResult')
+				.mockResolvedValue('test-id');
 
 			// Create a mock request handler function
 			const handlers = app.routes
@@ -78,12 +67,8 @@ describe('Audit Routes', () => {
 				const response = await handler(mockRequest as any);
 
 				// Assertions
-				expect(AuditService.prepareAuditResultObject).toHaveBeenCalledWith(
-					mockRequest.body
-				);
-				expect(AuditService.saveAuditResult).toHaveBeenCalledWith(
-					mockPreparedAudit
-				);
+				expect(prepareAuditSpy).toHaveBeenCalledWith(mockRequest.body);
+				expect(saveAuditSpy).toHaveBeenCalledWith(mockPreparedAudit);
 
 				expect(response).toEqual({
 					success: true,
@@ -100,12 +85,12 @@ describe('Audit Routes', () => {
 		});
 
 		it('should handle errors when creating an audit', async () => {
-			// Setup mocks to throw an error
-			vi.mocked(AuditService.prepareAuditResultObject).mockImplementation(
-				() => {
+			// Setup spy to throw an error
+			const prepareAuditSpy = vi
+				.spyOn(AuditService, 'prepareAuditResultObject')
+				.mockImplementation(() => {
 					throw new Error('Test error');
-				}
-			);
+				});
 
 			// Get the handler
 			const handlers = app.routes
