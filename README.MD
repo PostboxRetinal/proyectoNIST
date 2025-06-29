@@ -1,170 +1,167 @@
 # ProyectoNIST
 
-Proyecto de microservicios backend construido con ElysiaJS y Bun, usando Firebase como backend NoSQL.
+Backend microservices project built with ElysiaJS and Bun, using Firebase as NoSQL backend.
 
 [![Unit Tests](https://github.com/PostboxRetinal/proyectoNIST/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/PostboxRetinal/proyectoNIST/actions/workflows/unit-tests.yml)
 [![Coverage Report](https://github.com/PostboxRetinal/proyectoNIST/actions/workflows/coverage-report.yml/badge.svg)](https://github.com/PostboxRetinal/proyectoNIST/actions/workflows/coverage-report.yml)
 
-## 🎯 **Estado del Proyecto**
+## 👷🏾‍♂️ **Project Status**
 
-- ✅ **Pruebas Unitarias**: Todos los servicios tienen cobertura completa de pruebas
-- ✅ **Pipeline CI/CD**: Testing automatizado y reportes de cobertura
-- ✅ **Mocking de Firebase**: Pruebas aisladas sin dependencias externas
-- ✅ **Reportes de Cobertura**: Generación automática y despliegue en GitHub Pages
-- ✅ **Arquitectura Multi-Servicio**: Servicios de Company, Forms y User
+- [x] **Unit Tests**: All services have complete test coverage
+- [x] **CI/CD Pipeline**: Automated testing and coverage reports
+- [x] **Firebase Mocking**: Isolated tests without external dependencies
+- [x] **Coverage Reports**: Automatic generation and deployment to GitHub Pages
+- [x] **Multi-Service Architecture**: Company, Forms, and User services
 
-## 📊 Reportes de Cobertura
+## 🧪 **Test Coverage Reports**
 
-Los reportes de cobertura de pruebas están disponibles en: [**Dashboard de Cobertura**](https://postboxretinal.github.io/proyectoNIST/coverage/)
+Test coverage reports are available at: [**Coverage Dashboard**](https://postboxretinal.github.io/proyectoNIST/coverage/)
 
-- [Cobertura del Servicio Company](https://postboxretinal.github.io/proyectoNIST/coverage/company-service/)
-- [Cobertura del Servicio Forms](https://postboxretinal.github.io/proyectoNIST/coverage/forms-service/)
-- [Cobertura del Servicio User](https://postboxretinal.github.io/proyectoNIST/coverage/user-service/)
+- [Company Service Coverage](https://postboxretinal.github.io/proyectoNIST/coverage/company-service/)
+- [Forms Service Coverage](https://postboxretinal.github.io/proyectoNIST/coverage/forms-service/)
+- [User Service Coverage](https://postboxretinal.github.io/proyectoNIST/coverage/user-service/)
 
-## Arquitectura
+## ⚙️ **Architecture**
 
-- **api-gateway**: Puerta de entrada para todas las peticiones externas. Redirige y controla el acceso a los microservicios internos.
-- **user-service**: Microservicio dedicado a la autenticación y gestión de usuarios (registro, login, recuperación de contraseña, etc.) usando Firebase Auth y Firestore.
-- **company-service**: Microservicio para gestionar la información de empresas.
-- **forms-service**: Microservicio para manejar los formularios y auditorías NIST.
+- **api-gateway**: Entry point for all external requests. Redirects and controls access to internal microservices.
+- **user-service**: Microservice dedicated to authentication and user management (registration, login, password recovery, etc.) using Firebase Auth and Firestore.
+- **company-service**: Microservice for managing company information.
+- **forms-service**: Microservice for handling NIST forms and audits.
 
-Cada microservicio es independiente y se comunica a través del API Gateway. El despliegue se realiza mediante Docker y Docker Compose.
+Each microservice is independent and communicates through the API Gateway. Deployment is done using Docker and Docker Compose.
 
-## Tecnologías principales
+## 🧰 **Main Technologies**
 
-- [Bun](https://bun.sh/) (runtime ultrarrápido para JavaScript/TypeScript)
-- [ElysiaJS](https://elysiajs.com/) (framework web para Bun)
-- [Firebase](https://firebase.google.com/) (Auth y Firestore)
-- [Swagger/OpenAPI](https://swagger.io/) (documentación interactiva de la API)
-- [Docker](https://www.docker.com/) y [Docker Compose](https://docs.docker.com/compose/)
-- [Vitest](https://vitest.dev/) (framework de testing para Bun/Node.js)
-- [Elysia Swagger Plugin](https://elysiajs.com/plugins/swagger) (generación automática de documentación)
+- [Bun](https://bun.sh/) (ultra-fast runtime for JavaScript/TypeScript)
+- [ElysiaJS](https://elysiajs.com/) (web framework for Bun)
+- [Firebase](https://firebase.google.com/) (Auth and Firestore)
+- [Swagger/OpenAPI](https://swagger.io/) (interactive API documentation)
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- [Vitest](https://vitest.dev/) (testing framework for Bun/Node.js)
+- [Elysia Swagger Plugin](https://elysiajs.com/plugins/swagger) (automatic documentation generation)
 
-## Pruebas (Testing)
+## ⚠️ Prerequisites
 
-El proyecto incluye un sistema de testing robusto con CI/CD automatizado:
+- Already created .env files
+- [Bun](https://bun.sh/) (latest version)
+- [Docker](https://www.docker.com/) / [Docker Compose](https://docs.docker.com/compose/) / [Podman](https://podman.io)
 
-### 🧪 **Ejecutar Pruebas Localmente**
+## 💻 **Installation and Execution**
 
-```bash
-# Ejecutar pruebas en un servicio específico
-cd services/company-service
-bun test
-
-# Ejecutar pruebas con cobertura
-bun run test:coverage
-
-# Ejecutar todas las pruebas en modo watch
-bun test --watch
-```
-
-### 🔄 **Pipeline CI/CD**
-
-- **Pruebas automáticas**: Se ejecutan en cada push y pull request
-- **Cobertura**: Se genera automáticamente y se publica en GitHub Pages
-- **Múltiples servicios**: company-service, forms-service, user-service
-- **Mocking de Firebase**: Pruebas aisladas sin dependencias externas
-
-## Requisitos previos
-
-- [Bun](https://bun.sh/) (última versión)
-- [Docker](https://www.docker.com/) / [Docker Compose](https://docs.docker.com/compose/) / [Podman](https://podman.io/)
-
-## Instalación y ejecución
-
-1. Clona el repositorio:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/PostboxRetinal/proyectoNIST.git
    cd proyectoNIST
    ```
 
-2. Crea los archivos `.env` necesarios en cada microservicio
+2. Create the necessary `.env` files in each microservice
 
-3. Instala y ejecuta docker para levantar el stack completo del proyecto
-
-   ```bash
-   docker-compose up --build
-   ```
-
-## 📋 **Documentación API con Swagger**
-
-### **🌐 Acceso a través del API Gateway (Recomendado)**
-
-El API Gateway con nginx redirige automáticamente las peticiones a los servicios correspondientes:
-
-### **🎯 Servicios y sus Endpoints**
-
-**User Service** (acceso via `/api/users/`):
-
-- Gestión de usuarios, autenticación, roles
-- Swagger: `http://localhost:3001/api/users`
-
-**Company Service** (acceso via `/api/companies/`):
-
-- Gestión de empresas y organizaciones  
-- Swagger: `http://localhost:3001/api/companies`
-
-**Forms Service** (acceso via `/api/forms/`):
-
-- Formularios y auditorías NIST
-- Swagger: `http://localhost:3001/api/forms`
-
-> **💡 Nota**: Todos los endpoints están disponibles a través del API Gateway en `http://localhost:3001`. Las rutas internas de los servicios (puerto 4001, 4002, 4003) son para desarrollo directo.
-
-### 🚀 **Cómo consultar documentación Swagger**
-
-1. **Inicia los servicios**:
+3. Install and run docker to start the complete project stack
 
    ```bash
    docker-compose up --build
    ```
 
-2. **Accede a la documentación a través del API Gateway**:
+### **Access through API Gateway (Recommended)**
+
+The API Gateway with nginx automatically redirects requests to the corresponding services:
+
+### **Endpoint Structure**
+
+```yaml
+User Service (via API Gateway: /api/users/)
+├── POST /users/register     - User registration
+├── POST /users/login        - Authentication
+├── GET /users/profile       - User profile
+├── PUT /users/profile       - Update profile
+├── POST /users/forgot       - Password recovery
+└── GET /users/roles         - Get available roles
+
+Company Service (via API Gateway: /api/companies/)
+├── POST /companies/         - Create company
+├── GET /companies/          - List companies
+├── GET /companies/:id       - Get company by ID
+├── PUT /companies/:id       - Update company
+├── DELETE /companies/:id    - Delete company
+└── GET /companies/types     - Business types
+
+Forms Service (via API Gateway: /api/forms/)
+├── POST /forms/             - Create form
+├── GET /forms/              - List forms
+├── GET /forms/:id           - Get form
+├── PUT /forms/:id           - Update form
+├── POST /forms/:id/submit   - Submit form
+└── GET /forms/:id/report    - Generate report
+```
+
+> **💡 Note**: All endpoints are available through the API Gateway at `http://localhost:3001`. Internal service routes (ports 4001, 4002, 4003) are for direct development.
+
+## 📋 **API Documentation with Swagger**
+
+1. **Start the services**:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Access documentation through API Gateway**:
 
    - **User Service**: `http://localhost:3000/api/docs/user`
    - **Company Service**: `http://localhost:3000/api/docs/company`
    - **Forms Service**: `http://localhost:3000/api/docs/forms`
 
-3. **Explora y prueba los endpoints**:
+3. **Explore and test endpoints**:
 
-   - Navega por los endpoints disponibles
-   - Prueba las peticiones directamente desde la interfaz
-   - Visualiza los modelos de datos requeridos
+   - Navigate through available endpoints
+   - Test requests directly from the interface
+   - Visualize required data models
 
-## Scripts útiles
+## 🪧 **Useful Scripts**
 
-### 🏗️ **Desarrollo**
+### **Development**
 
-- `bun run dev` — Inicia el servicio en modo desarrollo con recarga automática
-- `docker-compose up --build` — Levanta todos los servicios con Docker
+- `bun run dev` — Start service in development mode with auto-reload
+- `docker-compose up --build` — Start all services with Docker
 
-### 🧪 **Pruebas**
+### **Testing**
 
-- `bun test` — Ejecuta todas las pruebas
-- `bun run test:coverage` — Ejecuta pruebas con reporte de cobertura
-- `bun test --watch` — Ejecuta pruebas en modo watch
-- `bun test --ui` — Abre la interfaz web de Vitest
+- `bun test` — Run all tests
+- `bun run test:coverage` — Run tests with coverage report
+- `bun test --watch` — Run tests in watch mode
+- `bun test --ui` — Open Vitest web interface
 
-## 🚀 **Workflows de CI/CD**
+### **Coverage**
 
-- **Pruebas Unitarias**: `.github/workflows/unit-tests.yml` - Ejecuta pruebas en cada push
-- **Reporte de Cobertura**: `.github/workflows/coverage-report.yml` - Genera y publica reportes de cobertura
+- Reports are generated automatically in CI/CD
+- Available at: [Coverage Dashboard](https://postboxretinal.github.io/proyectoNIST/coverage/)
 
-## 🛠️ **Implementación Técnica**
+## ⏳ **CI/CD Workflows**
 
-### **Estrategia de Mocking de Firebase**
+- **Unit Tests**: `.github/workflows/unit-tests.yml` - Runs tests on every push
+- **Coverage Report**: `.github/workflows/coverage-report.yml` - Generates and publishes coverage reports
 
-- **Mocks Globales**: Configurados en `tests/setup.ts` para cada servicio
-- **Aislamiento de Pruebas**: Cada prueba se ejecuta en un entorno aislado
-- **Sin Dependencias Externas**: Las pruebas no requieren conexión a Firebase real
+## 🧑🏾‍💻 **Technical Implementation**
 
-### **Integración Continua**
+### **Firebase Mocking Strategy**
 
-- **Testing Multi-Servicio**: Pruebas paralelas para cada microservicio
-- **Gestión de Artefactos**: Cobertura almacenada y combinada automáticamente
-- **Despliegue en GitHub Pages**: Reportes publicados automáticamente
+- **Global Mocks**: Configured in `tests/setup.ts` for each service
+- **Test Isolation**: Each test runs in an isolated environment
+- **No External Dependencies**: Tests don't require real Firebase connection
+
+### **Testing Architecture**
+
+- **Vitest Configuration**: Optimized for Bun runtime
+- **Setup Files**: Global configuration of mocks and utilities
+- **Test Helpers**: Auxiliary functions for testing in `tests/helpers/`
+- **Coverage Reports**: Automatic generation with detailed metrics
+
+### **Continuous Integration**
+
+- **Multi-Service Testing**: Parallel tests for each microservice
+- **Artifact Management**: Coverage stored and combined automatically
+- **GitHub Pages Deployment**: Reports published automatically
 
 ---
 
-Desarrollado con ❤️ usando Bun, ElysiaJS y Firebase.
+Developed with ❤️ using Bun, ElysiaJS and Firebase.

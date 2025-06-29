@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Check if we're in a test environment
 const isTestEnvironment = typeof process !== 'undefined' && (
 	process.env.NODE_ENV === 'test' ||
 	process.env.VITEST === 'true' ||
@@ -27,17 +26,17 @@ let auth: any;
 let db: any;
 
 if (isTestEnvironment) {
-	// In test environment, create mock objects
+	// En entorno de prueba, crear objetos simulados que no requieran Firebase real
 	app = {};
 	auth = {};
-	// Create a more complete mock for the db object that will work with Firestore functions
+	// Crear un mock más completo para el objeto db que funcione con las funciones de Firestore
 	db = {
 		app: {},
 		_delegate: {},
 		type: 'firestore'
 	};
 } else {
-	// In production environment, initialize Firebase normally
+	// En entorno de producción, inicializar Firebase normalmente
 	app = initializeApp(firebaseConfig);
 	auth = getAuth(app);
 	db = getFirestore(app);
@@ -47,7 +46,7 @@ export { auth, db };
 
 // Función para validar la configuración de Firebase
 export function validateFirebaseConfig() {
-	// Skip validation in test environment
+	// Saltar validación en entorno de prueba
 	if (isTestEnvironment) {
 		console.log(`[COMPANY_SVC] Firebase config: MOCKED (test environment)`);
 		return;
@@ -62,7 +61,7 @@ export function validateFirebaseConfig() {
 	console.log(`[COMPANY_SVC] Firebase config: OK`);
 }
 
-// Ejecutar validación al inicializar (only if not in test environment)
+// Ejecutar validación al inicializar (solo si no estamos en un entorno de prueba)
 if (!isTestEnvironment) {
 	validateFirebaseConfig();
 }

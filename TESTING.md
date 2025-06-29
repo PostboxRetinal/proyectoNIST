@@ -1,220 +1,227 @@
-# Guía de Pruebas para el Proyecto NIST
+# Testing Guide for NIST Project
 
-Este documento proporciona una guía completa para el sistema de testing del proyecto NIST, incluyendo ejecución de pruebas, cobertura y CI/CD.
+This document provides a comprehensive guide for the NIST project testing system, including test execution, coverage, and CI/CD.
 
-## 🎯 **Estado Actual del Testing**
+## 🎯 **Current Testing Status**
 
-- ✅ **Pruebas Unitarias Completas**: Todos los servicios tienen cobertura completa
-- ✅ **Firebase Mocking**: Sistema robusto de mocks para testing aislado
-- ✅ **CI/CD Automatizado**: Testing y cobertura automáticos en GitHub Actions
-- ✅ **Reportes de Cobertura**: Generación y publicación automática en GitHub Pages
-- ✅ **Testing de Rutas**: Pruebas de integración con Elysia
+- [x] **Complete Unit Tests**: All services have complete coverage
+- [x] **Firebase Mocking**: Robust mock system for isolated testing
+- [x] **Automated CI/CD**: Automatic testing and coverage in GitHub Actions
+- [x] **Coverage Reports**: Automatic generation and publishing to GitHub Pages
+- [x] **Route Testing**: Integration tests with Elysia
 
-## Prerrequisitos
+## Prerequisites
 
-- [Bun](https://bun.sh/) (versión 1.0.0+)
-- Todas las dependencias instaladas (ejecuta `bun install` en cada directorio de servicio)
-- Docker y Docker Compose (para testing con servicios completos)
+- [Bun](https://bun.sh/) (version 1.0.0+)
+- All dependencies installed (run `bun install` in each service directory)
+- Docker and Docker Compose (for testing with complete services)
 
-## 🚀 **Ejecución de Pruebas**
+## 🚀 **Test Execution**
 
-### **Pruebas Locales**
+### **Local Testing**
 
-#### **Ejecutar todas las pruebas en un servicio:**
+#### **Run all tests in a service:**
 
 ```bash
-# Cambiar al directorio del servicio
+# Change to service directory
 cd services/company-service
-# o
+# or
 cd services/forms-service  
-# o
+# or
 cd services/user-service
 
-# Ejecutar todas las pruebas
+# Run all tests
 bun test
 
-# Ejecutar pruebas con cobertura
+# Run tests with coverage
 bun run test:coverage
 
-# Ejecutar en modo watch (recarga automática)
+# Run in watch mode (auto-reload)
 bun test --watch
 
-# Abrir interfaz web de Vitest
+# Open Vitest web interface
 bun test --ui
 ```
 
-#### **Ejecutar pruebas específicas:**
+#### **Run specific tests:**
 
 ```bash
-# Pruebas de un archivo específico
+# Tests from a specific file
 bun test tests/unit/services/companyService.test.ts
 
-# Pruebas por patrón
+# Tests by pattern
 bun test --grep "should create company"
 
-# Pruebas de un directorio
+# Tests from a directory
 bun test tests/unit/services/
 ```
 
-## 📊 **Reportes de Cobertura**
+### **Complete Testing Script**
 
-### **Generación Local**
+To run all tests from all services:
 
 ```bash
-# Generar reporte de cobertura para un servicio
+#!/bin/bash
+echo "Running all NIST project tests..."
+
+services=("company-service" "forms-service" "user-service")
+
+for service in "${services[@]}"; do
+    echo "Testing $service..."
+    cd services/$service
+    bun test
+    echo "$service completed"
+    cd ../..
+done
+
+echo "All tests completed!"
+```
+
+## 📊 **Coverage Reports**
+
+### **Local Generation**
+
+```bash
+# Generate coverage report for a service
 cd services/company-service
 bun run test:coverage
 
-# Los reportes se generan en ./coverage/index.html
-# Abrir en navegador
+# Reports are generated in ./coverage/index.html
+# Open in browser
 open coverage/index.html  # macOS
 xdg-open coverage/index.html  # Linux
 ```
 
-### **Reportes Automáticos en CI/CD**
+### **Automatic CI/CD Reports**
 
-Los reportes de cobertura se generan automáticamente y están disponibles en:
+Coverage reports are generated automatically and available at:
 
-**🌐 [Dashboard de Cobertura en GitHub Pages](https://postboxretinal.github.io/proyectoNIST/coverage/)**
+**[Coverage Dashboard on GitHub Pages](https://postboxretinal.github.io/proyectoNIST/coverage/)**
 
-- [Cobertura Company Service](https://postboxretinal.github.io/proyectoNIST/coverage/company-service/)
-- [Cobertura Forms Service](https://postboxretinal.github.io/proyectoNIST/coverage/forms-service/)  
-- [Cobertura User Service](https://postboxretinal.github.io/proyectoNIST/coverage/user-service/)
+- [Company Service Coverage](https://postboxretinal.github.io/proyectoNIST/coverage/company-service/)
+- [Forms Service Coverage](https://postboxretinal.github.io/proyectoNIST/coverage/forms-service/)  
+- [User Service Coverage](https://postboxretinal.github.io/proyectoNIST/coverage/user-service/)
 
-## 🏗️ **Estructura de Pruebas**
+## 🏗️ **Test Structure**
 
-Cada servicio sigue una estructura consistente:
+Each service follows a consistent structure:
 
 ```yaml
 services/<service-name>/
 ├── tests/
-│   ├── setup.ts              # Configuración global de mocks
-│   ├── helpers/              # Ayudantes y factorías de datos
+│   ├── setup.ts              # Global mock configuration
+│   ├── helpers/              # Helpers and data factories
 │   │   └── <service>TestHelpers.ts
-│   └── unit/                 # Pruebas unitarias
-│       ├── services/         # Lógica de negocio
-│       ├── routes/           # Endpoints de API
-│       └── utils/            # Funciones utilitarias
-├── vitest.config.ts          # Configuración de Vitest
-└── package.json              # Scripts de testing
+│   └── unit/                 # Unit tests
+│       ├── services/         # Business logic
+│       ├── routes/           # API endpoints
+│       └── utils/            # Utility functions
+├── vitest.config.ts          # Vitest configuration
+└── package.json              # Testing scripts
 ```
 
-## 🧪 **Tipos de Pruebas**
+## 🧪 **Types of Tests**
 
-### **1. Pruebas Unitarias**
+### **1. Unit Tests**
 
-Prueban componentes individuales de forma aislada:
+Test individual components in isolation:
 
-- **Servicios de Negocio**: Lógica de CRUD, validaciones, transformaciones
-- **Validadores**: Esquemas y reglas de negocio
-- **Utilidades**: Funciones auxiliares y helpers
-- **Constantes**: Valores y configuraciones
+- **Business Services**: CRUD logic, validations, transformations
+- **Validators**: Schemas and business rules
+- **Utilities**: Helper and auxiliary functions
+- **Constants**: Values and configurations
 
 ```bash
-# Ejemplos de archivos de pruebas unitarias
+# Examples of unit test files
 tests/unit/services/companyService.test.ts
 tests/unit/services/userService.test.ts
 tests/unit/utils/schemaValidator.test.ts
 ```
 
-### **2. Pruebas de Integración**
+### **2. Integration Tests**
 
-Prueban la interacción entre componentes:
+Test interaction between components:
 
-- **Rutas de API**: Testing de endpoints con Elysia
-- **Flujos de Datos**: Desde request hasta response
-- **Autenticación**: Middleware y permisos
-- **Validación de Esquemas**: Input/output de APIs
+- **API Routes**: Endpoint testing with Elysia
+- **Data Flows**: From request to response
+- **Authentication**: Middleware and permissions
+- **Schema Validation**: API input/output
 
 ```bash
-# Ejemplos de archivos de pruebas de integración
+# Examples of integration test files
 tests/unit/routes/companyRoutes.test.ts
 tests/unit/routes/userRoutes.test.ts
 ```
 
-### **3. Mocking de Firebase**
+### **3. Firebase Mocking**
 
-Sistema robusto para aislar pruebas de dependencias externas:
+Robust system to isolate tests from external dependencies:
 
-- **Firestore**: Simulación completa de operaciones de base de datos
-- **Firebase Auth**: Mocking de autenticación y autorización
-- **Storage**: Simulación de operaciones de archivos
+- **Firestore**: Complete simulation of database operations
+- **Firebase Auth**: Authentication and authorization mocking
+- **Storage**: File operation simulation
 
 ```typescript
-// Ejemplo de configuración en tests/setup.ts
+// Example configuration in tests/setup.ts
 vi.mock('firebase/firestore', () => ({
   getFirestore: vi.fn(),
   collection: vi.fn(),
   addDoc: vi.fn(),
   getDocs: vi.fn(),
-  // ... más mocks
+  // ... more mocks
 }));
 ```
 
-## ⚙️ **Configuración del Sistema de Testing**
-
-### **Vitest Configuration**
-
-Cada servicio tiene un `vitest.config.ts` optimizado:
-
-### **Setup Global (tests/setup.ts)**
-
-Configuración de mocks globales para Firebase:
-
-### **Package.json Scripts**
-
-Scripts estandarizados en cada servicio:
-
-## 🔄 **CI/CD y Automatización**
+## 🔄 **CI/CD and Automation**
 
 ### **GitHub Actions Workflows**
 
 #### **Unit Tests Workflow** (`.github/workflows/unit-tests.yml`)
 
 ```yaml
-# Ejecuta pruebas automáticamente en cada push/PR
-- Instala dependencias con Bun
-- Ejecuta tests con cobertura para cada servicio
-- Sube artifacts de cobertura
-- Notifica resultados
+# Runs tests automatically on every push/PR
+- Install dependencies with Bun
+- Run tests with coverage for each service
+- Upload coverage artifacts
+- Notify results
 ```
 
 #### **Coverage Report Workflow** (`.github/workflows/coverage-report.yml`)
 
 ```yaml
-# Se ejecuta después del workflow de tests
-- Descarga artifacts de cobertura de todos los servicios
-- Combina reportes en un dashboard unificado
-- Despliega a GitHub Pages automáticamente
+# Runs after the tests workflow
+- Download coverage artifacts from all services
+- Combine reports in a unified dashboard
+- Deploy to GitHub Pages automatically
 ```
 
-### **Triggers de CI/CD**
+### **CI/CD Triggers**
 
-Las pruebas se ejecutan automáticamente cuando:
+Tests run automatically when:
 
-- 🚀 **Push** a ramas `master` o `tests`
-- 🔀 **Pull Request** hacia `master` o `tests`
-- 📁 **Cambios** en el directorio `services/`
-- 🔧 **Trigger manual** desde GitHub Actions
+- **Push** to `master` or `tests` branches
+- **Pull Request** to `master` or `tests`
+- **Changes** in `services/` directory
+- **Manual trigger** from GitHub Actions
 
-### **Artifacts y Reportes**
+### **Artifacts and Reports**
 
-- **📊 Cobertura**: Almacenada como artifacts de GitHub
-- **📈 Reportes**: Combinados y publicados en GitHub Pages
-- **🔍 Logs**: Disponibles en cada workflow run
-- **📋 Notificaciones**: Estado de tests en badges del README
+- **Coverage**: Stored as GitHub artifacts
+- **Reports**: Combined and published to GitHub Pages
+- **Logs**: Available in each workflow run
+- **Notifications**: Test status in README badges
 
-## 📋 **Resumen de Comandos**
+## 📋 **Command Summary**
 
 ```bash
-# Comandos más utilizados
-bun test                    # Ejecutar todas las pruebas
-bun run test:coverage       # Ejecutar con cobertura
-bun test --watch           # Modo desarrollo con recarga
-bun test --ui              # Interfaz web de Vitest
+# Most used commands
+bun test                    # Run all tests
+bun run test:coverage       # Run with coverage
+bun test --watch           # Development mode with reload
+bun test --ui              # Vitest web interface
 
-# Para CI/CD local
-./scripts/test-all.sh      # Ejecutar todos los servicios
+# For local CI/CD
+./scripts/test-all.sh      # Run all services
 ```
 
-**🎯 Para más información, consulta el [README principal](./README.MD) del proyecto.**
+>**💡 For more information, check the [main README](./README_EN.MD) of the project.**
