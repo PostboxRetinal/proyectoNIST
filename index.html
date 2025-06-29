@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProyectoNIST - Test Coverage Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .main-coverage-btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .main-coverage-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+
+        .service-card h3 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .service-card p {
+            color: #718096;
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .coverage-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .coverage-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .stats-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 3rem 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            display: block;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .icon {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 ProyectoNIST</h1>
+            <p>Test Coverage Dashboard</p>
+            <p>Comprehensive testing metrics for NIST audit management platform</p>
+            <a href="coverage/" class="main-coverage-btn">
+                🚀 View Complete Coverage Report
+            </a>
+        </header>
+
+        <section class="stats-section">
+            <h2 style="color: white; text-align: center; margin-bottom: 1rem; font-size: 1.5rem;">
+                Platform Overview
+            </h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">3</span>
+                    <span class="stat-label">Microservices</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Coverage Goal</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">TypeScript</span>
+                    <span class="stat-label">Language</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">Vitest</span>
+                    <span class="stat-label">Test Framework</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="services-grid">
+            <div class="service-card">
+                <h3>
+                    <span class="icon">👥</span>
+                    User Service
+                </h3>
+                <p>
+                    Authentication, user management, and role-based access control. 
+                    Handles user registration, login, profile management, and permission systems.
+                </p>
+                <a href="coverage/user-service/" class="coverage-btn">
+                    View User Service Coverage
+                </a>
+            </div>
+
+            <div class="service-card">
+                <h3>
+                    <span class="icon">🏢</span>
+                    Company Service
+                </h3>
+                <p>
+                    Company profile management, business type classification, and organizational data. 
+                    Manages company registration, validation, and business information.
+                </p>
+                <a href="coverage/company-service/" class="coverage-btn">
+                    View Company Service Coverage
+                </a>
+            </div>
+
+            <div class="service-card">
+                <h3>
+                    <span class="icon">📋</span>
+                    Forms Service
+                </h3>
+                <p>
+                    NIST compliance forms, audit questionnaires, and assessment management. 
+                    Handles form creation, validation, submission, and audit tracking.
+                </p>
+                <a href="coverage/forms-service/" class="coverage-btn">
+                    View Forms Service Coverage
+                </a>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>
+                <strong>ProyectoNIST</strong> - Professional NIST Cybersecurity Audit Platform
+            </p>
+            <p>
+                Built with ElysiaJS • Bun Runtime • TypeScript • Firebase • Docker
+            </p>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+                Coverage reports automatically generated by CI/CD pipeline
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
