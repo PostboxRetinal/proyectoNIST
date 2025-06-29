@@ -10,11 +10,6 @@ This repository hosts comprehensive test coverage reports for all microservices 
 - **[Forms Service Coverage](coverage/forms-service/index.html)** - NIST audit forms and questionnaires service  
 - **[User Service Coverage](coverage/user-service/index.html)** - Authentication and user management service
 
-## 🔍 How to View Reports
-
-1. **GitHub Pages**: Visit the live coverage reports at `https://[username].github.io/proyectoNIST/coverage/`
-2. **Local Development**: Clone this branch and open `coverage/[service-name]/index.html` in your browser
-
 ## 📈 Coverage Metrics
 
 Each service report includes:
@@ -41,12 +36,6 @@ coverage/
 ├── user-service/        # User service coverage
 └── index.html          # Main coverage dashboard
 ```
-
-## 🎯 Coverage Goals
-
-- **Target**: 100% test coverage across all services
-- **Threshold**: Minimum 95% coverage required for CI/CD pipeline
-- **Quality Gate**: All services must maintain high coverage standards
 
 ## 🔗 Related Links
 
